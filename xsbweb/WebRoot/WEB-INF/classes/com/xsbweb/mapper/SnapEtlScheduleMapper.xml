@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.SnapEtlScheduleMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.SnapEtlSchedule" >
+    <id column="task_table" property="taskTable" jdbcType="VARCHAR" />
+    <result column="task_desc" property="taskDesc" jdbcType="VARCHAR" />
+    <result column="task_period" property="taskPeriod" jdbcType="INTEGER" />
+    <result column="task_dependency" property="taskDependency" jdbcType="VARCHAR" />
+    <result column="effective_date" property="effectiveDate" jdbcType="VARCHAR" />
+    <result column="extire_date" property="extireDate" jdbcType="VARCHAR" />
+    <result column="last_exec_time" property="lastExecTime" jdbcType="VARCHAR" />
+    <result column="next_exec_time" property="nextExecTime" jdbcType="VARCHAR" />
+    <result column="intrfc_record_type" property="intrfcRecordType" jdbcType="VARCHAR" />
+    <!-- <result column="intrfc_method" property="intrfcMethod" jdbcType="VARCHAR" /> -->
+    <result column="intrfc_type" property="intrfcType" jdbcType="VARCHAR" />
+    <result column="exec_status" property="execStatus" jdbcType="VARCHAR" />
+    <result column="url_part_1" property="urlPart1" jdbcType="VARCHAR" />
+    <result column="url_part_1_logic" property="urlPart1Logic" jdbcType="VARCHAR" />
+    <result column="url_part_2" property="urlPart2" jdbcType="VARCHAR" />
+    <result column="url_part_2_logic" property="urlPart2Logic" jdbcType="VARCHAR" />
+    <result column="url_part_3" property="urlPart3" jdbcType="VARCHAR" />
+    <result column="url_part_3_logic" property="urlPart3Logic" jdbcType="VARCHAR" />
+    <result column="url_part_4" property="urlPart4" jdbcType="VARCHAR" />
+    <result column="url_part_4_logic" property="urlPart4Logic" jdbcType="VARCHAR" />
+    <result column="url_part_5" property="urlPart5" jdbcType="VARCHAR" />
+    <result column="url_part_5_logic" property="urlPart5Logic" jdbcType="VARCHAR" />
+    <result column="regex" property="regex" jdbcType="VARCHAR" />
+    <result column="target_column_01" property="targetColumn01" jdbcType="VARCHAR" />
+    <result column="target_column_02" property="targetColumn02" jdbcType="VARCHAR" />
+    <result column="target_column_03" property="targetColumn03" jdbcType="VARCHAR" />
+    <result column="target_column_04" property="targetColumn04" jdbcType="VARCHAR" />
+    <result column="target_column_05" property="targetColumn05" jdbcType="VARCHAR" />
+    <result column="target_column_06" property="targetColumn06" jdbcType="VARCHAR" />
+    <result column="target_column_07" property="targetColumn07" jdbcType="VARCHAR" />
+    <result column="target_column_08" property="targetColumn08" jdbcType="VARCHAR" />
+    <result column="target_column_09" property="targetColumn09" jdbcType="VARCHAR" />
+    <result column="target_column_10" property="targetColumn10" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="VARCHAR" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="VARCHAR" />
+    <result column="schedule_date" property="scheduleDate" jdbcType="VARCHAR" />
+    <result column="thread_host" property="threadHost" jdbcType="VARCHAR" />
+    <result column="thread_port" property="threadPort" jdbcType="VARCHAR" />
+    <result column="thread_name" property="threadName" jdbcType="VARCHAR" />
+  </resultMap>
+ 
+<!--   <sql id="Base_Column_List" >
+    task_table, task_desc, task_period, task_dependency, effective_date, extire_date, 
+    last_exec_time, next_exec_time, intrfc_record_type, intrfc_type, exec_status, 
+    url_part_1, url_part_1_logic, url_part_2, url_part_2_logic, url_part_3, url_part_3_logic, 
+    url_part_4, url_part_4_logic, url_part_5, url_part_5_logic, regex, target_column_01, 
+    target_column_02, target_column_03, target_column_04, target_column_05, target_column_06, 
+    target_column_07, target_column_08, target_column_09, target_column_10, date_format(create_date,'%Y-%m-%d %H:%i:%S')create_date, 
+    date_format(last_update_date,'%Y-%m-%d %H:%i:%S')last_update_date, date_format(schedule_date,'%Y-%m-%d %H:%i:%S')schedule_date
+  </sql> -->
+  
+  <sql id="Base_Column_List" >
+    task_table, task_desc, task_period, task_dependency, 
+    last_exec_time, next_exec_time, intrfc_record_type, intrfc_type, exec_status, 
+    url_part_1, url_part_1_logic, url_part_2, url_part_2_logic, url_part_3, url_part_3_logic, 
+    url_part_4, url_part_4_logic, url_part_5, url_part_5_logic, regex, target_column_01, 
+    target_column_02, target_column_03, target_column_04, target_column_05, target_column_06, 
+    target_column_07, target_column_08, target_column_09, target_column_10, date_format(create_date,'%Y-%m-%d %H:%i:%S')create_date, 
+    date_format(last_update_date,'%Y-%m-%d %H:%i:%S')last_update_date, date_format(schedule_date,'%Y-%m-%d %H:%i:%S')schedule_date,
+    thread_host,
+	thread_port,
+	thread_name
+  </sql>
+  
+   <select id="getEtlScheduleList" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_etl_schedule
+    where 1=1
+    	<if test="taskTable !=null and taskTable !=''">
+    		and task_table = #{taskTable}
+    	</if>
+    	<if test="taskDesc !=null and taskDesc !=''">
+    		and task_desc like CONCAT('%',#{taskDesc},'%' ) 
+    	</if>  	
+    limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getEtlScheduleCount"  resultType="java.lang.Integer" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+  	select 
+    count(1)
+    from t_rl_snap_etl_schedule
+    where 1=1
+    	<if test="taskTable !=null and taskTable !=''">
+    		and task_table = #{taskTable}
+    	</if>
+    	<if test="taskDesc !=null and taskDesc !=''">
+    		and task_desc like CONCAT('%',#{taskDesc},'%' ) 
+    	</if>  	
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_etl_schedule
+    where task_table = #{taskTable}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    delete from t_rl_snap_etl_schedule
+    where task_table = #{taskTable}
+  </delete>
+  <!-- <update id="deleteByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule">
+  	update t_rl_snap_etl_schedule 
+	<set>
+		<if test="taskTable!=null">
+			
+		</if>
+	</set>
+  </update> -->
+  
+  <insert id="insert" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    insert into t_rl_snap_etl_schedule (
+    <if test="taskDesc !=null and taskDesc != ''"> task_desc,</if>
+    <if test="taskPeriod !=null and taskPeriod != ''"> task_period, </if>
+    <if test="taskDependency !=null and taskDependency != ''"> task_dependency, </if>
+    <if test="effectiveDate !=null and effectiveDate != ''"> effective_date,  </if>
+    <if test="extireDate !=null and extireDate != ''"> extire_date,   </if>
+    <if test="lastExecTime !=null and lastExecTime != ''"> last_exec_time,  </if>
+    <if test="nextExecTime !=null and nextExecTime != ''"> next_exec_time,  </if>
+    <if test="intrfcRecordType !=null and intrfcRecordType != ''"> intrfc_record_type,  </if>
+    <!-- <if test="intrfcMethod !=null and intrfcMethod != ''"> intrfc_method,  </if> -->
+    <if test="intrfcType !=null and intrfcType != ''"> intrfc_type,  </if>
+    <if test="execStatus !=null and execStatus != ''"> exec_status,  </if>
+    <if test="urlPart1 !=null and urlPart1 != ''"> url_part_1,  </if>
+    <if test="urlPart1Logic !=null and urlPart1Logic != ''"> url_part_1_logic,  </if>
+    <if test="urlPart2 !=null and urlPart2 != ''"> url_part_2,  </if>
+    <if test="urlPart2Logic !=null and urlPart2Logic != ''"> url_part_2_logic,  </if>
+    <if test="urlPart3 !=null and urlPart3 != ''"> url_part_3,  </if>
+    <if test="urlPart3Logic !=null and urlPart3Logic != ''"> url_part_3_logic,  </if>
+    <if test="urlPart4 !=null and urlPart4 != ''"> url_part_4,  </if>
+    <if test="urlPart4Logic !=null and urlPart4Logic != ''"> url_part_4_logic,  </if>
+    <if test="urlPart5 !=null and urlPart5 != ''"> url_part_5,  </if>
+    <if test="urlPart5Logic !=null and urlPart5Logic != ''"> url_part_5_logic,  </if>
+    <if test="regex !=null and regex != ''"> regex,  </if>
+    <if test="targetColumn01 !=null and targetColumn01 != ''"> target_column_01,  </if>
+    <if test="targetColumn02 !=null and targetColumn02 != ''"> target_column_02,  </if>
+    <if test="targetColumn03 !=null and targetColumn03 != ''"> target_column_03,  </if>
+    <if test="targetColumn04 !=null and targetColumn04 != ''"> target_column_04,  </if>
+    <if test="targetColumn05 !=null and targetColumn05 != ''"> target_column_05,  </if>
+    <if test="targetColumn06 !=null and targetColumn06 != ''"> target_column_06,  </if>
+    <if test="targetColumn07 !=null and targetColumn07 != ''"> target_column_07,  </if>
+    <if test="targetColumn08 !=null and targetColumn08 != ''"> target_column_08,  </if>
+    <if test="targetColumn09 !=null and targetColumn09 != ''"> target_column_09,  </if>
+    <if test="targetColumn10 !=null and targetColumn10 != ''"> target_column_10,  </if>
+	<if test="createDate !=null and createDate != ''"> create_date,  </if>
+    <if test="lastUpdateDate !=null and lastUpdateDate != ''"> last_update_date,  </if>
+    <if test="scheduleDate !=null and scheduleDate != ''"> schedule_date,  </if>
+    <if test="threadHost !=null and threadHost != ''"> thread_host,  </if>
+    <if test="threadPort !=null and threadPort != ''"> thread_port,  </if>
+    <if test="threadName !=null and threadName != ''"> thread_name,  </if>
+    task_table
+      )
+    values (
+     <if test="taskDesc !=null and taskDesc != ''"> #{taskDesc},</if>
+    <if test="taskPeriod !=null and taskPeriod != ''"> #{taskPeriod}, </if>
+    <if test="taskDependency !=null and taskDependency != ''"> #{taskDependency}, </if>
+    <if test="effectiveDate !=null and effectiveDate != ''"> #{effectiveDate},  </if>
+    <if test="extireDate !=null and extireDate != ''"> #{extireDate},   </if>
+    <if test="lastExecTime !=null and lastExecTime != ''"> #{lastExecTime},  </if>
+    <if test="nextExecTime !=null and nextExecTime != ''"> #{nextExecTime},  </if>
+    <if test="intrfcRecordType !=null and intrfcRecordType != ''"> #{intrfcRecordType},  </if>
+    <if test="intrfcMethod !=null and intrfcMethod != ''"> #{intrfcMethod},  </if>
+    <if test="intrfcType !=null and intrfcType != ''"> #{intrfcType},  </if>
+    <if test="execStatus !=null and execStatus != ''"> #{execStatus},  </if>
+    <if test="urlPart1 !=null and urlPart1 != ''"> #{urlPart1},  </if>
+    <if test="urlPart1Logic !=null and urlPart1Logic != ''"> #{urlPart1Logic},  </if>
+    <if test="urlPart2 !=null and urlPart2 != ''"> #{urlPart2},  </if>
+    <if test="urlPart2Logic !=null and urlPart2Logic != ''"> #{urlPart2Logic},  </if>
+    <if test="urlPart3 !=null and urlPart3 != ''"> #{urlPart3},  </if>
+    <if test="urlPart3Logic !=null and urlPart3Logic != ''"> #{urlPart3Logic},  </if>
+    <if test="urlPart4 !=null and urlPart4 != ''"> #{urlPart4},  </if>
+    <if test="urlPart4Logic !=null and urlPart4Logic != ''"> #{urlPart4Logic},  </if>
+    <if test="urlPart5 !=null and urlPart5 != ''"> #{urlPart5},  </if>
+    <if test="urlPart5Logic !=null and urlPart5Logic != ''"> #{urlPart5Logic},  </if>
+    <if test="regex !=null and regex != ''"> #{regex},  </if>
+    <if test="targetColumn01 !=null and targetColumn01 != ''"> #{targetColumn01},  </if>
+    <if test="targetColumn02 !=null and targetColumn02 != ''"> #{targetColumn02},  </if>
+    <if test="targetColumn03 !=null and targetColumn03 != ''"> #{targetColumn03},  </if>
+    <if test="targetColumn04 !=null and targetColumn04 != ''"> #{targetColumn04},  </if>
+    <if test="targetColumn05 !=null and targetColumn05 != ''"> #{targetColumn05},  </if>
+    <if test="targetColumn06 !=null and targetColumn06 != ''"> #{targetColumn06},  </if>
+    <if test="targetColumn07 !=null and targetColumn07 != ''"> #{targetColumn07},  </if>
+    <if test="targetColumn08 !=null and targetColumn08 != ''"> #{targetColumn08},  </if>
+    <if test="targetColumn09 !=null and targetColumn09 != ''"> #{targetColumn09},  </if>
+    <if test="targetColumn10 !=null and targetColumn10 != ''"> #{targetColumn10},  </if>
+	<if test="createDate !=null and createDate != ''"> #{createDate},  </if>
+    <if test="lastUpdateDate !=null and lastUpdateDate != ''"> #{lastUpdateDate},  </if>
+    <if test="scheduleDate !=null and scheduleDate != ''"> #{scheduleDate},  </if>
+    <if test="threadHost !=null and threadHost != ''"> #{threadHost},  </if>
+    <if test="threadPort !=null and threadPort != ''"> #{threadPort},  </if>
+    <if test="threadName !=null and threadName != ''"> #{threadName},  </if>
+	#{taskTable}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    insert into t_rl_snap_etl_schedule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="taskTable != null" >
+        task_table,
+      </if>
+      <if test="taskDesc != null" >
+        task_desc,
+      </if>
+      <if test="taskPeriod != null" >
+        task_period,
+      </if>
+      <if test="taskDependency != null" >
+        task_dependency,
+      </if>
+      <if test="effectiveDate != null" >
+        effective_date,
+      </if>
+      <if test="extireDate != null" >
+        extire_date,
+      </if>
+      <if test="lastExecTime != null" >
+        last_exec_time,
+      </if>
+      <if test="nextExecTime != null" >
+        next_exec_time,
+      </if>
+      <if test="intrfcRecordType != null" >
+        intrfc_record_type,
+      </if>
+      <if test="intrfcMethod != null" >
+        intrfc_method,
+      </if>
+      <if test="intrfcType != null" >
+        intrfc_type,
+      </if>
+      <if test="execStatus != null" >
+        exec_status,
+      </if>
+      <if test="urlPart1 != null" >
+        url_part_1,
+      </if>
+      <if test="urlPart1Logic != null" >
+        url_part_1_logic,
+      </if>
+      <if test="urlPart2 != null" >
+        url_part_2,
+      </if>
+      <if test="urlPart2Logic != null" >
+        url_part_2_logic,
+      </if>
+      <if test="urlPart3 != null" >
+        url_part_3,
+      </if>
+      <if test="urlPart3Logic != null" >
+        url_part_3_logic,
+      </if>
+      <if test="urlPart4 != null" >
+        url_part_4,
+      </if>
+      <if test="urlPart4Logic != null" >
+        url_part_4_logic,
+      </if>
+      <if test="urlPart5 != null" >
+        url_part_5,
+      </if>
+      <if test="urlPart5Logic != null" >
+        url_part_5_logic,
+      </if>
+      <if test="regex != null" >
+        regex,
+      </if>
+      <if test="targetColumn01 != null" >
+        target_column_01,
+      </if>
+      <if test="targetColumn02 != null" >
+        target_column_02,
+      </if>
+      <if test="targetColumn03 != null" >
+        target_column_03,
+      </if>
+      <if test="targetColumn04 != null" >
+        target_column_04,
+      </if>
+      <if test="targetColumn05 != null" >
+        target_column_05,
+      </if>
+      <if test="targetColumn06 != null" >
+        target_column_06,
+      </if>
+      <if test="targetColumn07 != null" >
+        target_column_07,
+      </if>
+      <if test="targetColumn08 != null" >
+        target_column_08,
+      </if>
+      <if test="targetColumn09 != null" >
+        target_column_09,
+      </if>
+      <if test="targetColumn10 != null" >
+        target_column_10,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="lastUpdateDate != null" >
+        last_update_date,
+      </if>
+      <if test="scheduleDate != null" >
+        schedule_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="taskTable != null" >
+        #{taskTable,jdbcType=VARCHAR},
+      </if>
+      <if test="taskDesc != null" >
+        #{taskDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="taskPeriod != null" >
+        #{taskPeriod,jdbcType=INTEGER},
+      </if>
+      <if test="taskDependency != null" >
+        #{taskDependency,jdbcType=VARCHAR},
+      </if>
+      <if test="effectiveDate != null" >
+        #{effectiveDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="extireDate != null" >
+        #{extireDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastExecTime != null" >
+        #{lastExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="nextExecTime != null" >
+        #{nextExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="intrfcRecordType != null" >
+        #{intrfcRecordType,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcMethod != null" >
+        #{intrfcMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcType != null" >
+        #{intrfcType,jdbcType=VARCHAR},
+      </if>
+      <if test="execStatus != null" >
+        #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1 != null" >
+        #{urlPart1,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1Logic != null" >
+        #{urlPart1Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2 != null" >
+        #{urlPart2,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2Logic != null" >
+        #{urlPart2Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3 != null" >
+        #{urlPart3,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3Logic != null" >
+        #{urlPart3Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4 != null" >
+        #{urlPart4,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4Logic != null" >
+        #{urlPart4Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5 != null" >
+        #{urlPart5,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5Logic != null" >
+        #{urlPart5Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="regex != null" >
+        #{regex,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn01 != null" >
+        #{targetColumn01,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn02 != null" >
+        #{targetColumn02,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn03 != null" >
+        #{targetColumn03,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn04 != null" >
+        #{targetColumn04,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn05 != null" >
+        #{targetColumn05,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn06 != null" >
+        #{targetColumn06,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn07 != null" >
+        #{targetColumn07,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn08 != null" >
+        #{targetColumn08,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn09 != null" >
+        #{targetColumn09,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn10 != null" >
+        #{targetColumn10,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="scheduleDate != null" >
+        #{scheduleDate,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    update t_rl_snap_etl_schedule
+    <set >
+    <if test="taskDesc !=null and taskDesc != ''"> task_desc = #{taskDesc},</if>
+    <if test="taskPeriod !=null and taskPeriod != ''"> task_period = #{taskPeriod}, </if>
+    <if test="taskDependency !=null and taskDependency != ''"> task_dependency = #{taskDependency}, </if>
+    <if test="effectiveDate !=null and effectiveDate != ''"> effective_date = #{effectiveDate}, </if>
+    <if test="extireDate !=null and extireDate != ''"> extire_date = #{extireDate},  </if>
+    <if test="lastExecTime !=null and lastExecTime != ''"> last_exec_time = #{lastExecTime}, </if>
+    <if test="nextExecTime !=null and nextExecTime != ''"> next_exec_time = #{nextExecTime},  </if>
+    <if test="intrfcRecordType !=null and intrfcRecordType != ''"> intrfc_record_type = #{intrfcRecordType},  </if>
+    <!-- <if test="intrfcMethod !=null and intrfcMethod != ''"> intrfc_method = #{intrfcMethod},  </if> -->
+    <if test="intrfcType !=null and intrfcType != ''"> intrfc_type = #{intrfcType},  </if>
+    <if test="execStatus !=null and execStatus != ''"> exec_status = #{execStatus}, </if>
+    <if test="urlPart1 !=null and urlPart1 != ''"> url_part_1 = #{urlPart1},  </if>
+    <if test="urlPart1Logic !=null and urlPart1Logic != ''"> url_part_1_logic = #{urlPart1Logic},  </if>
+    <if test="urlPart2 !=null and urlPart2 != ''"> url_part_2 = #{urlPart2}, </if>
+    <if test="urlPart2Logic !=null and urlPart2Logic != ''"> url_part_2_logic = #{urlPart2Logic}, </if>
+    <if test="urlPart3 !=null and urlPart3 != ''"> url_part_3 = #{urlPart3},  </if>
+    <if test="urlPart3Logic !=null and urlPart3Logic != ''"> url_part_3_logic = #{urlPart3Logic},  </if>
+    <if test="urlPart4 !=null and urlPart4 != ''"> url_part_4 = #{urlPart4}, </if>
+    <if test="urlPart4Logic !=null and urlPart4Logic != ''"> url_part_4_logic = #{urlPart4Logic},  </if>
+    <if test="urlPart5 !=null and urlPart5 != ''"> url_part_5 = #{urlPart4Logic},  </if>
+    <if test="urlPart5Logic !=null and urlPart5Logic != ''"> url_part_5_logic = #{urlPart5Logic},  </if>
+    <if test="regex !=null and regex != ''"> regex = #{regex},    </if>
+    <if test="targetColumn01 !=null and targetColumn01 != ''"> target_column_01 = #{targetColumn01},  </if>
+    <if test="targetColumn02 !=null and targetColumn02 != ''"> target_column_02 = #{targetColumn02},  </if>
+    <if test="targetColumn03 !=null and targetColumn03 != ''"> target_column_03 = #{targetColumn03},  </if>
+    <if test="targetColumn04 !=null and targetColumn04 != ''"> target_column_04 = #{targetColumn04},  </if>
+    <if test="targetColumn05 !=null and targetColumn05 != ''"> target_column_05 = #{targetColumn05},  </if>
+    <if test="targetColumn06 !=null and targetColumn06 != ''"> target_column_06 = #{targetColumn06},  </if>
+    <if test="targetColumn07 !=null and targetColumn07 != ''"> target_column_07 = #{targetColumn07},  </if>
+    <if test="targetColumn08 !=null and targetColumn08 != ''"> target_column_08 = #{targetColumn08}, </if>
+    <if test="targetColumn09 !=null and targetColumn09 != ''"> target_column_09 = #{targetColumn09},  </if>
+    <if test="targetColumn10 !=null and targetColumn10 != ''"> target_column_10 = #{targetColumn10},  </if>
+	<if test="createDate !=null and createDate != ''"> create_date = #{createDate},  </if>
+    <if test="lastUpdateDate !=null and lastUpdateDate != ''"> last_update_date = #{lastUpdateDate},  </if>
+    <if test="scheduleDate !=null and scheduleDate != ''"> schedule_date = #{scheduleDate},  </if>
+    <if test="threadHost !=null and threadHost != ''"> thread_host = #{threadHost}, </if>
+    <if test="threadPort !=null and threadPort != ''"> thread_port = #{threadPort},  </if>
+    <if test="threadName !=null and threadName != ''"> thread_name = #{threadName}  </if>
+    </set>
+    where task_table = #{taskTable}
+  </update>
+ 
+</mapper>

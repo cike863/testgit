@@ -1,0 +1,301 @@
+package com.xsbweb.controller.manage;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.service.EnumService;
+import com.xsbweb.util.MD5;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.vo.Menu;
+import com.xsbweb.vo.ProjectAndItems;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.EnumVO;
+import com.xsbweb.vo.extend.MeetVideoRoomVO;
+
+
+@Controller
+public class EnumController {
+	@Autowired
+	private EnumService enumService;
+	//页面初始化数据
+	@RequestMapping(value="admin/enum/toEnumManage.do")
+	public ModelAndView allEnumManage(EnumVO enumVO)throws Exception{
+		if(enumVO==null){
+			enumVO=new EnumVO();
+		}
+		//String queryCondition = enumVO.getEnumGroupCode();
+		ModelAndView mav = new ModelAndView();
+		int totalCounts = enumService.getEnumCounts(enumVO);
+		List<EnumVO> enumList = enumService.getEnumVOList(enumVO);
+		enumVO.setTotalRecord(totalCounts);
+		if("industry".equals(enumVO.getEnumFullName())){
+			mav.setViewName("manage/project/queryProjectEnum");
+		}else{
+			mav.setViewName("manage/enums/queryEnumManage");
+		}
+		
+		//mav.addObject("queryCondition",queryCondition);
+		mav.addObject("enumList",enumList);
+		mav.addObject("enumVO",enumVO);
+		mav.addObject("searchInformation","");
+		return mav;
+	}
+	
+	//删除数据
+	@RequestMapping(value="/enum/deleteEnumManage.do")
+	public ModelAndView deleteEnum(EnumVO enumVO)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		int flag = enumService.deleteEnum(enumVO);
+		if(flag<=0){
+			mav.addObject("error","删除失败");
+		}
+		List<EnumVO> enumList = enumService.getEnumVOList(new EnumVO());
+		mav.addObject("enumVO",enumVO);
+		mav.addObject("enumList",enumList);
+		mav.setViewName("manage/enums/queryEnumManage");//当删除之后，在次返回主页面；
+		return mav;
+	}		
+
+	
+	//模糊查询
+	@RequestMapping(value="/enum/searchEnumManage.do",method=RequestMethod.GET)
+	public ModelAndView serachEnum(@RequestParam("searchInformation")String information,HttpServletRequest request)throws Exception{
+		String pageNo = request.getParameter("pageNo");
+		ModelAndView mav = new ModelAndView();
+		EnumVO enumVO = new EnumVO();
+		//BasePo basePo = new BasePo();
+		if(pageNo !=null){
+			enumVO.setPageNo(Integer.parseInt(pageNo));
+		}
+		int count =enumService.getfuzzySearchEnumCount(information);
+		enumVO.setTotalRecord(count);
+		List<EnumVO> enumList = enumService.fuzzySearch(enumVO.getPageSize(), enumVO.getPageNo(), information);
+		mav.addObject("enumList",enumList);
+		mav.addObject("enumVO",enumVO);
+		mav.addObject("searchInformation",information);
+		mav.setViewName("manage/enums/queryEnumManage");
+		return mav;
+	}
+	
+
+	/**
+	 * 编辑数据
+	 */
+    @RequestMapping(value="enum/toEnum.do")
+    public ModelAndView toEditEnum(String enumFullName,String enumCode)throws Exception{
+    	ModelAndView mav = new ModelAndView();
+    	EnumVO enumVO = enumService.getEnumByfullNameEnumCode(enumFullName,enumCode);
+    	if(enumVO!=null){
+    		mav.setViewName("manage/enums/editForeEnum");
+        	mav.addObject("enumVOList",enumVO);
+    	}
+    	return mav;
+    }
+	
+    //成功之后跳回主页面
+    @RequestMapping(value="enum/editEnum.do",method=RequestMethod.PUT)
+    public String editMenu(EnumVO enumVO)throws Exception{
+      	enumService.updateEnum(enumVO);
+    	return "redirect:../admin/enum/toEnumManage.do";//在这里加上“../”因为是从上级目录传递过来的,如果不加则回报404错误;
+    }
+
+    
+    
+    /**
+     * 添加数据
+     */
+   @RequestMapping(value="enum/toAddData.do")
+   public ModelAndView toAddStaff(EnumVO enumVO)throws Exception{
+    	ModelAndView mav = new ModelAndView();
+    	//Staff staff = new Staff();
+    	//EnumVO enumVOList = new EnumVO();
+    	mav.addObject("enumVOList",enumVO);
+    	if(enumVO!=null&&"industry".equals(enumVO.getEnumFullName())){
+    		mav.setViewName("manage/project/addProjectEnum");
+    	}else{
+    		mav.setViewName("manage/enums/addEnum");
+    	}    	
+	return mav;
+    }
+
+   	//持久化
+    @RequestMapping(value="enum/addEnum.do",method=RequestMethod.POST)
+    public String addEnum(EnumVO enumVO)throws Exception{
+    	//ModelAndView mav = new ModelAndView();
+    	enumService.addEnum(enumVO);
+    	if(enumVO!=null&&"industry".equals(enumVO.getEnumFullName())){
+    		return "redirect:../admin/enum/toEnumManage.do?enumFullName=industry";
+    	}else{
+    		return "redirect:../admin/enum/toEnumManage.do";
+    	}
+    	
+    }
+    /**
+     * 获取所有轮播
+     * @param enumVO
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="enum/getScrollList",method=RequestMethod.GET)
+    public ModelAndView getScrollList(EnumVO enumVO) throws Exception{
+    	ModelAndView mav = new ModelAndView();
+    	List<EnumVO> scrollList = new ArrayList<EnumVO>();
+    	scrollList = enumService.getScrollList(enumVO);
+    	/*MultipleDataSource.clearDataSourceType();*/
+    	int count = enumService.getScrollListCount(enumVO);
+    	enumVO.setTotalRecord(count);    	
+    	mav.addObject("scrollList",scrollList);
+    	mav.addObject("enumVO",enumVO);
+    	mav.setViewName("manage/scrollList");
+    	return mav;   	
+    }
+    /**
+     * 通过id获取所有该Id的轮播，编辑轮播页面跳转
+     * @param objectId
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="enum/getScrollListByObjectId",method=RequestMethod.GET)
+    public ModelAndView getScrollListByObjectId(@RequestParam("objectId")String objectId) throws Exception{
+    	ModelAndView mav = new ModelAndView();
+    	List<EnumVO> scrollList = new ArrayList<EnumVO>();
+    	scrollList = enumService.getScrollListByObjectId(objectId);
+    	/*MultipleDataSource.clearDataSourceType();*/
+    	/*int count = enumService.getScrollListCount(enumVO);
+    	enumVO.setTotalRecord(count);    	*/
+    	List<String> checkEnumDesc = new ArrayList<String>();
+    	for(EnumVO enumVO : scrollList){
+    		checkEnumDesc.add(enumVO.getEnumDesc());
+    	}
+    	EnumVO enumVO = new EnumVO();
+    	enumVO.setEnumDescCn("广告");
+    	List<EnumVO> adScrollList = enumService.getScrollList(enumVO);
+    	List<String> adEnumDesc = new ArrayList<String>();
+    	for(EnumVO enumVO1 : adScrollList){
+    		adEnumDesc.add(enumVO1.getEnumDescCn());
+    	}
+    	if(objectId.contains("news")){
+    		enumVO.setEnumDescCn("轮播");
+    		List<EnumVO> lbScrollList = enumService.getScrollList(enumVO);
+    		List<String> lbEnumDesc = new ArrayList<String>();
+        	for(EnumVO enumVO1 : lbScrollList){
+        		lbEnumDesc.add(enumVO1.getEnumDescCn());
+        	}
+        	mav.addObject("lbEnumDesc",lbEnumDesc);
+    	}
+    	mav.addObject("scrollList",scrollList);
+    	mav.addObject("checkEnumDesc",checkEnumDesc);
+    	mav.addObject("adEnumDesc",adEnumDesc);
+    	mav.addObject("objectId",objectId);
+    	mav.setViewName("manage/editScrollList");
+    	return mav;   	
+    }
+    /**
+     * 轮播编辑提交，包含新增轮播
+     * @param objectId
+     * @param enumDesc
+     * @return
+     * @throws Exception 
+     */
+    @RequestMapping(value="enum/editScrollList",method=RequestMethod.GET)
+    @ResponseBody
+    public Map<String,Object> editScrollList(@RequestParam("objectId")String objectId,@RequestParam("enumDesc")String enumDesc) throws Exception{
+    	Map<String,Object>map = new HashMap<String,Object>();
+    		int result = enumService.editScrollList(objectId,enumDesc);
+    		if(result==1){
+    			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+    		}else{
+    			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+    		}
+    	return map;
+    }
+    @RequestMapping(value="enum/addScrollList",method=RequestMethod.GET)
+    public String addScrollList(){
+    	return "manage/addScrollList";
+    }
+    @RequestMapping(value="enum/updateProjectEnum.do",method=RequestMethod.POST)
+    @ResponseBody
+    public ModelAndView updateProjectEnum(TrsProject trsProject) throws Exception{
+    	ModelAndView mav = new ModelAndView();
+    	int result = enumService.bathUpdateEnum(trsProject.getEnumList());
+    	/*if(result>0){    		
+    		//map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}else{
+			//map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}*/
+    	mav.setViewName("redirect:/admin/enum/toEnumManage.do?enumFullName=industry");
+    	return mav; 
+    }
+    /**
+     * 批量删除项目enum
+     * @param news
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="enum/projectEnumDesc/{enumDescArrs}/del",method=RequestMethod.DELETE)
+    @ResponseBody
+    public Map<String,Object> batchDeleteProjectEnums(
+    		@PathVariable("enumDescArrs") String[] enumDescArrs)throws Exception{
+    	/*if(CommonUtils.isBlank(newsNoArrs)){
+    		mode.addAttribute("error","新闻newsNo缺失！");
+    		log.info("####################新闻newsNo缺失！");
+    		return "manage/news/queryTrsNewsList";
+    	}*/
+    	Map<String,Object> map = new HashMap<String,Object>();
+    	MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+    	int flag = enumService.batchDeleteProjectEnums(enumDescArrs);
+    	if(flag>0){
+    		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+        	/*if(projectNo!=null&&!"".equals(projectNo)){
+    			return "redirect:/admin/news/toAdminNews.do?projectNo="+projectNo;
+    		}else{
+    			return "redirect:/admin/news/toAdminNews.do";
+    		}*/
+    	}else{
+    		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+    	}
+    	return map;
+    }
+}

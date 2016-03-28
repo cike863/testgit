@@ -1,0 +1,162 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+ <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <title>评论列表</title>
+    
+	<meta http-equiv="pragma" content="no-cache">
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta http-equiv="expires" content="0">    
+	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+	<meta http-equiv="description" content="This is my page">
+	<link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+	<!--
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	-->
+	<script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<style>
+		.mt10{margin-top:10px;}
+		a{text-decoration:underline;}
+		a:after{content:"";margin-right:5px;}
+	</style>
+  </head>
+ 
+  <body>
+  ${error}
+	  <div class="container-full">
+		  <form class="form-inline" name="trsCommentForm" action="${pageContext.request.contextPath }/admin/trsComment " >
+		  <div class="row">
+			  <div class="col-md-12 mt10">
+			  		<span onclick="batchDeletetrsComment();"class="btn btn-danger" >删除</span>
+					 <div class="input-group">
+						  <span class="input-group-addon">用户编号</span>
+						  <input type="text" class="form-control" id="search" name="commenter" placeholder="请输入查询内容" value="${trsComment.commenter}" >
+					  </div>
+					  <div class="input-group">
+						  <span class="input-group-addon">留言地点</span>
+						  <input type="text" class="form-control" id="search" name="commentAddress" placeholder="请输入查询内容" value="${trsComment.commentAddress}" >
+					  </div>
+					  <div class="input-group">
+						  <span class="input-group-addon">留言平台</span>
+						  <input type="radio" name="commentPlatform" value="news"  id="yNewsPlatform"> 新闻
+						  <input type="radio" name="commentPlatform" value="projcomment" id="nNewsPlatform">非新闻
+					  </div>
+					  <div class="input-group">
+						<span class="input-group-addon">评论时间</span> 
+						<input placeholder="请输入开始日期" class="laydate-icon" name="sartQueryDate" id="t1" 
+						value="<fmt:formatDate value="${trsComment.sartQueryDate}" pattern="yyyy-MM-dd" />" 
+						onClick="laydate({elem: '#t1',istime: true, format: 'YYYY-MM-DD'})">~
+						<input placeholder="请输入结束日期" class="laydate-icon" name="endQueryDate" id="t2" 
+						value="<fmt:formatDate value="${trsComment.endQueryDate}" pattern="yyyy-MM-dd" />"
+						 onClick="laydate({elem: '#t2',istime: true, format: 'YYYY-MM-DD'})">
+					</div>
+					  <input type="hidden" name="pageSize" id="pageSize" value="${trsComment.pageSize}" /> 
+					  <button class="btn btn-warning" type="submit">查询</button>
+					  
+			  </div>
+		  </div>
+		  <div class="row">
+			  <div class="col-md-12 mt10">
+				  <table class="table table-bordered table-hover table-responsive">
+					  <thead>
+					  <tr>
+					  		<th><input type="checkbox" name="allCheckBox"  id="allCheckBox" onclick="checktrsCommentAll(this);" >全选</th>
+						  	<th>留言编号</th>
+						  	<th>留言者</th>
+						  	<th>留言地点</th>
+						  	<th>留言平台</th>
+						  	<th>留言内容</th>
+						  	<th>留言时间</th>
+						  	<th>点赞数</th>
+					  </tr>
+					  </thead>
+					  <tbody>
+						<c:forEach items="${commentList}" var="nVO" varStatus="index">
+							<tr>
+								<td><input type="checkbox" name="trsCommentNoCheckBox" value="${index.index}"></td>
+	                			<td id="trsComment_${index.index}">${nVO.commentNo}</td>
+								<td>${nVO.commenter}</td>
+								<td>${nVO.commentAddress}</td>
+								<td>${nVO.commentPlatform}</td>
+								<td>${nVO.commentContent}</td>
+								<td><fmt:formatDate value="${nVO.commentTime}"
+										pattern="yyyy-MM-dd HH:mm:ss" /></td>
+								<td>${nVO.commentPraise}</td>
+							</tr>
+						</c:forEach>
+					  </tbody>
+				  </table>
+			  </div>
+		  </div>
+	   	</form>
+		<page:pager pageSize="${trsComment.pageSize}" pageNo="${trsComment.pageNo}" url="admin/trsComment" recordCount="${trsComment.totalRecord}"/>
+	  </div>
+  </body>
+  <script type="text/javascript">
+	  	/* function toEditEtlSchedule(taskTable){
+			//提交form
+			document.etlForm.action="admin/etlschedule/toEditEtlSchedule.do";
+			document.etlForm.submit();
+		} */
+  		
+  		function toAddtrsComment(){
+  			//提交form
+  			
+  			document.trsCommentForm.action="admin/trsComment/toAddtrsComment.do";
+  			document.trsCommentForm.submit();
+  		}
+		//全选
+		function checktrsCommentAll(k){
+	  		if($(k).is(':checked')){
+	  			$("input[name='trsCommentNoCheckBox']").each(function(){	
+					$(this).prop("checked",true);
+				});
+	  		}else{
+	  			$("input[name='trsCommentNoCheckBox']").each(function(){	
+	  				$(this).prop("checked",false);
+				});
+	  		}	
+	  	}
+		function batchDeletetrsComment(){
+			if(!confirm("确定要删除该数据吗？")){
+				return;
+			}
+	  		var trsCommentNoArrs = "";
+	  		$("input[name='trsCommentNoCheckBox']:checked").each(function(){ 
+	  			trsCommentNoArrs += $("#trsComment_"+$(this).val()).html()+",";
+	  		});
+	  		trsCommentNoArrs=trsCommentNoArrs.toString().substring(0, trsCommentNoArrs.toString().length-1);
+	  		//console.log(trsCommentNoArrs);
+	  		$.ajax({
+	  			url : "admin/trsComment/"+trsCommentNoArrs+"/del",
+	  			//contentType : 'application/json',JSON.stringify(
+				type : 'POST',
+				data : {
+					'_method' : 'delete'
+				},
+				async: false,
+				success : function(data) {
+					if (data.resultCode == '1') {
+						window.location.reload();
+					} else {
+						alert("删除失败");
+					};
+				},
+				error : function() {
+					alert("删除失败");
+				}
+			});
+		}
+  </script>
+</html>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.CompanyAssetMapper" >
+  <resultMap id="assetResultMap" type="com.xsbweb.vo.CompanyAsset" >
+    <result column="snapshot_day" property="snapshotDay" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="pe_dnmc" property="peDnmc" jdbcType="VARCHAR" />
+    <result column="eps" property="eps" jdbcType="VARCHAR" />
+    <result column="roe" property="roe" jdbcType="VARCHAR" />
+    <result column="pe_sttc" property="peSttc" jdbcType="VARCHAR" />
+    <result column="earning" property="earning" jdbcType="VARCHAR" />
+    <result column="naps" property="naps" jdbcType="VARCHAR" />
+    <result column="captl" property="captl" jdbcType="VARCHAR" />
+    <result column="pbv" property="pbv" jdbcType="VARCHAR" />
+    <result column="ne" property="ne" jdbcType="VARCHAR" />
+    <result column="cfps" property="cfps" jdbcType="VARCHAR" />
+    <result column="open_captl" property="openCaptl" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="asset_column_List" >
+    snapshot_day, stock_id, pe_dnmc, eps, roe,pe_sttc,earning,naps,captl,pbv,ne,cfps,open_captl
+  </sql>
+  <select id="getCompanyAssetByStockId" parameterType="java.lang.String" resultMap="assetResultMap">
+  	select 
+	<include refid="asset_column_List"/>
+	 from t_orgn_etl_company_asset where stock_id = #{stockId} limit 0,1;
+  </select>
+  
+</mapper>

@@ -1,0 +1,151 @@
+<%@ page language="java" import="java.util.*" pageEncoding="gbk"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <title>My JSP 'editEtlSchedule.jsp' starting page</title>
+    
+	<meta http-equiv="pragma" content="no-cache">
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta http-equiv="expires" content="0">    
+	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+	<meta http-equiv="description" content="This is my page">
+	<!--
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	-->
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/js/utils/jquery-1.11.3.js" ></script>
+  </head>
+  
+  <body>
+    <form action="admin/etlschedule/editEtlSchedule.do" name="etlForm" method="post">
+    		<table style="width: 100%">
+    			<tr>
+    				<td>taskTable</td>
+    				<td><input type="text" disabled="true" name="taskTable" value="${etlScheduleVO.taskTable}"/></td>
+    				<td>taskDesc</td>
+    				<td><input type="text" name="taskDesc" value="${etlScheduleVO.taskDesc}"/></td>
+    			</tr>
+    			<tr>
+    				<td>taskPeriod</td>
+    				<td><input type="text" name="taskPeriod" value="${etlScheduleVO.taskPeriod}"/></td>
+    				<td>taskDependency</td>
+    				<td><input type="text" name="taskDependency" value="${etlScheduleVO.taskDependency}"/></td>
+    			</tr>
+    			<tr>
+    				<td>effectiveDate</td>
+    				<td><input type="text" name="effectiveDate" value="${etlScheduleVO.effectiveDate}"/></td>
+    				<td>extireDate</td>
+    				<td><input type="text" name="extireDate" value="${etlScheduleVO.extireDate}"/></td>
+    			</tr>
+    			<tr>
+    				<td>lastExecTime</td>
+    				<td><input type="text" name="lastExecTime" value="${etlScheduleVO.lastExecTime}"/></td>
+    				<td>nextExecTime</td>
+    				<td><input type="text" name="nextExecTime" value="${etlScheduleVO.nextExecTime}"/></td>
+    			</tr>
+    			<tr>
+    				<td>intrfcRecordType</td>
+    				<td><input type="text" name="intrfcRecordType" value="${etlScheduleVO.intrfcRecordType}"/></td>
+    				<td>intrfcMethod</td>
+    				<td><input type="text" name="intrfcMethod" value="${etlScheduleVO.intrfcMethod}"/></td>
+    			</tr>
+    			<tr>
+    				<td>intrfcType</td>
+    				<td><input type="text" name="intrfcType" value="${etlScheduleVO.intrfcType}"/></td>
+    				<td>execStatus</td>
+    				<td><input type="text" name="execStatus" value="${etlScheduleVO.execStatus}"/></td>
+    			</tr>
+    			<tr>
+    				<td>urlPart1</td>
+    				<td><input type="text" name="urlPart1" value="${etlScheduleVO.urlPart1}"/></td>
+    				<td>urlPart1Logic</td>
+    				<td><input type="text" name="urlPart1Logic" value="${etlScheduleVO.urlPart1Logic}"/></td>
+    			</tr>
+    			<tr>
+    				<td>urlPart2</td>
+    				<td><input type="text" name="urlPart2" value="${etlScheduleVO.urlPart2}"/></td>
+    				<td>urlPart2Logic</td>
+    				<td><input type="text" name="urlPart2Logic" value="${etlScheduleVO.urlPart2Logic}"/></td>
+    			</tr>
+    			<tr>
+    				<td>urlPart3</td>
+    				<td><input type="text" name="urlPart3" value="${etlScheduleVO.urlPart3}"/></td>
+    				<td>urlPart3Logic</td>
+    				<td><input type="text" name="urlPart3Logic" value="${etlScheduleVO.urlPart3Logic}"/></td>
+    			</tr>
+    			<tr>
+    				<td>urlPart4</td>
+    				<td><input type="text" name="urlPart4" value="${etlScheduleVO.urlPart4}"/></td>
+    				<td>urlPart4Logic</td>
+    				<td><input type="text" name="urlPart4Logic" value="${etlScheduleVO.urlPart4Logic}"/></td>
+    			</tr>
+    			<tr>
+    				<td>urlPart5</td>
+    				<td><input type="text" name="urlPart5" value="${etlScheduleVO.urlPart5}"/></td>
+    				<td>urlPart5Logic</td>
+    				<td><input type="text" name="urlPart5Logic" value="${etlScheduleVO.urlPart5Logic}"/></td>
+    			</tr>
+    			<tr>
+    				<td>regex</td>
+    				<td><input type="text" name="regex" value="${etlScheduleVO.regex}"/></td>
+    				<td>scheduleDate</td>
+    				<td><input type="text" name="scheduleDate" value="${etlScheduleVO.scheduleDate}"/></td>
+    			</tr>
+    			
+    			
+    			<tr>
+    				<td>targetColumn01</td>
+    				<td><input type="text" name="targetColumn01" value="${etlScheduleVO.targetColumn01}"/></td>
+    				<td>targetColumn02</td>
+    				<td><input type="text" name="targetColumn02" value="${etlScheduleVO.targetColumn02}"/></td>
+    			</tr>
+    			<tr>
+    				<td>targetColumn03</td>
+    				<td><input type="text" name="targetColumn03" value="${etlScheduleVO.targetColumn03}"/></td>
+    				<td>targetColumn04</td>
+    				<td><input type="text" name="targetColumn04" value="${etlScheduleVO.targetColumn04}"/></td>
+    			</tr>
+    			<tr>
+    				<td>targetColumn05</td>
+    				<td><input type="text" name="targetColumn05" value="${etlScheduleVO.targetColumn05}"/></td>
+    				<td>targetColumn06</td>
+    				<td><input type="text" name="targetColumn06" value="${etlScheduleVO.targetColumn06}"/></td>
+    			</tr>
+    			
+    			<tr>
+    				<td>targetColumn07</td>
+    				<td><input type="text" name="targetColumn07" value="${etlScheduleVO.targetColumn07}"/></td>
+    				<td>targetColumn08</td>
+    				<td><input type="text" name="targetColumn08" value="${etlScheduleVO.targetColumn08}"/></td>
+    			</tr>
+    			<tr>
+    				<td>targetColumn09</td>
+    				<td><input type="text" name="targetColumn09" value="${etlScheduleVO.targetColumn09}"/></td>
+    				<td>targetColumn10</td>
+    				<td><input type="text" name="targetColumn10" value="${etlScheduleVO.targetColumn10}"/></td>
+    			</tr>
+    			<tr>
+    				<td colspan="4" align="center">
+    					<!-- <input type="button" onclick="submitData();" value="提交"/> -->
+    					<input type="submit" value="提交"/>
+    				</td>
+    			</tr>
+    		</table>
+    	</form>
+  </body>
+  <script type="text/javascript">
+  	function submitData(){
+  	//提交form
+  		alert('2');
+		document.etlForm.action="admin/etlschedule/editEtlSchedule.do";
+		document.etlForm.submit();
+  	}
+  </script>
+</html>

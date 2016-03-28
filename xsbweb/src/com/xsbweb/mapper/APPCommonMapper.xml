@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.APPCommonMapper" >
+
+  <resultMap id="commonResultMap" type="com.xsbweb.vo.RObject" >
+    <result column="object_id" property="objectId" jdbcType="VARCHAR" />
+    <result column="object_pic_no" property="objectPicNo" jdbcType="VARCHAR" />
+    <result column="share_pic_no" property="sharePicNo" jdbcType="VARCHAR" />
+    <result column="big_pic_no" property="bigPicNo" jdbcType="VARCHAR" />
+    <result column="text_desc" property="textDesc" jdbcType="VARCHAR" />
+    <result column="online_date" property="onlineDate" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="pv" property="pv" jdbcType="INTEGER" />
+    <result column="conf_create_date" property="confCreateDate" jdbcType="VARCHAR" />
+    <result column="obj_name" property="objName" jdbcType="VARCHAR" />
+    <result column="news_source" property="newsSource" jdbcType="VARCHAR" />
+    <result column="news_title" property="newsTitle" jdbcType="VARCHAR" />
+    <result column="proj_dyn_quotes" property="projDynQuotes" jdbcType="VARCHAR" />
+    <result column="proj_coach_org" property="projCoachOrg" jdbcType="VARCHAR" />
+    <result column="proj_assignment_may" property="projAssignmentMay" jdbcType="VARCHAR" />
+    <result column="proj_apply_counts" property="projApplyCounts" jdbcType="VARCHAR" />
+    <result column="proj_percentage" property="projPercentage" jdbcType="VARCHAR" />
+    <result column="object_pic_path" property="objectPicPath" jdbcType="VARCHAR" />
+    <result column="share_pic_path" property="sharePicPath" jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigPicPath" jdbcType="VARCHAR" />
+    <result column="object_type" property="objectType" jdbcType="VARCHAR" />
+    <result column="conf_id" property="confId" jdbcType="VARCHAR" />
+    <result column="base_url" property="baseUrl" jdbcType="VARCHAR" />
+    <result column="share_url" property="shareUrl" jdbcType="VARCHAR" />
+    <result column="role" property="role" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="totalResultMap" type="com.xsbweb.vo.extend.XSBTotalVO" >
+    <result column="customer_counts" property="customerCounts" jdbcType="INTEGER" />
+    <result column="view_counts" property="viewCounts" jdbcType="INTEGER" />
+  </resultMap>
+  
+  <resultMap id="favorResultMap" type="com.xsbweb.vo.CustomerFavor" >
+  	<result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+    <result column="favor_object" property="favorObject" jdbcType="VARCHAR" />
+    <result column="favor_status" property="favorStatus" jdbcType="VARCHAR" />
+    <result column="favor_type" property="favorType" jdbcType="VARCHAR" />
+  </resultMap> 
+  
+  <resultMap id="newsResultMap" type="com.xsbweb.vo.News" >
+  	<result column="news_no" property="newsNo" jdbcType="VARCHAR" />
+    <result column="news_date" property="newsDate" jdbcType="VARCHAR" />
+    <result column="news_title" property="newsTitle" jdbcType="VARCHAR" />
+    <result column="news_source" property="newsSource" jdbcType="VARCHAR" />
+    <result column="news_pic_path" property="newsPicPath" jdbcType="VARCHAR" />
+    <result column="pv" property="pv" jdbcType="VARCHAR" />
+  </resultMap> 
+  
+  <resultMap id="projResultMap" type="com.xsbweb.vo.TrsProject" >
+  	<result column="project_no" property="projectNo" jdbcType="VARCHAR" />
+    <result column="proj_online_date" property="projOnlineDate" jdbcType="VARCHAR" />
+    <result column="proj_name" property="projName" jdbcType="VARCHAR" />
+    <result column="proj_cp_code" property="projCpCode" jdbcType="VARCHAR" />
+  </resultMap> 
+  
+  <resultMap id="remindResultMap" type="com.xsbweb.vo.extend.MeetVideoRoomVO" >
+  	<result column="meet_no" property="meetNo" jdbcType="VARCHAR" />
+    <result column="conf_name" property="confName" jdbcType="VARCHAR" />
+    <result column="online_date" property="onlineDate" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="meet_media_path" property="meetMediaPath" jdbcType="VARCHAR" />
+  </resultMap> 
+  
+  <resultMap id="roadMap" type="com.xsbweb.vo.ApplyRoad" >
+    <result column="company" property="company" jdbcType="VARCHAR" />
+    <result column="step" property="step" jdbcType="VARCHAR" />
+    <result column="is_venture" property="isVenture" jdbcType="VARCHAR" />
+    <result column="financing_type" property="financingType" jdbcType="VARCHAR" />
+    <result column="turnover_scale" property="turnoverScale" jdbcType="VARCHAR" />
+    <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <select id="getNewsListByFavor" parameterType="com.xsbweb.vo.CustomerFavor" resultMap="newsResultMap">
+  	select DISTINCT(td.news_no) news_no,
+  			date_format(td.news_date,'%Y-%m-%d %H:%i:%s') news_date,
+  			td.news_title,
+  			td.news_source,
+  			if(td.fake_counts is null or td.fake_counts='',0,td.fake_counts) + 
+	        if(td.real_counts is null or td.real_counts='',0,td.real_counts) + 
+	        if(td.news_pv_till_last_day is null or td.news_pv_till_last_day='',0,td.news_pv_till_last_day) as pv,
+  			tm.media_location news_pic_path
+  		from t_rl_snap_customer_favor tf 
+  			left join oltp.t_rl_trs_news_idx td on tf.favor_object=td.news_no 
+  			left join t_rl_trs_media tm on tm.media_no=td.news_media_no and (tm.object_id='' or tm.object_id is null)
+  		where tf.customer_id=#{customerId} and tf.favor_type=#{favorType} 
+  			limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getProjectListByFavor" parameterType="com.xsbweb.vo.CustomerFavor" resultMap="projResultMap">
+  	select td.project_no,
+  			date_format(td.proj_online_date,'%Y-%c-%d %H:%i:%s') proj_online_date,
+  			td.proj_name,
+  			td.proj_cp_code
+  		from t_rl_snap_customer_favor tf 
+  			left join t_rl_trs_project td on tf.favor_object=td.project_no 
+  		where tf.customer_id=#{customerId} and tf.favor_type=#{favorType};
+  </select>
+  
+  <select id="getRemindListByFavor" parameterType="com.xsbweb.vo.CustomerFavor" resultMap="remindResultMap">
+  	<![CDATA[select td.meet_no,
+  			date_format(td.online_date,'%Y-%c-%d %H:%i:%s') online_date,
+  			date_format(td.show_date,'%Y-%c-%d %H:%i:%s') show_date,
+  			td.conf_name,
+  			tm.media_location meet_media_path
+  		from t_rl_snap_customer_favor tf 
+  			left join t_rl_trs_meet_room_video td on tf.favor_object=td.meet_no 
+  			left join t_rl_trs_media tm on tm.media_no=td.meet_media_no 
+  		where td.meet_role > 64 and td.meet_role < 256 and
+  			tf.customer_id=#{customerId} and tf.favor_type=#{favorType} 
+  			limit #{currentRecord},#{pageSize};]]>
+  </select>
+  
+  <insert id="addCustomerFavor" parameterType="com.xsbweb.vo.CustomerFavor">
+  	insert into t_rl_snap_customer_favor(
+  		customer_id,
+  		favor_object,
+  		favor_status,
+  		favor_type,
+  		create_date,	
+  		last_update_date
+  	)values(
+  		#{customerId},
+  		#{favorObject},
+  		#{favorStatus},
+  		#{favorType},
+  		sysdate(),
+  		sysdate()
+  	);
+  </insert>
+  
+  <select id="isFavored" parameterType="com.xsbweb.vo.CustomerFavor" resultType="java.lang.Integer">
+  	select count(1) from oltp.t_rl_snap_customer_favor where customer_id=#{customerId} and favor_object=#{favorObject}; 
+  </select>
+  
+  
+  <select id="getRObjectListByGroup" statementType="CALLABLE" parameterType="java.util.HashMap" resultMap="commonResultMap">
+  	call get_object_list_by_page(#{group,mode=IN,jdbcType=VARCHAR},
+							  	#{pageNo,mode=IN,jdbcType=INTEGER},
+							  	#{pageSize,mode=IN,jdbcType=INTEGER},
+								#{prcFlag,mode=OUT,jdbcType=VARCHAR});
+  </select>
+  
+  <select id="getXSBTotalOfRoadIndex" resultMap="totalResultMap">
+  	select (select count(1)+68000 from t_rl_snap_customer where customer_status='1')customer_counts,(select count(1) from t_rl_trs_j2ee_log) view_counts;
+  </select>
+  
+  <delete id="deleteFavor" parameterType="com.xsbweb.vo.CustomerFavor">
+  	delete from t_rl_snap_customer_favor where customer_id = #{customerId} and favor_object = #{favorObject};
+  </delete>
+  
+  <select id="getSqlServerDataTotal" resultMap="totalResultMap">
+  	select (select count(1)+68000 from dbo.XSB_user)customer_counts,(select t.txtnum from dbo.XSB_config t) view_counts;
+  </select>
+  
+  <select id="getSearchListByWord" statementType="CALLABLE" parameterType="java.util.HashMap" resultMap="commonResultMap">
+  	call get_object_list_by_word(#{word,mode=IN,jdbcType=VARCHAR},
+							  	#{pageNo,mode=IN,jdbcType=INTEGER},
+							  	#{pageSize,mode=IN,jdbcType=INTEGER},
+							  	#{searchType,mode=IN,jdbcType=VARCHAR},
+								#{prcFlag,mode=OUT,jdbcType=VARCHAR});
+  </select>
+  
+  <select id="isApplyRoad" parameterType="java.lang.String" resultType="java.lang.Integer">
+  	select count(1) from t_rl_trs_road_want where company = #{companyName};
+  </select>
+  
+  <insert id="applyRoad" parameterType="com.xsbweb.vo.ApplyRoad">
+  	insert into t_rl_trs_road_want (
+  		company,
+  		step,
+  		is_venture,
+  		financing_type,
+  		turnover_scale,
+  		name,
+  		position,
+  		phoneNo,
+  		wx,
+  		email,
+  		customer_id
+  	)values(
+  		#{company},
+  		#{step},
+  		#{isVenture},
+  		#{financingType},
+  		#{turnoverScale},
+  		#{name},
+  		#{position},
+  		#{phoneNo},
+  		#{wx},
+  		#{email},
+  		#{customerId}
+  	);
+  </insert>
+  
+</mapper>

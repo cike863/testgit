@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.ZtMapper" >
+
+  <resultMap id="femaleLeaderMap" type="com.xsbweb.vo.zt.FemaleLeader" >
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+	 <result column="leader_name" property="leaderName" jdbcType="VARCHAR" />
+	 <result column="voted_cnt" property="votedCnt" jdbcType="INTEGER" />
+	 <result column="voted_status" property="votedStatus" jdbcType="VARCHAR" />
+	 <result column="leader_mobile" property="leaderMobile" jdbcType="VARCHAR" />
+	 <result column="candidate_slogan" property="candidateSlogan" jdbcType="VARCHAR" />
+	 <result column="company_info" property="companyInfo" jdbcType="VARCHAR" />
+	 <result column="leader_pic_path" property="leaderPicPath" jdbcType="VARCHAR" />
+	 <result column="company_pic_path" property="companyPicPath" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="trsVoteMap" type="com.xsbweb.vo.zt.TrsVote" >
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+	 <result column="leader_name" property="leaderName" jdbcType="VARCHAR" />
+	 <result column="wx_subs_id" property="wxSubsId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="wxSubscriberMap" type="com.xsbweb.vo.zt.WxSubscriber" >
+	 <result column="vote_score" property="leaderName" jdbcType="INTEGER" />
+	 <result column="wx_subs_id" property="wxSubsId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="subsConsumeMap" type="com.xsbweb.vo.zt.SubsConsume" >
+	 <result column="cnsum_no" property="cnsumNo" jdbcType="INTEGER" />
+	 <result column="wx_subs_id" property="wxSubsId" jdbcType="VARCHAR" />
+	 <result column="vote_score" property="voteScore" jdbcType="INTEGER" />
+	 <result column="cnsum_status" property="cnsumStatus" jdbcType="INTEGER" />
+	 <result column="ex_cnsum_no" property="exCnsumNo" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <insert id="addFemaleLeader" parameterType="com.xsbweb.vo.zt.FemaleLeader">
+  	insert into oltp.t_temp_snap_female_leader(
+  		company_name,	
+  		leader_name,
+  		voted_cnt,
+  		voted_status,
+  		leader_mobile,
+  		candidate_slogan,
+  		company_info,
+  		leader_pic_path,
+  		company_pic_path,
+  		created_date,
+  		last_update_date
+  	)values(
+  		#{companyName},
+  		#{leaderName},
+  		#{votedCnt},
+  		#{votedStatus},
+  		#{leaderMobile},
+  		#{candidateSlogan},
+  		#{companyInfo},
+  		#{leaderPicPath},
+  		#{companyPicPath},
+  		sysdate(),
+  		sysdate()
+  	);
+  </insert>
+  
+  <update id="editFemaleLeader" parameterType="com.xsbweb.vo.zt.FemaleLeader">
+  	update oltp.t_temp_snap_female_leader 
+  	<set>
+  		<if test="companyName != null and companyName != ''">
+			company_name = #{companyName},
+		</if>
+		<if test="leaderName != null and leaderName != ''">
+			leader_name = #{leaderName},
+		</if>
+		<if test="votedCnt != null and votedCnt !=0">
+			voted_cnt = #{votedCnt},
+		</if>
+		<if test="votedStatus != null and votedStatus !=''">
+			voted_status = #{votedStatus},
+		</if>
+		<if test="leaderMobile != null and leaderMobile !=''">
+			leader_mobile = #{leaderMobile},
+		</if>
+		<if test="candidateSlogan != null and candidateSlogan !=''">
+			candidate_slogan = #{candidateSlogan},
+		</if>
+		<if test="companyInfo != null and companyInfo !=''">
+			company_info = #{companyInfo},
+		</if>
+		<if test="leaderPicPath != null and leaderPicPath !=''">
+			leader_pic_path = #{leaderPicPath},
+		</if>
+		<if test="companyPicPath != null and companyPicPath !=''">
+			company_pic_path = #{companyPicPath},
+		</if>
+  	</set>
+	where company_name = #{companyName} and leader_name = #{leaderName}; 
+  </update>
+  
+  <delete id="deleteFemaleLeader" parameterType="com.xsbweb.vo.zt.FemaleLeader">
+  	delete from oltp.t_temp_snap_female_leader  where company_name = #{companyName} and leader_name = #{leaderName}; 
+  </delete>
+  
+  <select id="getFemaleLeaderList" parameterType="com.xsbweb.vo.zt.FemaleLeader" resultMap="femaleLeaderMap">
+  	select 
+  		company_name,	
+  		leader_name,
+  		voted_cnt,
+  		voted_status,
+  		leader_mobile,
+  		candidate_slogan,
+  		company_info,
+  		leader_pic_path,
+  		company_pic_path
+  	from oltp.t_temp_snap_female_leader 
+  	where 1=1 
+  		<if test="companyName != null and companyName != ''">
+			and company_name = #{companyName} 
+		</if>
+		<if test="leaderName != null and leaderName != ''">
+			and leader_name = #{leaderName} 
+		</if>
+		<if test="votedStatus != null and votedStatus !=''">
+			and voted_status = #{votedStatus} 
+		</if>
+		<if test="leaderMobile != null and leaderMobile !=''">
+			and leader_mobile = #{leaderMobile} 
+		</if>
+		limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getFemaleLeader" parameterType="com.xsbweb.vo.zt.FemaleLeader" resultMap="femaleLeaderMap">
+  	select 
+  		company_name,	
+  		leader_name,
+  		voted_cnt,
+  		voted_status,
+  		leader_mobile,
+  		candidate_slogan,
+  		company_info,
+  		leader_pic_path,
+  		company_pic_path
+  	from oltp.t_temp_snap_female_leader 
+  		where 1=1 
+  		<if test="companyName != null and companyName != ''">
+			and company_name = #{companyName} 
+		</if>
+		<if test="leaderName != null and leaderName != ''">
+			and leader_name = #{leaderName} 
+		</if>
+		<if test="leaderMobile != null and leaderMobile !=''">
+			and leader_mobile = #{leaderMobile} 
+		</if>
+		limit 0,1;
+  </select>
+  
+  <select id="addTrsVote" statementType="CALLABLE" parameterType="com.xsbweb.vo.zt.TrsVote">
+	  	call oltp.prc_temp_vote(#{companyName,mode=IN,jdbcType=VARCHAR},
+	  							#{leaderName,mode=IN,jdbcType=VARCHAR},
+	  							#{wxSubsId,mode=IN,jdbcType=VARCHAR},
+	  							#{prcFlag,mode=OUT,jdbcType=INTEGER});
+  	</select>
+  
+  <select id="getTrsVoteListByDay" parameterType="com.xsbweb.vo.zt.TrsVote" resultMap="trsVoteMap">
+ 	 select 
+  		company_name,
+  		leader_name,
+  		wx_subs_id
+  	 from oltp.t_temp_trs_vote 
+  		where wx_subs_id = #{wxSubsId} and str_to_date(created_date,'%Y-%m-%d') = str_to_date(sysdate(),'%Y-%m-%d');
+  </select>
+  
+  <select id="getVoteCountsByFemaleLeader" parameterType="com.xsbweb.vo.zt.TrsVote" resultType="java.lang.Integer">
+ 	 select 
+  		count(1) 
+  	 from oltp.t_temp_trs_vote 
+  		where company_name = #{companyName} and leader_name = #{leaderName};
+  </select>
+  
+  <insert id="addWxSubscriber" parameterType="com.xsbweb.vo.zt.WxSubscriber">
+  	insert into oltp.t_temp_snap_wx_subscriber(
+  		wx_subs_id,
+  		vote_score,
+  		created_date,
+  		last_update_date
+  	)values(
+  		#{wxSubsId},
+  		#{voteScore},
+  		sysdate(),
+  		sysdate()
+  	);
+  </insert>
+  
+  <update id="editWxSubscriber" parameterType="com.xsbweb.vo.zt.WxSubscriber">
+  	update oltp.t_temp_snap_wx_subscriber 
+  		set vote_score=#{voteScore} 
+  			where wx_subs_id = #{wxSubsId};
+  </update>
+  
+  <select id="getWxSubscriber" parameterType="java.lang.String" resultMap="wxSubscriberMap">
+  	select 
+  		wx_subs_id,
+  		vote_score 
+	from oltp.t_temp_snap_wx_subscriber 
+		where wx_subs_id = #{wxSubsId} 
+		limit 0,1;
+  </select>
+  
+  <insert id="addSubsConsume" useGeneratedKeys="true" keyProperty="cnsumNo"  parameterType="com.xsbweb.vo.zt.SubsConsume">
+  	insert into oltp.t_temp_trs_subs_consume (
+  		 wx_subs_id,
+  		 vote_score,
+  		 cnsum_status,
+  		 ex_cnsum_no,
+  		 created_date,
+  		 last_update_date
+  	)values(
+  		#{wxSubsId},
+  		#{voteScore},
+  		#{cnsumStatus},
+  		#{exCnsumNo},
+  		sysdate(),
+  		sysdate()
+  	);
+  </insert>
+  
+  <update id="editSubsConsumeStatus" parameterType="com.xsbweb.vo.zt.SubsConsume">
+	update oltp.t_temp_trs_subs_consume 
+		set cnsum_status = #{cnsumStatus}
+	where cnsum_no = #{cnsumNo}; 
+  </update>
+  
+  <select id="getSubsConsumeByCnsumNo" parameterType="java.lang.String" resultMap="subsConsumeMap">
+	 select 
+	 	cnsumNo,
+	 	wx_subs_id,
+	 	vote_score,
+	 	cnsum_status,
+	 	ex_cnsum_no
+	 from oltp.t_temp_trs_subs_consume 
+		 where cnsum_no = #{cnsumNo} 
+		 limit 0,1;
+  </select>
+</mapper>

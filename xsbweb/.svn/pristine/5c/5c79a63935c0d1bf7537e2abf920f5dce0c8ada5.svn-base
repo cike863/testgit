@@ -1,0 +1,429 @@
+package com.xsbweb.controller.app;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.service.LoginRegisterService;
+import com.xsbweb.service.UploadFilesService;
+import com.xsbweb.service.XSBBaseService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.ConfigUtil;
+import com.xsbweb.util.GetIp;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.util.UploadUtil;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.CustomerFavor;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.CustomerVO;
+import com.xsbweb.vo.extend.MeetVideoRoomVO;
+
+@Controller
+public class AppCustomerController {
+	
+	private Logger log = Logger.getLogger(AppCustomerController.class);
+	 
+	@Autowired
+	private LoginRegisterService loginRegisterService;
+	
+	@Autowired
+	private UploadFilesService uploadFilesService;
+	
+	@Autowired
+	private XSBBaseService xsbBaseService;
+	
+	@Resource
+	private RedisUtil redisUtil;
+	
+	/**
+	 * 修改密码
+	 * @param customerVO
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/app/cust/updatePwd.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> updatePwd(HttpServletRequest request,
+			@RequestParam(value="customerId")String customerId,
+			@RequestParam(value="loginMethod")String loginMethod,
+			@RequestParam(value="newPassword")String newPassword,
+			@RequestParam(value="customerPassword")String customerPassword,
+			@RequestParam(value="tmpToken")String tmpToken,
+			@RequestParam(value="customerPhoneNo")String customerPhoneNo
+			) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		//获取客户端ip地址
+		String ip = GetIp.getIpAddr(request);
+		log.info("############"+customerPhoneNo+"  ip地址："+ip);
+		if(CommonUtils.isBlank(customerId)||CommonUtils.isBlank(loginMethod)||
+				CommonUtils.isBlank(newPassword)||CommonUtils.isBlank(customerPassword)||
+				CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerPhoneNo)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			log.info("############"+customerPhoneNo+"  请求参数有误");
+			return map;
+		}
+		//token验证
+		String token = redisUtil.getString("tmp:"+customerPhoneNo+":token");
+		if(!tmpToken.equals(token)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_REQUEST);
+			log.info("#######################"+customerPhoneNo+" 非法请求！");
+			return map;
+		}
+		CustomerVO customerVO = new CustomerVO();
+		customerVO.setIp(ip);
+		//customerVO.setLoginMethod("j2ee");
+		customerVO.setCustomerId(customerId);
+		customerVO.setCustomerUname(customerId);
+		customerVO.setCustomerPassword(customerPassword);
+		customerVO.setLoginMethod(loginMethod);
+		//判断用户是否存在
+		CustomerVO cuVO = loginRegisterService.validateLogin(customerVO);
+		if(CommonUtils.isBlank(cuVO.getCustomerId())){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PWD_ERROR);
+		}else{
+			customerVO.setCustomerPassword(newPassword);
+			//修改用户信息
+			Integer flag = loginRegisterService.updatePassword(customerVO);
+			//修改成功
+			if(flag==1){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		}
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	/**
+	 * 资源上传数据插入接口
+	 * @param objectId
+	 * @param mediaName
+	 * @param mediaLocation
+	 * @param mediaType
+	 * @param mediaSize
+	 * @param tmpToken
+	 * @param loginMethod
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/cust/upload",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> upload(
+			HttpServletRequest request,
+			@RequestParam(value="objectId",required=false)String objectId,
+			@RequestParam(value="mediaName")String mediaName,
+			@RequestParam(value="mediaType")String mediaType,
+			@RequestParam(value="tmpToken")String tmpToken,
+			@RequestParam(value="loginMethod")String loginMethod,
+			@RequestParam(value="customerPhoneNo")String customerPhoneNo
+			) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(mediaName)||
+				CommonUtils.isBlank(loginMethod)||
+				CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerPhoneNo)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			log.info("############"+customerPhoneNo+"  请求参数有误");
+			return map;
+		}
+		String newFileName=null;
+	    String returnPath=null;
+	    //定义允许上传的文件扩展名
+	    Map<String, String> extMap = new HashMap<String, String>();
+	    extMap.put("image", "gif,jpg,jpeg,png,bmp");
+	    extMap.put("flash", "swf,flv");
+	    extMap.put("media", "swf,flv,mp3,wav,wma,wmv,mid,avi,mpg,asf,rm,rmvb");
+	    extMap.put("file", "doc,docx,xls,xlsx,ppt,htm,html,txt,zip,rar,gz,bz2");
+	    //最大文件大小
+	    long maxSize =Long.valueOf(ConfigUtil.configMap.get("file_max"))*1024*1024;
+	    try {    
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;   
+			Map<String, MultipartFile>  multMap =  multipartRequest.getFileMap();
+			if(multMap == null){
+				map.put(ResultCode.RESULT_CODE, ResultCode.UPLOAD_ERROE_NULL);
+				return map;
+			}
+			MultipartFile multFile = multMap.get("file");
+			//文件名
+			String fileName = multFile.getOriginalFilename();
+			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+			//大小
+			Long mediaSize = multFile.getSize();
+			//超过最大文件大小
+			if(mediaSize>maxSize){
+				map.put(ResultCode.RESULT_CODE, ResultCode.UPLOAD_ERROE_MAX);
+				return map;
+			}
+	        //扩展名
+	        String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+	        if(!Arrays.<String>asList(extMap.get(mediaType).split(",")).contains(fileExt)){
+	        	//文件扩展名有不符合
+	        	map.put(ResultCode.RESULT_CODE, ResultCode.UPLOAD_ERROE_FILEEXT);
+	        	return map;
+			}
+	        //新文件名
+			newFileName = df.format(new Date()) + "_" + new Random().nextInt(1000) + "."+fileExt;
+			//图片上传到ftp服务器
+			returnPath=UploadUtil.FTPupload(multFile.getInputStream(),newFileName,mediaType);
+			log.info("#################################returnPath:"+returnPath);
+			TrsMedia trsMedia = new TrsMedia();
+			trsMedia.setMediaNo(CommonUtils.getNowDateStringOf14()+new Random().nextInt(99));
+			trsMedia.setMediaName(mediaName);
+			trsMedia.setMediaLocation(returnPath);
+			trsMedia.setMediaSize(Double.valueOf(mediaSize));
+			if(CommonUtils.isNotBlank(mediaType)){
+				trsMedia.setMediaType(mediaType);
+			}
+			//if(CommonUtils.isNotBlank(objectId)){
+			//	trsMedia.setObjectId(objectId);
+			//}else{
+				trsMedia.setObjectId("");
+			//}
+			String mediaNo = uploadFilesService.addMediaRecode(trsMedia);
+			if(CommonUtils.isBlank(mediaNo)){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}else{
+				//修改customer_media_no字段信息
+				CustomerVO customerVO = new CustomerVO();
+				customerVO.setCustomerId(objectId);
+				customerVO.setCustomerMediaNo(mediaNo);
+				loginRegisterService.updateCustomerInfo(customerVO);
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 个人中心，判断用户是否有约谈、提醒、是否认证过
+	 * @param request
+	 * @param customerId
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/cust/istalkremind",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> isHaveTalkOrRemind(
+			HttpServletRequest request,
+			@RequestParam(value="customerId")String customerId,
+			@RequestParam(value="loginMethod")String loginMethod
+			) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(customerId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try{
+			//约谈
+			List<RObject> talkList = xsbBaseService.getCustomerTalkList(customerId);
+			if(talkList!=null && talkList.size()>0){
+				map.put("isHaveTalk", "1");
+			}else{
+				map.put("isHaveTalk", "0");
+			}
+			//提醒集合 ，提醒集合的逻辑：取视频直播预告中用户点击了提醒的
+			CustomerFavor customerFavor = new CustomerFavor();
+			customerFavor.setCustomerId(customerId);
+			customerFavor.setFavorType("remind");
+			customerFavor.setPageNo(1);
+			List<MeetVideoRoomVO> remindList = xsbBaseService.getRemindListByFavor(customerFavor);
+			if(remindList!=null && remindList.size()>0){
+				map.put("isHaveRemind", "1");
+			}else{
+				map.put("isHaveRemind", "0");
+			}
+			//判断是否认证通过
+			Customer cust = loginRegisterService.getCustomerById(customerId);
+			//0：用户还没有提交认证申请，1： 用户已提交认证申请，等待审核中，2：审核通过，3：审核不通过
+			if(cust!=null){
+				map.put("authentStatus", cust.getAuthentStatus());
+			}
+			map.put("shareUrl", XsbBusinessConstant.APP_SHARE_URL);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL); 
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 个人中心---认证功能
+	 * @param request
+	 * @param customerId
+	 * @param customerCardId
+	 * @param customerName
+	 * @param customerEmail
+	 * @param customerCompany
+	 * @param customerWechat
+	 * @param customerAddress
+	 * @param gzIndustry
+	 * @param customerCases
+	 * @param customerInstttCode
+	 * @param loginMethod
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @return
+	 */
+	@RequestMapping(value="/app/cust/authent",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> authent(
+			HttpServletRequest request,
+			@RequestParam(value="customerId")String customerId,
+			@RequestParam(value="customerCardId",required=false)String customerCardId,
+			@RequestParam(value="customerName",required=false) String customerName,
+			@RequestParam(value="customerEmail",required=false) String customerEmail,
+			@RequestParam(value="customerCompany",required=false) String customerCompany,
+			@RequestParam(value="customerWechat",required=false) String customerWechat,
+			@RequestParam(value="customerAddress",required=false) String customerAddress,
+			@RequestParam(value="gzIndustry",required=false) String gzIndustry,
+			@RequestParam(value="customerAddress",required=false) String customerCases,
+			@RequestParam(value="customerInstttCode",required=false) String customerInstttCode,
+			@RequestParam(value="loginMethod")String loginMethod,
+			@RequestParam(value="customerPhoneNo")String customerPhoneNo,
+			@RequestParam(value="tmpToken")String tmpToken
+			) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(customerId)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerName)
+				||CommonUtils.isBlank(customerEmail)||CommonUtils.isBlank(customerCompany)
+				||CommonUtils.isBlank(customerWechat)||CommonUtils.isBlank(customerAddress)
+				||gzIndustry==null||CommonUtils.isBlank(customerCases)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+	    //认证上传默认类型
+	    String mediaType = "authent";
+	    //定义允许上传的文件扩展名
+	    Map<String, String> extMap = new HashMap<String, String>();
+	    extMap.put("authent", "gif,jpg,jpeg,png,bmp");
+	    extMap.put("image", "gif,jpg,jpeg,png,bmp");
+	    extMap.put("flash", "swf,flv");
+	    extMap.put("media", "swf,flv,mp3,wav,wma,wmv,mid,avi,mpg,asf,rm,rmvb");
+	    extMap.put("file", "doc,docx,xls,xlsx,ppt,htm,html,txt,zip,rar,gz,bz2");
+	    //最大文件大小
+	    long maxSize =Long.valueOf(ConfigUtil.configMap.get("file_max"))*1024*1024;
+		try{
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;   
+			Map<String, MultipartFile>  multMap =  multipartRequest.getFileMap();
+			//资源集合
+			List<TrsMedia> trsMediaList = new ArrayList<TrsMedia>();
+			if(multMap != null && multMap.size()>0){
+				Set<String> set = multMap.keySet();
+				String newFileName=null;
+			    String returnPath=null;
+				for (String key : set) {
+					MultipartFile multFile = multMap.get(key);
+					//文件名
+					String fileName = multFile.getOriginalFilename();
+					SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+					//大小
+					Long mediaSize = multFile.getSize();
+					//超过最大文件大小
+					if(mediaSize>maxSize){
+						map.put(ResultCode.RESULT_CODE, ResultCode.UPLOAD_ERROE_MAX);
+						return map;
+					}
+			        //扩展名
+			        String fileExt = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+			        if(!Arrays.<String>asList(extMap.get(mediaType).split(",")).contains(fileExt)){
+			        	//文件扩展名有不符合
+			        	map.put(ResultCode.RESULT_CODE, ResultCode.UPLOAD_ERROE_FILEEXT);
+			        	return map;
+					}
+			        //新文件名
+					newFileName = df.format(new Date()) + "_" + new Random().nextInt(1000) + "."+fileExt;
+					//图片上传到ftp服务器
+					returnPath=UploadUtil.FTPupload(multFile.getInputStream(),newFileName,mediaType);
+					log.info("#################################returnPath:"+returnPath);
+					TrsMedia trsMedia = new TrsMedia();
+					trsMedia.setMediaNo(CommonUtils.getNowDateStringOf14()+new Random().nextInt(99));
+					trsMedia.setMediaName(newFileName);
+					trsMedia.setMediaLocation(returnPath);
+					trsMedia.setMediaSize(Double.valueOf(mediaSize));
+					trsMedia.setObjectId("");
+					trsMedia.setMediaType(mediaType);
+					trsMediaList.add(trsMedia);
+				}
+			}
+			//插入资源文件进数据库
+			if(trsMediaList.size()>0){
+				xsbBaseService.batchInsertMedias(trsMediaList);
+			}
+			String mediaNo1 = "";
+			String mediaNo2 = "";
+			if(trsMediaList.size()==1){
+				mediaNo1 = trsMediaList.get(0).getMediaNo();
+			}else if(trsMediaList.size()==2){
+				mediaNo1 = trsMediaList.get(0).getMediaNo();
+				mediaNo2 = trsMediaList.get(1).getMediaNo();
+			}
+			//修改customer_media_no字段信息
+			CustomerVO customerVO = new CustomerVO();
+			customerVO.setCustomerId(customerId);
+			customerVO.setAuthentMediaNo1(mediaNo1);
+			customerVO.setAuthentMediaNo2(mediaNo2);
+			customerVO.setCustomerName(customerName);
+			customerVO.setCustomerCardId(customerCardId);
+			customerVO.setCustomerWechat(customerWechat);
+			customerVO.setCustomerEmail(customerEmail);
+			customerVO.setCustomerAddress(customerAddress);
+			customerVO.setCustomerCompany(customerCompany);
+			customerVO.setAuthentStatus("1");
+			if(CommonUtils.isNotBlank(gzIndustry)){
+				customerVO.setGzIndustry(Long.valueOf(gzIndustry));
+			}
+			customerVO.setCustomerCases(customerCases);
+			customerVO.setCustomerInstttCode(customerInstttCode);
+			loginRegisterService.updateCustomerInfo(customerVO);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL); 
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+}

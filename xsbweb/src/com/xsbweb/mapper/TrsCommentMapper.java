@@ -1,0 +1,22 @@
+package com.xsbweb.mapper;
+
+import java.util.List;
+
+import com.xsbweb.vo.TrsComment;
+
+public interface TrsCommentMapper {
+
+	public int insertTrsComment(TrsComment trsComment)throws Exception;
+	
+	public int deleteTrsComment(TrsComment trsComment)throws Exception;
+	
+	public List<TrsComment> getTrsCommentByObjectId(String objectId)throws Exception;
+	
+	public List<TrsComment> getCommentList(TrsComment trsComment)throws Exception;
+
+	public int updatePraiseComment(String commentNo)throws Exception;
+	
+	public int getCommentListCount(TrsComment trsComment)throws Exception;
+
+	public int bathDeleteProject(String[] trsCommentNoArrs)throws Exception;
+}

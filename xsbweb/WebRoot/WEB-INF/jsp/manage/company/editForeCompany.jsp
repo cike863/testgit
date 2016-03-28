@@ -1,0 +1,154 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+ResourceBundle bundle = ResourceBundle.getBundle("config");  
+String	hostName = bundle.getString("ftp_url_pro");  //IP地址
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>公司详情修改</title>
+    <link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mt50{margin-top:50px;}
+        .mt20{margin-top:20px;}
+    </style>
+    <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/layer/layer.js" ></script>
+	<script type="text/javascript">
+		 !function(){
+			laydate.skin('molv');//切换皮肤，请查看skins下面皮肤库
+			laydate({elem: '#demo'});//绑定元素
+		}(); 
+		//各种回显
+		window.onload = function(){
+			$("input[name='totalEquity']").val( parseFloat('${company.totalEquity}').toString());
+		}
+			
+	</script>
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-12 mt20">
+            <form class="form-inline"  action="admin/company/${company.stockId}/upd" method="post"  >
+           <input type="hidden" name="_method" value="put" />
+            <table class="table table-bordered table-hover table-responsive">
+                <tbody>
+                <tr>
+                    <td class="col-md-2">股票代码</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="stockId" value="${company.stockId}"  readonly="readonly"></td>
+                </tr>
+                 <tr>
+                    <td class="col-md-2">公司名称</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="companyName" value="${company.companyName}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">英文名称</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="companyEngName" value="${company.companyEngName}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">所属地域</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="area" value="${company.area}" ></td>
+                </tr>
+                <%-- <tr>
+                    <td class="col-md-2">所属行业</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="industry" value="${company.industry}" ></td>
+                </tr> --%>
+                <tr>
+                    <td class="col-md-2">办公地址</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="companyAddress" value="${company.companyAddress}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">法人代表</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="legalPerson" value="${company.legalPerson}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">董　　秘</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="chSecretary" value="${company.chSecretary}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">注册资金</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="companyCapital" value="${company.companyCapital}" ></td>
+                </tr>
+                
+                <tr>
+                    <td class="col-md-2">股票名称</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="stockName" value="${company.stockName}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">股票状态</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="stockStatus" value="${company.stockStatus}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">交易所</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="assiMay" value="${company.assiMay}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">行业所属</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="industryType" value="${company.industryType}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">做市卷商</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="zsTrader" value="${company.zsTrader}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">协议机构标记</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="protocolInsttt" value="${company.protocolInsttt}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">总股本</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="totalEquity"  ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">协议机构</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="protocolBroker" value="${company.protocolBroker}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">公司介绍</td>
+                    <td class="col-md-10"><textarea  rows="6" cols="100%" name="historyShort">${company.historyShort}</textarea></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">公司网址</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="url" value="${company.url}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">电　　话</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="tel" value="${company.tel}" ></td>
+                </tr>
+                <tr>
+                    <td class="col-md-2">传　　真</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="fax" value="${company.fax}" ></td>
+                </tr>
+                
+                <tr>
+                    <td class="col-md-2">邮      编</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="zipCode" value="${company.zipCode}" ></td>
+                </tr>
+		          <tr>
+                    <td colspan="3" class="text-center">
+                        <button type="submit" class="btn btn-success">提交</button>
+                        <button type="button" class="btn btn-danger" onclick="history.go(-1)">返回</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,826 @@
+package com.xsbweb.controller.app;
+
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.service.XSBBaseService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.vo.ApplyRoad;
+import com.xsbweb.vo.Comment;
+import com.xsbweb.vo.CustomerFavor;
+import com.xsbweb.vo.IndustryBaike;
+import com.xsbweb.vo.News;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.EnumVO;
+import com.xsbweb.vo.extend.MeetVideoRoomVO;
+
+@Controller
+public class AppCommonController {
+
+	private Logger log = Logger.getLogger(AppCommonController.class);
+	 
+	@Autowired
+	private XSBBaseService xsbBaseService;
+	
+	@Resource
+	private RedisUtil redisUtil;
+	/**
+	 * 根据类型获取知识库列表
+	 * @param newsNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/baike/getBaikeList.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getBaikeList(
+			HttpServletRequest request,
+			@RequestParam(value="baikeType",required=false) String baikeType,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("pageSize") Integer pageSize,
+			@RequestParam("pageNo") Integer pageNo
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<IndustryBaike> baikeList = null;
+		try {
+			IndustryBaike industryBaike = new IndustryBaike();
+			industryBaike.setPageNo(pageNo==null?1:pageNo);
+			industryBaike.setPageSize(pageSize==null?10:pageSize);
+			if(CommonUtils.isNotBlank(baikeType)){
+				industryBaike.setBaikeType(baikeType);
+				if("tz".equals(baikeType)){
+					industryBaike.setBaikeType(baikeType);
+				}else if("gp".equals(baikeType)){
+					industryBaike.setBaikeType(baikeType);
+				}else if("rm".equals(baikeType)){
+					industryBaike.setBaikeType(baikeType);
+				}else{
+					industryBaike.setBaikeType("");
+				}
+			}
+			baikeList = xsbBaseService.getIndustryBaikeList(industryBaike);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("baikeList", baikeList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据baikeId获取知识库信息
+	 * @param newsNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/baike/getBaikeInfoById.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getBaikeInfoById(
+			HttpServletRequest request,
+			@RequestParam("baikeId") String baikeId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(baikeId)
+				||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		IndustryBaike industryBaike = null;
+		try {
+			industryBaike = xsbBaseService.getIndustryBaikeById(baikeId);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("baike", industryBaike);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 新增评论、留言
+	 * @param objectId
+	 * @param loginMethod
+	 * @param customerId
+	 * @param commentContent  /app/comment/{id}  method post put delete get 
+	 * @return
+	 */
+	@RequestMapping(value="/app/comment/addComment.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> addComment(
+			HttpServletRequest request,
+			@RequestParam("objectId") String objectId,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam(value="customerId",required=false) String customerId,
+			@RequestParam(value="customerName",required=false) String customerName,
+			@RequestParam("type") String type,
+			@RequestParam("commentContent") String commentContent
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(commentContent)||CommonUtils.isBlank(objectId)
+				||CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(type)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		int flag = 0;
+		try {
+			//语音会议中才存在伪实时留言
+			if("voiceRT".equals(type)){
+				//存入缓存中
+				List<Comment> clist = redisUtil.getToListJedis("comment:"+objectId);
+				Comment comment = new Comment();
+				comment.setCommentAddress(objectId);
+				comment.setCommenter(customerId);
+				comment.setCommentContent(commentContent);
+				comment.setCommentPlatform(type);
+				comment.setCommenterName(customerName);
+				comment.setCommentTime(CommonUtils.getInstanceTime().toString());
+				if(clist == null || clist.isEmpty()){
+					List<Comment> comlist = new ArrayList<Comment>();
+					comlist.add(comment);
+					redisUtil.addToListJedis("comment:"+objectId, comlist);
+				}else{
+					//redisUtil.deleteJedisByKey("comment:"+objectId, null);
+					clist.add(comment);
+					int len = clist.size();
+					List<Comment> clist2 = new ArrayList<Comment>();
+					//因为list是先进先出的，那种，所以值保留20条最新数据进入redis
+					if(len>20){
+						for (int i = 0; i < clist.size(); i++) {
+							if(len-i<=20){
+								clist2.add(clist.get(i));
+							}
+						}
+						redisUtil.addToListJedis("comment:"+objectId, clist2);
+					}else{
+						redisUtil.addToListJedis("comment:"+objectId, clist);
+					}
+				}
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				flag = xsbBaseService.addComment(objectId, customerId, commentContent,type);
+				if(flag>0){
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				}else{
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 伪实时对讲留言获取
+	 * @param objectId
+	 * @param loginMethod
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	@RequestMapping(value="/app/comment/getCommentByAddressByTime.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCommentByAddressByTime(
+			HttpServletRequest request,
+			@RequestParam("objectId") String objectId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(objectId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<Comment> cList = null;
+		try {
+			cList = redisUtil.getToListJedis("comment:"+objectId);
+			/*List<Comment> commentList = new ArrayList<Comment>();
+			Long time = CommonUtils.getInstanceTime();
+			if(cList!=null && !cList.isEmpty()){
+				for (Comment comment : cList) {
+					Long cTime = Long.valueOf(CommonUtils.isBlank(comment.getCommentTime())?"0":comment.getCommentTime());
+					if((time-cTime)<60000){
+						commentList.add(comment);
+					}
+				}
+			}*/
+			map.put("commentList", cList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取评论集合
+	 * @param objectId
+	 * @param loginMethod
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	@RequestMapping(value="/app/comment/getCommentByAddress.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCommentByAddress(
+			HttpServletRequest request,
+			@RequestParam("objectId") String objectId,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("pageNo") String pageNo,
+			@RequestParam(value="pageSize",required=false) String pageSize,
+			@RequestParam(value="type",required=false) String type
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(pageSize)||CommonUtils.isBlank(objectId)
+				||CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(pageNo)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<Comment> commentList = null;
+		try {
+			Comment comment = new Comment();
+			comment.setCommentAddress(objectId);
+			comment.setPageNo(Integer.valueOf(pageNo));
+			comment.setPageSize(Integer.valueOf(pageSize));
+			if(CommonUtils.isNotBlank(type)){
+				comment.setCommentPlatform(type);
+			}
+			commentList = xsbBaseService.getCommentByAddress(comment);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("commentList", commentList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	
+	//约谈
+	@RequestMapping(value="/app/comment/projectTalk.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> projectTalk(
+			HttpServletRequest request,
+			@RequestParam("customerId") String customerId,
+			@RequestParam(value="staffId",required=false) String staffId,
+			@RequestParam("objectId") String objectId,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("tmpToken") String tmpToken,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam(value="timer",required=false) String timer
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(objectId)
+				||CommonUtils.isBlank(customerId)||CommonUtils.isBlank(staffId)
+				||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<Comment> commentList = null;
+		try {
+			Comment comment = new Comment();
+			//项目编号
+			comment.setCommentAddress(objectId);
+			//留言对象id
+			comment.setCommentTarget(staffId);
+			//留言者id
+			comment.setCommenter(customerId);
+			if(pageNo!=null){
+				comment.setPageNo(pageNo==0?1:pageNo);
+			}
+			if(pageSize!=null){
+				comment.setPageSize(pageSize==0?10:pageSize);
+			}
+			if(CommonUtils.isNotBlank(timer)){
+				comment.setCommentTime(timer);
+			}
+			commentList = xsbBaseService.getCommentByTalk(comment);
+			List<Comment> commentList2 = new ArrayList<Comment>();
+			if(commentList!=null && !commentList.isEmpty()){
+				for (int i = commentList.size()-1; i >=0; i--) {
+					commentList2.add(commentList.get(i));
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("commentList", commentList2);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	//-------------------新闻收藏、自选股、项目报名等  begin--------------------
+	/**
+	 * 新增收藏
+	 * @param customerId
+	 * @param favorObject
+	 * @param favorStatus
+	 * @param favorType
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/favor/addCustomerFavor.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> addCustomerFavor(
+			HttpServletRequest request,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("favorObject") String favorObject,
+			@RequestParam("favorStatus") String favorStatus,
+			@RequestParam("favorType") String favorType,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("tmpToken") String tmpToken,
+			@RequestParam("customerPhoneNo") String customerPhoneNo
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(customerId)
+				||CommonUtils.isBlank(favorObject)||CommonUtils.isBlank(favorStatus)
+				||CommonUtils.isBlank(favorType)||CommonUtils.isBlank(favorType)
+				||CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerPhoneNo)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			CustomerFavor customerFavor = new CustomerFavor();
+			customerFavor.setCustomerId(customerId);
+			customerFavor.setFavorObject(favorObject);
+			customerFavor.setFavorStatus(favorStatus);
+			customerFavor.setFavorType(favorType);
+			//判断用户是否已收藏
+			boolean flag = xsbBaseService.isFavored(customerFavor);
+			if(flag){
+				map.put(ResultCode.RESULT_CODE, ResultCode.FAVOR_IS_ED);
+			}else{
+				xsbBaseService.addCustomerFavor(customerFavor);
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据类型获取对应收藏列表，
+	 * favorType，news：新闻收藏；project：项目报名；stock：自选股
+	 * @param customerId
+	 * @param favorType
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/favor/getCustomerFavorList.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCustomerFavorList(
+			HttpServletRequest request,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("favorType") String favorType,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("pageNo") Integer pageNo
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(customerId)
+				||CommonUtils.isBlank(favorType)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			CustomerFavor customerFavor = new CustomerFavor();
+			customerFavor.setCustomerId(customerId);
+			customerFavor.setFavorType(favorType);
+			customerFavor.setPageNo(pageNo);
+			if(XsbBusinessConstant.FAVOR_TYPE_NEWS.equals(customerFavor.getFavorType())){
+				//新闻收藏集合
+				List<News> newsList = xsbBaseService.getNewsListByFavor(customerFavor);
+				List<Map<String,Object>> nlist = new ArrayList<Map<String,Object>>();
+				if(newsList!=null && !newsList.isEmpty()){
+					Map<String,Object> nm = null;
+					for (News news : newsList) {
+						nm = new HashMap<String,Object>();
+						nm.put("newsNo", news.getNewsNo());
+						nm.put("newsSource", news.getNewsSource());
+						nm.put("newsTitle", news.getNewsTitle());
+						nm.put("newsExTitle", news.getNewsExTitle());
+						nm.put("newsPicPath", news.getNewsPicPath());
+						nm.put("sharePicPath", news.getSharePicPath());
+						nm.put("newsDate", news.getNewsDate());
+						int fakeCounts=0,realCounts=0;
+						if(CommonUtils.isNotBlank(news.getFakeCounts())){
+							fakeCounts = Integer.valueOf(news.getFakeCounts());
+						}
+						if(CommonUtils.isNotBlank(news.getRealCounts())){
+							realCounts = Integer.valueOf(news.getRealCounts());
+						}
+						nm.put("pv", fakeCounts+realCounts);
+						nlist.add(nm);
+					}
+				}
+				map.put("newsList", nlist);
+			}else if (XsbBusinessConstant.FAVOR_TYPE_PROJECT.equals(customerFavor.getFavorType())) {
+				//项目收藏集合
+				List<TrsProject> peojectList = xsbBaseService.getProjectListByFavor(customerFavor);
+				map.put("peojectList", peojectList);
+			}else if(XsbBusinessConstant.FAVOR_TYPE_REMIND.equals(customerFavor.getFavorType())){
+				//提醒集合 ，提醒集合的逻辑：取视频直播预告中用户点击了提醒的
+				List<MeetVideoRoomVO> remindList = xsbBaseService.getRemindListByFavor(customerFavor);
+				List<Map<String,Object>> rlist = new ArrayList<Map<String,Object>>();
+				if(remindList==null || remindList.isEmpty()){
+					map.put("remindList", rlist);
+				}else{
+					Map<String,Object> rm = null;
+					for (MeetVideoRoomVO mroom : remindList) {
+						rm = new HashMap<String,Object>();
+						rm.put("meetNo", mroom.getMeetNo());
+						rm.put("confName", mroom.getConfName());
+						rm.put("onlineDate", mroom.getOnlineDate());
+						rm.put("showDate", mroom.getShowDate());
+						rm.put("meetMediaPath", mroom.getMeetMediaPath());
+						rlist.add(rm);
+					}
+					map.put("remindList", rlist);
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 删除收藏
+	 * @param customerId
+	 * @param favorObject
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/favor/deleteFavor.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> deleteFavor(
+			HttpServletRequest request,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("favorObject") String favorObject,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam("tmpToken") String tmpToken
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(customerId)
+				||CommonUtils.isBlank(favorObject)||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			CustomerFavor customerFavor = new CustomerFavor();
+			customerFavor.setCustomerId(customerId);
+			customerFavor.setFavorObject(favorObject);
+			xsbBaseService.deleteFavor(customerFavor);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 是否已收藏
+	 * @param request
+	 * @param customerId
+	 * @param favorObject
+	 * @param loginMethod
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @return
+	 */
+	@RequestMapping(value="/app/favor/isFavored",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> isFavored(
+			HttpServletRequest request,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("favorObject") String favorObject,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam("tmpToken") String tmpToken
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(customerId)
+				||CommonUtils.isBlank(favorObject)||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			CustomerFavor customerFavor = new CustomerFavor();
+			customerFavor.setCustomerId(customerId);
+			customerFavor.setFavorObject(favorObject);
+			//判断用户是否已收藏
+			boolean flag = xsbBaseService.isFavored(customerFavor);
+			if(flag){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	//-------------------新闻收藏、自选股、项目报名等  end----------------------
+	
+	//-------------------数据字典接口 begin---------------------------------------
+	/**
+	 * 根据全名称获取数据字典集合
+	 * @param columnFullName
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/enum/getEnumVOListByColumnFullName.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getEnumVOListByColumnFullName(
+			HttpServletRequest request,
+			@RequestParam("columnFullName") String columnFullName,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(columnFullName)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			List<EnumVO> enumVOList = xsbBaseService.getEnumVOListByColumnFullName(columnFullName);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("enumVOList", enumVOList);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	//-------------------数据字典接口 end-----------------------------------------
+	
+	/**
+	 * 搜索接口
+	 * @param request
+	 * @param word
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/search",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> search(
+			HttpServletRequest request,
+			@RequestParam("word") String word,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam(value="searchType",required=false) String searchType,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(word)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<RObject> resultList = null;
+		try {
+			if(pageNo==null || pageNo<1){
+				pageNo = 1;
+			}
+			if(pageSize==null || pageSize<1){
+				pageSize = 10;
+			}
+			resultList = xsbBaseService.getSearchListByWord(word, pageNo, pageSize,searchType);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("resultList", resultList);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+
+	/**
+	 * 我要路演接口
+	 * @param request
+	 * @param company
+	 * @param step
+	 * @param isVenture
+	 * @param financingType
+	 * @param turnoverScale
+	 * @param name
+	 * @param position
+	 * @param phoneNo
+	 * @param wx
+	 * @param email
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/road",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> applyRoad(
+			HttpServletRequest request,
+			@RequestParam("company") String company,//公司
+			@RequestParam("step") String step,//挂牌进度
+			@RequestParam("isVenture") String isVenture,//是否有创投机构
+			@RequestParam("financingType") String financingType,//融资方式
+			@RequestParam("turnoverScale") String turnoverScale,//营收规模
+			@RequestParam("name") String name,//姓名
+			@RequestParam("position") String position,//职位
+			@RequestParam("phoneNo") String phoneNo,//手机号码
+			@RequestParam("wx") String wx,//微信
+			@RequestParam("email") String email,//邮箱
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("tmpToken") String tmpToken,
+			@RequestParam("customerPhoneNo") String customerPhoneNo
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(customerId)||CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerPhoneNo)||
+				CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(company)||
+				CommonUtils.isBlank(step)||CommonUtils.isBlank(isVenture)||
+				CommonUtils.isBlank(financingType)||CommonUtils.isBlank(turnoverScale)||
+				CommonUtils.isBlank(name)||CommonUtils.isBlank(position)||
+				CommonUtils.isBlank(phoneNo)||CommonUtils.isBlank(wx)||CommonUtils.isBlank(email)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			//首先判断该公司是否已经提交过我要路演
+			int isApply = xsbBaseService.isApplyRoad(company);
+			//如果已报名则不让继续提交
+			if(isApply>0){
+				map.put(ResultCode.RESULT_CODE, ResultCode.COMPANY_SAME_ROAD_APPLY);
+				return map;
+			} 
+			ApplyRoad applyRoad = new ApplyRoad();
+			applyRoad.setCustomerId(customerId);
+			applyRoad.setCompany(company);
+			applyRoad.setFinancingType(financingType);
+			applyRoad.setIsVenture(isVenture);
+			applyRoad.setStep(step);
+			applyRoad.setTurnoverScale(turnoverScale);
+			applyRoad.setName(name);
+			applyRoad.setEmail(email);
+			applyRoad.setPhoneNo(phoneNo);
+			applyRoad.setPosition(position);
+			applyRoad.setWx(wx);
+			int flag = xsbBaseService.applyRoad(applyRoad);
+			if(flag>0){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取用户约谈列表
+	 * @param request
+	 * @param loginMethod
+	 * @param customerId
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/talk",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCustomerTalkList(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("tmpToken") String tmpToken,
+			@RequestParam("customerPhoneNo") String customerPhoneNo
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(customerId)||CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerPhoneNo)||
+				CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			List<RObject> talkList = xsbBaseService.getCustomerTalkList(customerId);
+			List<Map<String,Object>> rlist = new ArrayList<Map<String,Object>>();
+			if(talkList==null || talkList.isEmpty()){
+				map.put("remindList", rlist);
+			}else{
+				Map<String,Object> tm = null;
+				for (RObject rObject : talkList) {
+					tm = new HashMap<String,Object>();
+					tm.put("objectId", rObject.getObjectId());
+					tm.put("objectName", rObject.getObjName());
+					tm.put("showDate", rObject.getShowDate());
+					tm.put("objPicPath", rObject.getObjectPicPath());
+					rlist.add(tm);
+				}
+				map.put("talkList", rlist);
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	@RequestMapping(value="/app/search/companynews",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> searchCompanyNews(
+			HttpServletRequest request,
+			@RequestParam("objectNo") String objectNo,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(objectNo)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<RObject> resultList = null;
+		try {
+			if(pageNo==null || pageNo<1){
+				pageNo = 1;
+			}
+			if(pageSize==null || pageSize<1){
+				pageSize = 10;
+			}
+			resultList = xsbBaseService.getSearchListByWord(objectNo, pageNo, pageSize,"news");
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("resultList", resultList);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+}

@@ -1,0 +1,130 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>index</title>
+    <link href="<%=path%>/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mt10{margin-top:10px;}
+    </style>
+</head>
+ 	<script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/layer/layer.js" ></script>
+ <script type="text/javascript" language="javascript">
+	/* function updateScroll(objectId){
+		window.location.href="enum/getScrollListByObjectId?objectId="+objectId;
+	} */
+	function updateScroll(objectId){
+		var url = "enum/getScrollListByObjectId?objectId="+objectId;
+		layer.open({
+		    type: 2,
+		    area: ['500px', '300px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	}
+	function toAddScroll(){
+		var url = "enum/addScrollList";
+		layer.open({
+		    type: 2,
+		    area: ['500px', '300px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	}
+	function isOk(){
+		document.location.reload();
+	}
+ </script>
+<body>
+<!--<form action="meet/toMeetRoomList.do" name="confForm" method="post">-->
+${error }
+<div class="container-full">
+    <div class="row">
+        <div class="col-md-12 mt10">
+            <form class="form-inline" action="enum/getScrollList" method="post"  name="confForm"><!--action="admin/project/serach?serachInformation="+information, name="confForm" method="post"-->
+                
+                <div class="input-group">
+                	<span class="input-group-addon">编号</span>
+                	<input type="text" class="form-control" id="enumGroupCode" name="enumGroupCode" placeholder="请输入查询内容" value="${enumVO.enumGroupCode}" >
+                </div>
+                <div class="input-group">
+                	<span class="input-group-addon">名称</span>
+                	<input type="text" class="form-control" id="enumFullName" name="enumFullName" placeholder="请输入查询内容" value="${enumVO.enumFullName}" >
+                </div>
+                 <div class="input-group">
+                	<span class="input-group-addon">轮播值</span>
+                	<input type="text" class="form-control" id="enumDescCn" name="enumDescCn" placeholder="请输入查询内容" value="${enumVO.enumDescCn}" >
+                </div>
+                <input type="hidden" name="_method" value="get" /> 
+                <input type="hidden" name="pageSize" id="pageSize" value="${enumVO.pageSize}" /> 
+                <button class="btn btn-warning" type="submit">查询</button><!-- type="submit"  onclick="serach();-->
+                <!-- <a href="javascript:void(0);" onclick="toAddScroll();" class="btn btn-success">新建</a> -->
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 mt10">
+        	<aa:zone name="confListZone">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                    	<th>序号</th>
+                    	<th>编号</th>
+                    	<th>名称</th>
+                    	<!-- <th>轮播值</th> -->
+                    	<th>轮播值</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                	<c:if test="${scrollList!=null}">
+	                	<c:forEach items="${scrollList}" var="scroll" varStatus="index">
+	                		<tr>
+	                			<td>${index.index+1}</td>
+	                			<td >${scroll.enumGroupCode}</td>
+	                			<td >${scroll.enumFullName}</td>
+	                			<%-- <td >${scroll.enumDesc}</td> --%>
+	                			<td >${scroll.enumDescCn}</td>
+		                        <td>	
+		                        	<c:if test="${item.enumGroupCode ne '' }">
+		                        		<a href="javascript:void(0);" onclick="updateScroll('${scroll.enumGroupCode }')">修改</a>
+		                        		<%-- <a href="javascript:void(0);" onclick="deleteObjectItem('${projectNo}','${item.itemKey}')">删除</a> --%>
+		                        	</c:if>
+		                        </td>	
+		                    </tr>
+	                	</c:forEach>
+                	</c:if>
+		          <!-- <tr>
+                    <td colspan="4" class="text-center">
+                        <button type="button" class="btn btn-danger" onclick="history.go(-1)">返回</button>
+                    </td>
+                </tr> -->
+                </tbody>
+            </table>
+            </aa:zone>
+            <page:pager pageSize="${enumVO.pageSize}" pageNo="${enumVO.pageNo}" url="enum/getScrollList"  recordCount="${enumVO.totalRecord}"/>
+        </div>
+    </div>
+</div>
+<!--</form>-->
+</body>
+
+</html>

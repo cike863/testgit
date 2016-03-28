@@ -1,0 +1,29 @@
+package com.xsbweb.vo.extend;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.xsbweb.vo.TrsProject;
+
+public class TrsProjectVO {
+
+	private TrsProject trsProject = new TrsProject();
+	
+	private List<TrsProject> trsProjectList = new ArrayList<TrsProject>();
+	
+	public TrsProject getTrsProject() {
+		return trsProject;
+	}
+
+	public void setTrsProject(TrsProject trsProject) {
+		this.trsProject = trsProject;
+	}
+
+	public List<TrsProject> getTrsProjectList() {
+		return trsProjectList;
+	}
+
+	public void setTrsProjectList(List<TrsProject> trsProjectList) {
+		this.trsProjectList = trsProjectList;
+	}
+}

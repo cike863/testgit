@@ -1,0 +1,84 @@
+package com.xsbweb.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.extend.CustomerVO;
+import com.xsbweb.vo.extend.EnumVO;
+
+
+public interface StaffMapper {
+	
+	public List<Staff> getAllStaffList(Staff staff)throws Exception;
+	
+	/**
+	 * 获取员工数量
+	 * @param staff
+	 * @return
+	 * @throws Exception
+	 */
+	public int getStaffCounts(Staff staff)throws Exception;
+	/**
+	 * 校验员工登陆
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	public Staff validateLogin(Map<String,Object> param) throws Exception;
+	/**
+	 * 判断用户是否存在
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	public Staff checkStaff(Map<String,Object> param) throws Exception;
+	/**
+	 * 修改密码
+	 * @param param
+	 * @throws Exception
+	 */
+	public void updatePassword(Staff staff) throws Exception;
+	/**
+	 * 判断手机号是否被注册
+	 * @param phoneNo
+	 * @return
+	 * @throws Exception
+	 */
+	public Staff checkRegisteredByPhoneNo(String phoneNo) throws Exception;
+	/**
+	 * 通过手机号和邮箱判断用户是否被注册
+	 * @param staff
+	 * @return
+	 * @throws Exception
+	 */
+	public Staff selectStaffByPhoneNoOrEmail(Staff staff) throws Exception;
+	/**
+	 * 新增用户
+	 * @param staff
+	 * @throws Exception
+	 */
+	public void addStaff(Staff staff)throws Exception;
+	
+	/**
+	 * 修改用户信息
+	 * @param staff
+	 * @return
+	 * @throws Exception
+	 */
+	public int editStaff(Staff staff)throws Exception;
+	
+	
+	
+	/***根据ID查询**/
+	public Staff  getStaffById(String id)throws Exception;
+	
+	public Integer delStaff(String id) throws Exception;
+
+	/**
+	 * 根据staffId调用存储过程获取后台用户权限
+	 * @param param
+	 * @return
+	 */
+	public List<EnumVO> getStaffRoleByPrc(Map<String, Object> param);
+}

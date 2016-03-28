@@ -1,0 +1,740 @@
+package com.xsbweb.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.controller.manage.TrsNewsController;
+import com.xsbweb.mapper.APPCommonMapper;
+import com.xsbweb.mapper.CommonMapper;
+import com.xsbweb.mapper.CompanyAssetMapper;
+import com.xsbweb.mapper.EnumVOMapper;
+import com.xsbweb.mapper.NewsMapper;
+import com.xsbweb.mapper.StaffMapper;
+import com.xsbweb.mapper.TrsMediaMapper;
+import com.xsbweb.mapper.TrsProjectMapper;
+import com.xsbweb.service.TrsProjectService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.XsbBusinessUtil;
+import com.xsbweb.vo.CompanyAsset;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ProjectAndItems;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.SearchWord;
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.EnumVO;
+
+public class TrsProjectServiceImpl implements TrsProjectService {
+	private Logger log = Logger.getLogger(TrsProjectServiceImpl.class);
+	@Autowired
+	private TrsProjectMapper trsProjectMapper;
+	
+	@Autowired
+	private TrsMediaMapper trsMediaMapper;
+	
+	@Autowired 
+	private APPCommonMapper appCommonMapper;
+	
+	@Autowired 
+	private CompanyAssetMapper companyAssetMapper;
+	
+	@Autowired
+	private NewsMapper newsMapper;
+	
+	@Autowired
+	private EnumVOMapper enumVOMapper;
+	
+	@Autowired
+	private CommonMapper commonMapper;
+	
+	@Autowired
+	private StaffMapper staffMapper;
+	
+	@Override
+	public List<RObject> getProjectList(TrsProject trsProject,String projectType)
+			throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//获取项目列表
+		List<RObject> projectList = null;
+		//1：获取路演中的项目列表，2：获取成功案例项目列表
+		if("1".equals(projectType)){
+			Map<String, Object> param = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.PROJ_SHOWING, trsProject.getPageNo(), trsProject.getPageSize());
+			projectList = appCommonMapper.getRObjectListByGroup(param);	
+		}else{
+			Map<String, Object> param = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.PROJ_SHOWED, trsProject.getPageNo(), trsProject.getPageSize());
+			projectList = appCommonMapper.getRObjectListByGroup(param);	
+		}
+		//报名人数超过总人数，为了防止报名进度超过100%
+		if(projectList!=null){
+			for (RObject tproject : projectList) {
+				if(CommonUtils.isNotBlank(tproject.getProjPercentage())){
+					Double percentege = Double.valueOf(tproject.getProjPercentage());
+					if(percentege>1){
+						tproject.setProjPercentage("1.0000");
+					}
+						
+				}
+			}
+		}
+		/*if(scrolllist!=null && !scrolllist.isEmpty()){
+			String[] projectNoArrs = new String[scrolllist.size()];
+			for (int i = 0; i < scrolllist.size(); i++) {
+				projectNoArrs[i] = scrolllist.get(i).getObjectId();
+			}
+			trsProject.setProjectNoArrs(projectNoArrs);
+			projectList = trsProjectMapper.getProjectListByNoArr(trsProject);
+		}*/
+		/*if(projectList!=null){
+			//如果项目列表不为空，则获取媒体资源集合
+			List<TrsMedia> meidaList = trsMediaMapper.getTrsMediaList(new TrsMedia());
+			if(meidaList!=null){
+				List<TrsMedia> tmedias = null;
+				for (TrsProject tproject : projectList) {
+					tmedias = new ArrayList<TrsMedia>();
+					for (TrsMedia trsMedia : meidaList) {
+						if(CommonUtils.isNotBlank(tproject.getProjectNo()) && tproject.getProjectNo().equals(trsMedia.getObjectId())){
+							tmedias.add(trsMedia);
+						}
+					}
+					tproject.setTrsMediaList(tmedias);
+				}
+			}
+		}*/
+		return projectList;
+	}
+
+	@Override
+	public TrsProject getProjectByNo(String projectNo) throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		TrsProject trsProject = trsProjectMapper.getProjectByNo(projectNo);
+		if(trsProject!=null && CommonUtils.isNotBlank(trsProject.getProjectNo())){
+			//转换报名进度为百分比
+			if(trsProject.getProjPercentage()!=null){
+				trsProject.setProjPercentage(trsProject.getProjPercentage());
+			}else{
+				trsProject.setProjPercentage(0.00);
+			}
+			//转换项目上线时间
+			String onlinDate = trsProject.getProjOnlineDate();
+			if(CommonUtils.isNotBlank(onlinDate) && onlinDate.length()>10){
+				trsProject.setProjOnlineDate(onlinDate.substring(0,10));
+			}
+			//根据projectId获取媒体资源列表
+			List<TrsMedia> meidaList = trsMediaMapper.getVideoListByObjectId(trsProject.getProjectNo());
+			if(meidaList!=null){
+				trsProject.setTrsMediaList(meidaList);
+			}
+			if(CommonUtils.isNotBlank(trsProject.getHandler())){
+				Staff staff = staffMapper.getStaffById(trsProject.getHandler());
+				if(staff!=null){
+					trsProject.getStaffInfo().put("staffPhone",CommonUtils.isBlank(staff.getStaffPhoneNo())?"":staff.getStaffPhoneNo());
+					trsProject.getStaffInfo().put("staffName", CommonUtils.isBlank(staff.getStaffName())?"":staff.getStaffName());
+					trsProject.getStaffInfo().put("staffTel", CommonUtils.isBlank(staff.getStaffTel())?"":staff.getStaffTel());
+				}
+			}
+			//获取projectItem
+			/*ProjectItem projectItem = new ProjectItem();
+			projectItem.setObjectNo(trsProject.getProjectNo());
+			List<ProjectItem> projectItemList = trsProjectMapper.getProjectItemListByNo(projectItem);
+			if(projectItemList!=null){
+				trsProject.setItemList(projectItemList);
+			}*/
+			//路演大厅项目分享，如果有stockId值则分享到老版本，没有则分享到下载地址
+			if(CommonUtils.isNotBlank(trsProject.getProjCpCode())){
+				trsProject.setShareUrl(XsbBusinessConstant.PROJ_SHARE_URL+trsProject.getProjCpCode()+XsbBusinessConstant.PROJ_D_HTML);
+			}else{
+				trsProject.setShareUrl(XsbBusinessConstant.APP_SHARE_URL);
+			}
+			String role = trsProject.getProjRole();
+			if(CommonUtils.isNotBlank(role)){
+				int roleInt = Integer.valueOf(role);
+				//如果role值下雨64则是路演中状态
+				if(roleInt<64){
+					trsProject.setRoadStatus("1");
+				}else{
+					trsProject.setRoadStatus("2");
+				}
+			}
+		}
+		return trsProject;
+	}
+	
+	@Override
+	public List<ProjectItem> getProjectItemListByNo(ProjectItem projectItem) throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<ProjectItem> projectItemList = trsProjectMapper.getProjectItemListByNo(projectItem);
+		if(projectItemList==null){
+			projectItemList = new ArrayList<ProjectItem>();
+		}
+		/*
+		 * 三板行情概况走单独接口，2016-1-19 15:36:43 by lgl
+		 * //如果取到的item为空，则有可能是三板行情传过来的是stockId，根据stockId取一下项目信息，再查item
+		if(projectItemList==null || projectItemList.isEmpty()){
+			TrsProject tp = trsProjectMapper.getProjectByStockId(projectItem.getObjectNo());
+			if(tp!=null){
+				ProjectItem projectItem2 = new ProjectItem();
+				projectItem2.setObjectNo(tp.getProjectNo());
+				projectItemList = trsProjectMapper.getProjectItemListByNo(projectItem2);
+			}
+		}*/
+		//敲钟模块，如果是集体敲钟，敲钟子项目需要去集体敲钟公共直播item
+		if(XsbBusinessConstant.ITEM_QZ.equals(projectItem.getObjectType())){
+			//如果存在集体，则加上集体敲钟的item
+			String projectNo = trsProjectMapper.getPrmtParentNoByProjectNo(projectItem.getObjectNo());
+			if(CommonUtils.isNotBlank(projectNo)){
+				ProjectItem projectItem2 = new ProjectItem();
+				projectItem2.setObjectNo(projectNo);
+				List<ProjectItem> projectItemList2 = trsProjectMapper.getProjectItemListByNo(projectItem2);
+				if(projectItemList2!=null && !projectItemList2.isEmpty()){
+					for (ProjectItem projectItem3 : projectItemList2) {
+						projectItemList.add(projectItem3);
+					}
+				}
+			}
+		}
+		return projectItemList;
+	}
+
+	@Override
+	public List<TrsProject> getProjectListByChoose(TrsProject trsProject)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//获取项目列表
+		List<TrsProject> projectList = trsProjectMapper.getProjectList(trsProject);
+		return projectList;
+	}
+
+	/**
+	 * 获取首页轮播集合
+	 */
+	@Override
+	public List<RObject> getIndexScrollList() throws Exception {
+		
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//路演大厅_轮播1
+		Map<String, Object> param1 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.OBJ_SCROLL_1, 1, 10);
+		List<RObject> scrolllist1 = appCommonMapper.getRObjectListByGroup(param1);	
+		//路演大厅_轮播2
+		Map<String, Object> param2 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.OBJ_SCROLL_2, 1, 10);
+		List<RObject> scrolllist2 = appCommonMapper.getRObjectListByGroup(param2);	
+		//路演大厅_轮播3
+		Map<String, Object> param3 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.OBJ_SCROLL_3, 1, 10);
+		List<RObject> scrolllist3 = appCommonMapper.getRObjectListByGroup(param3);	
+		//路演大厅_轮播4
+		Map<String, Object> param4 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.OBJ_SCROLL_4, 1, 10);
+		List<RObject> scrolllist4 = appCommonMapper.getRObjectListByGroup(param4);	
+		//路演大厅_轮播5
+		Map<String, Object> param5 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.OBJ_SCROLL_5, 1, 10);
+		List<RObject> scrolllist5 = appCommonMapper.getRObjectListByGroup(param5);	
+		List<RObject> scrolllist = new ArrayList<RObject>();
+		if(scrolllist1!=null && !scrolllist1.isEmpty()){
+			scrolllist.add(scrolllist1.get(0));
+		}
+		if(scrolllist2!=null && !scrolllist2.isEmpty()){
+			scrolllist.add(scrolllist2.get(0));
+		}
+		if(scrolllist3!=null && !scrolllist3.isEmpty()){
+			scrolllist.add(scrolllist3.get(0));
+		}
+		if(scrolllist4!=null && !scrolllist4.isEmpty()){
+			scrolllist.add(scrolllist4.get(0));
+		}
+		if(scrolllist5!=null && !scrolllist5.isEmpty()){
+			scrolllist.add(scrolllist5.get(0));
+		}
+		/*objectType
+		if(scrolllist!=null && !scrolllist.isEmpty()){
+			for (RObject rObject : scrolllist) {
+				if(rObject.getObjectId().indexOf("news")){
+					
+				}
+			}
+		}*/
+		//初始化跳转
+		XsbBusinessUtil.initScrollForward(scrolllist);
+		return scrolllist;
+	}
+
+	@Override
+	public int isApplyJoinRoad(String customerId,String objectNo){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Customer customer = new Customer();
+		customer.setObjectNo(objectNo);
+		customer.setCustomerId(customerId);
+		int flag=0;
+		try {
+			flag = trsProjectMapper.isApplyJoinRoad(customer);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public int applyJoinRoadById(String customerId,String objectNo){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Customer customer = new Customer();
+		customer.setObjectNo(objectNo);
+		customer.setCustomerId(customerId);
+		int addFlag = 0;
+		try {
+			//先判断是否存在
+			int isFlag = trsProjectMapper.isApplyJoinRoad(customer);
+			if(isFlag>0){
+				return 3;
+			}
+			customer.setSignStatus("1");
+			addFlag = trsProjectMapper.addCustSignProject(customer);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			addFlag=-1;
+		}
+		
+		return addFlag;
+	}
+
+	@Override
+	public CompanyAsset getCompanyAssetByStockId(String stockId)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		return companyAssetMapper.getCompanyAssetByStockId(stockId);
+	}
+
+	@Override
+	public List<Customer> getApplyProjectCustomerList(Customer customer)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getApplyProjectList(customer);
+	}
+	
+	@Override
+	public List<Customer> getApplyProjectCustomerList(String projectNo)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getApplyProjectCustomerList(projectNo);
+	}
+
+	@Override
+	public TrsProject getPEByNo(String projectNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//根据projectId获取媒体资源列表
+		TrsProject trsProject = trsProjectMapper.getPEByNo(projectNo);
+		List<TrsMedia> meidaList = trsMediaMapper.getVideoListByObjectId(projectNo);
+		trsProject.setTrsMediaList(meidaList);
+		//获取projectItem
+		ProjectItem projectItem = new ProjectItem();
+		projectItem.setObjectNo(projectNo);
+		List<ProjectItem> projectItemList = trsProjectMapper.getProjectItemListByNo(projectItem);
+		if(projectItemList!=null){
+			trsProject.setItemList(projectItemList);
+		}
+		return trsProject;
+	}
+
+	@Override
+	public List<TrsProject> getPEByList(int pageSize, int pageNo,
+			String searchDate) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String,Object> param = new HashMap<String,Object>();
+		param.put("currentRecord", (pageNo-1)*pageSize);
+		param.put("pageSize", pageSize);
+		param.put("searchDate", searchDate);
+		List<TrsProject> trsProjects = trsProjectMapper.getPEByList(param);
+		return trsProjects;
+	}
+
+	@Override
+	public List<TrsProject> getProjectList(TrsProject trsProject)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<TrsProject> trsProjectList=trsProjectMapper.getProjectList(trsProject);
+		return trsProjectList;
+	}
+
+	@Override
+	public int getTotalRecordProjectCount(TrsProject trsProject) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		log.info(trsProject.getPrmtParentNo());
+		int totalRecordProjectCount=trsProjectMapper.getTotalRecordProjectCount(trsProject);
+		return totalRecordProjectCount;
+	}
+
+	@Override
+	public void deleteRecodeByProjectNo(String projectNo) throws Exception {
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//t_rl_trs_progect表与t_rl_trs_object_item通过 project_no和object_no进行关联
+		//通过projectNo查找t_rl_trs_object_item表中是否有记录，如果有记录就执行删除操作
+		List<ProjectItem> result = trsProjectMapper.getObjectRecordByObjectNo(projectNo);
+		if(!result.isEmpty()){
+			trsProjectMapper.deleteObjectByObjectNo(projectNo);
+		}
+		trsProjectMapper.deleteProjectRecordByProjectNo(projectNo);
+	}
+
+	@Override
+	public TrsProject getProjectListByProjectNo(String projectNo)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		TrsProject trsProject = trsProjectMapper.getProjectListByProjectNo(projectNo);
+		/*List<TrsMedia> meidaList = trsMediaMapper.getTrsMediaListByObjectId(projectNo);
+		List<TrsMedia> meidaList = trsMediaMapper.getVideoListByObjectId(projectNo);
+		if(meidaList!=null){
+			trsProject.setTrsMediaList(meidaList);
+		}*/
+		/*List<SearchWord> words =newsMapper.getWordListByNewsNo(projectNo);
+		if(words!=null&&!words.isEmpty()){
+			trsProject.setSearchWord(words);
+		}*/
+		return trsProject;
+	}
+	
+	
+
+	@Override
+	public int updateRecodeByProjectNo(TrsProject trsProject) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int a = 1;
+		int b =1;
+		try{
+			a = trsProjectMapper.updateProjectRecodeByProjectNo(trsProject);
+			/*if(trsProject.getTrsMediaList()!=null&&!trsProject.getTrsMediaList().isEmpty()){
+				b = trsMediaMapper.batchInsert(trsProject.getTrsMediaList());
+			}*/
+		}catch(Exception e){
+			e.fillInStackTrace();
+			return -1;
+		}
+		return a*b;
+	}
+
+	@Override
+	public List<ProjectItem> getObjectListByObjectNo(String objectNo)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<ProjectItem> list =trsProjectMapper.getObjectRecordByObjectNo(objectNo);
+		return list;
+	}
+
+	@Override
+	public void deleteObjectByObjectNoAndItemKey(String objectNo, String itemKey)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("objectNo", objectNo);
+		map.put("itemKey", itemKey);
+		trsProjectMapper.deleteObjectByObjectNoAndItemKey(map);
+	}
+
+	@Override
+	public int addRecode(TrsProject trsProject) throws Exception{
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		trsProjectMapper.addProjectRecode(trsProject);
+		if(trsProject.getPrcFlag()!=1){
+			return 0;
+		}
+		/*int a = 1;*/
+		/*String objectNo =projectAndItems.getTrsProject().getProjectNo();
+		if(projectAndItems.getProjectItems()!=null&&!projectAndItems.getProjectItems().isEmpty()){
+			trsProjectMapper.addObjectRecode(projectAndItems.getProjectItems());
+			for(ProjectItem projectItem:projectAndItems.getProjectItems()){
+				projectItem.setObjectNo(objectNo);
+				trsProjectMapper.addObjectRecode(projectItem);
+			}
+		}*/
+		/*if(trsProject.getTrsMediaList()!=null&&!trsProject.getTrsMediaList().isEmpty()){
+			a = trsMediaMapper.batchInsert(trsProject.getTrsMediaList());
+			for(TrsMedia trsMedia:trsProject.getTrsMediaList()){
+				trsMedia.setObjectId(objectNo);
+				trsMediaMapper.insert(trsMedia);
+			}
+		}*/
+		/*int b=1;
+		List<SearchWord> searchWords = new ArrayList<SearchWord>();
+		if(trsProject.getSearchWord()!=null&&!trsProject.getSearchWord().isEmpty()){
+			for(SearchWord searchWord:trsProject.getSearchWord()){
+				if(searchWord!=null){
+					searchWord.setObject(trsProject.getProjectNo());
+					searchWords.add(searchWord);
+				}
+			}
+			b = newsMapper.batchAddWord(searchWords);
+		}		*/
+		return 1;
+	}
+
+	@Override
+	public List<TrsProject> fuzzySearch(int pageSize, int pageNo,String serachInformation)
+			throws Exception {
+
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String,Object> param = new HashMap<String,Object>();
+		param.put("currentRecord", (pageNo-1)*pageSize);
+		param.put("pageSize", pageSize);
+		param.put("serachInformation", serachInformation);
+		List<TrsProject> trsProjectList=trsProjectMapper.fuzzySearch(param);
+		return trsProjectList;
+	}
+
+	@Override
+	public int getfuzzySearchProjectCount(String serachInformation)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int totalRecordProjectCount=trsProjectMapper.getfuzzySearchProjectCount(serachInformation);
+		return totalRecordProjectCount;
+	}
+
+	/**
+	 * 取消我要看路演报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public int cancelApplyJoinRoad(Customer customer) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.cancelApplyJoinRoad(customer);
+	}
+
+	@Override
+	public int updateUrlOrStatusByProjectNo(String projectNo, String projCpUrl,
+			String projShowStatus) throws Exception{
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String , Object> map = new HashMap<String,Object>();
+		map.put("projectNo", projectNo);
+		map.put("projCpUrl", projCpUrl);
+		map.put("projShowStatus", projShowStatus);
+		int result=0;
+		try{
+			result = trsProjectMapper.updateUrlOrStatusByProjectNo(map);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@Override
+	public int addItem(ProjectItem item) throws Exception{
+		
+		List<ProjectItem> items = new ArrayList<ProjectItem>();
+		items.add(item);
+		int result = 0;
+		try {
+			result=trsProjectMapper.addObjectRecode(items);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@Override
+	public List<ProjectItem> getItemsList(String projectNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<ProjectItem> items = new ArrayList<ProjectItem>();
+		try {
+			items=trsProjectMapper.getObjectRecordByObjectNo(projectNo);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return items;
+	}
+
+	@Override
+	public int updateItem(ProjectItem item) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<ProjectItem> items = new ArrayList<ProjectItem>();
+		items.add(item);
+		int result = 0;
+		try {
+			result=trsProjectMapper.updateObjectRecodeByObjectNo(items);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}	
+	
+
+	/**
+	 * 获取敲钟列表
+	 * @param trsProject
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<TrsProject> getQZProjectList(TrsProject trsProject)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getQZProjectList(trsProject);
+	}
+
+	@Override
+	public int getApplyProjectCount(String objectNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getApplyProjectCount(objectNo);
+	}
+
+	@Override
+	public List<SearchWord> getWordsList(String projectNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord> words =newsMapper.getWordListByNewsNo(projectNo);
+		return words;
+	}
+
+	@Override
+	public int addWords(SearchWord word) throws Exception {
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord>addWords= new ArrayList<SearchWord>();
+		if(word.getWord()!=null&&word.getWord().contains(",")){
+    		String [] resultRole = word.getWord().split(",");
+        	for(int i=0;i<resultRole.length;i++){
+        		SearchWord addWord =  new SearchWord();
+        		if("".equals(resultRole[i])){
+        			continue;
+        		}
+        		addWord.setWord(resultRole[i]);
+        		addWord.setObject(word.getObject());
+        		addWords.add(addWord);
+        	}
+    	}else{
+    		addWords.add(word);
+    	}
+		
+		int prcflg=1;
+		try{
+			prcflg = newsMapper.batchAddWord(addWords);
+		}catch(Exception e){
+			prcflg=0;
+		}
+		return prcflg;
+	}
+
+	@Override
+	public List<EnumVO> getProjectEnum() throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.META);
+		return enumVOMapper.getProjectEnumVOList();
+	}
+	@Override
+	public int updateWords(SearchWord word) throws Exception {
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord>addWords= new ArrayList<SearchWord>();
+		addWords.add(word);
+		int prcflg=1;
+		try{
+			prcflg = newsMapper.batchUpdateWord(addWords);
+		}catch(Exception e){
+			prcflg=0;
+		}
+		return prcflg;
+	}
+
+	/**
+	 * 路演大厅首页行业过滤
+	 * @param pageNo
+	 * @param pageSize
+	 * @param code
+	 * @param type
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<RObject> getProjectListByIndustry(Integer pageNo,
+			Integer pageSize, String code, String type) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//根据role值获取行业名称集合
+		Map<String,Object> industryParam = new HashMap<String,Object>();
+		industryParam.put("enumFullName", "industry");
+		if(CommonUtils.isBlank(code)){
+			industryParam.put("role", 0l);
+		}else{
+			industryParam.put("role", Long.valueOf(code));
+		}
+		List<String> industryList = enumVOMapper.getEnumDescListByRoleAndFullName(industryParam);
+		if(industryList == null || industryList.isEmpty()){
+			return new ArrayList<RObject>();
+		}
+		//先获取符合条件的projectNo集合
+		Map<String,Object> wordMap = new HashMap<String,Object>();
+		wordMap.put("industrys", industryList);
+		wordMap.put("object", "proj");
+		
+		List<String> nolist = commonMapper.getObjectListByWord(wordMap);
+		if(nolist == null || nolist.isEmpty()){
+			return new ArrayList<RObject>();
+		}
+		//获取符合条件的项目集合
+		Map<String,Object> param = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(type) || "1".equals(type)){
+			type=XsbBusinessConstant.PROJ_SHOWING;
+		}else{
+			type=XsbBusinessConstant.PROJ_SHOWED;
+		}
+		param.put("type", type);
+		param.put("projectNos", nolist);
+		param.put("currentRecord",((pageNo==0?10:pageNo)-1)*pageSize);
+		param.put("pageSize",pageSize==0?10:pageSize);
+		List<RObject> resultList = trsProjectMapper.getProjectListByIndustry(param);
+		return resultList;
+	}
+
+	/**
+	 * 根据projectNo数组获取对应实时行情价格
+	 * @param projectNos
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<TrsProject> getQuotesByProjectNos(String[] projectNos)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getQuotesByProjectNos(projectNos);
+	}
+	
+	@Override
+	public String getQuotesByProjectNo(String projectNo)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getQuotesByProjectNo(projectNo);
+	}
+
+	/**
+	 * 根据stockId获取项目信息
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public TrsProject getProjectByStockId(String stockId) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsProjectMapper.getProjectByStockId(stockId);
+	}
+
+	@Override
+	public int  deleteRecodeByProjectNo(String[] projectNoArrs)
+			throws Exception {
+		int flag=0;
+		try{
+			trsProjectMapper.deleteObjectByObjectNos(projectNoArrs);
+			trsProjectMapper.deleteProjectRecordByprojectNoArrs(projectNoArrs);	
+			flag=1;
+		}catch(Exception e){
+			e.printStackTrace();
+			flag=0;
+		}
+		return flag;
+	}
+}

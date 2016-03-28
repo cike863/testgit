@@ -1,0 +1,207 @@
+ <%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>index</title>
+    <link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/shade.css">
+    <style>
+        .mt10{margin-top:10px;}
+    </style>
+</head>
+<body>
+<!--<form action="meet/toMeetRoomList.do" name="confForm" method="post">-->
+${error }
+<div class="container-full">
+        <div class="row">
+			<div class="col-md-12 mt10">
+				<form class="form-inline" action="zt/womenday/admin/femaleLeaders" name="womendayForm" method="post">
+					<div class="input-group">
+						<span class="input-group-addon">候选人姓名</span>
+						 <input type="text" class="form-control" name="leaderName" placeholder="候选人名称"/>
+					</div>
+					<div class="input-group">
+						<span class="input-group-addon">候选人公司</span> 
+						<input type="text"class="form-control" name="companyName" placeholder="候选人公司"/>
+					</div>
+					<div class="input-group">
+						<span class="input-group-addon">候选人手机号</span> 
+						<input type="text"class="form-control" name="leaderMobile" placeholder="候选人手机号"/>
+					</div>
+					<input type="hidden" name="_method" value="get" />
+					<button type="submit" class="btn btn-warning" >查询</button>
+            		<a href="zt/womenday/admin/add" role="button" class="btn btn-success">新建</a>
+				</form>
+			</div>
+		</div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 mt10">
+        	<aa:zone name="confListZone">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                    	<th>序号</th>
+                    	<th>候选人姓名</th>
+                        <th>候选人公司</th>
+                        <th>候选人手机号</th>
+                        <th>所得投票数</th>
+                        <th>候选人状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                	<c:if test="${femaleLeaders!=null }">
+	                	<c:forEach items="${femaleLeaders}" var="leader" varStatus="index">
+	                		<tr>
+	                			<td><input type="text" value="${index.index}"></td>
+	                			<td>${leader.leaderName}</td>
+		                        <td>${leader.companyName}</td>
+		                        <td>${leader.leaderMobile}</td>
+	                         	<td></td>
+	                         	<td></td>
+		                        <td></td>
+		                    </tr>
+	                	</c:forEach>
+                	</c:if>
+                </tbody>
+            </table>
+            </aa:zone>
+            <page:pager pageSize="${femaleLeader.pageSize}" pageNo="${femaleLeader.pageNo}" url="zt/womenday/admin/femaleLeaders" recordCount="${femaleLeader.totalRecord}"/>
+        </div>
+    </div>
+</div>
+<!--</form>-->
+</body>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/aa.js"></script>
+ <script type="text/javascript" language="javascript">
+ 	ajaxAnywhere.formName="womendayForm";
+	ajaxAnywhere.getZonesToReload = function(){
+		return "confListZone";
+	} 
+	function deleteForeVideoMeetRoom(meetNo){
+		if(!confirm("确定要删除该数据吗？")){
+			return;
+		}
+		//console.log("meetNo:"+meetNo);
+		//document.forms[0].action="meet/deleteVideoMeetRoomByMeetNo.do?meetNo="+meetNo;
+		//ajaxAnywhere.submitAJAX();
+		window.location="meet/deleteVideoMeetRoomByMeetNo.do?meetNo="+meetNo;
+	}
+	
+	function updateForeVideoMeetRoom(meetNo){
+		alert("该功能暂未提供！");
+	}
+	//弹出baseUrl输入框
+	function toAddBaseUrl(meetNo,confName,meetRole){
+		$("#shade").css("display","block");
+		$("[name='meetNo']").val(meetNo);
+		$("[name='confName']").val(confName);
+		$("[name='meetRole']").val(meetRole);
+	}
+	//新增baseUrl
+	function addBaseUrl(){
+		var baseUrl = $("[name='baseUrl']").val();
+		if(baseUrl==null || $.trim(baseUrl)==""){
+			alert("url地址不能为空");
+		}
+		var meetNo = $("[name='meetNo']").val();
+		//document.forms[0].action="admin/meet/"+meetNo+"/updateMeetToShowStatus";
+		//window.location="admin/meet/"+meetNo+"/updateMeetToShowStatus";
+		//ajaxAnywhere.submitAJAX();
+		$.ajax({
+			cache:true,
+			type : 'POST',
+			url : "admin/meet/updateMeetToShowStatus",
+			data : $("#updateMeetToShowStatus").serialize(),
+			async : false,
+			error : function (){
+				alert("修改失败");
+			},
+			success :function(data){
+				if(data.resultCode=='1'){
+					closeShade();
+					document.location.reload();
+				}
+				if(data.resultCode=='70001'){
+					alert("开始直播操作失败");
+					closeShade();
+				}
+				if(data.resultCode=='70001'){
+					alert("结束直播操作失败");
+					closeShade();
+				}
+			}
+			
+		});
+	}
+	//关闭baseUrl输入框
+	function closeShade(){
+		$("#shade").css("display","none");
+		$("[name='meetNo']").val("");
+		$("[name='confName']").val("");
+		$("[name='baseUrl']").val("");
+		$("[name='meetRole']").val("");
+	}
+	function getitems(projectNo){
+		window.location="admin/item?projectNo="+projectNo;		  
+	}
+	//全选
+	function checkMeetVideoAll(k){
+  		if($(k).is(':checked')){
+  			$("input[name='meetNoCheckBox']").each(function(){	
+				$(this).prop("checked",true);
+			});
+  		}else{
+  			$("input[name='meetNoCheckBox']").each(function(){	
+  				$(this).prop("checked",false);
+			});
+  		}	
+  	}
+	function batchDeleteVideoMeetRoom(){
+		if(!confirm("确定要删除该数据吗？")){
+			return;
+		}
+  		var meetNoArrs = "";
+  		$("input[name='meetNoCheckBox']:checked").each(function(){ 
+  			meetNoArrs += $("#meetNo_"+$(this).val()).html()+",";
+  		});
+  		meetNoArrs=meetNoArrs.toString().substring(0, meetNoArrs.toString().length-1);
+  		//console.log(meetNoArrs);
+  		$.ajax({
+  			url : "meet/videoMeetRoom/"+meetNoArrs+"/del",
+  			//contentType : 'application/json',JSON.stringify(
+			type : 'POST',
+			data : {
+				'_method' : 'delete'
+			},
+			async: false,
+			success : function(data) {
+				if (data.resultCode == '1') {
+					window.location.reload();
+				} else {
+					alert("删除失败");
+				};
+			},
+			error : function() {
+				alert("删除失败");
+			}
+		});
+	}
+ </script>
+</html>

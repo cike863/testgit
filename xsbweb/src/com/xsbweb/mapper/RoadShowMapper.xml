@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.RoadShowMapper" >
+	<resultMap id="resultMap" type="com.xsbweb.vo.extend.RoadShowVO" >
+		<result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+		<result column="is_venture" property="isVenture" jdbcType="VARCHAR" />
+		<result column="financing_type" property="financingType" jdbcType="VARCHAR" />
+		<result column="turnover_scale" property="turnoverScale" jdbcType="VARCHAR" />
+		<result column="create_date" property="creatDate" jdbcType="TIMESTAMP" />
+		<result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="position" property="position" jdbcType="VARCHAR" />
+		<result column="phoneNo" property="phoneNo" jdbcType="VARCHAR" />
+		<result column="wx" property="wx" jdbcType="VARCHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="company" property="company" jdbcType="VARCHAR" />
+		<result column="step" property="step" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="queryRoadShowInfo" parameterType="com.xsbweb.vo.extend.RoadShowVO" resultMap="resultMap">
+		select 
+			customer_id,
+			is_venture,
+			financing_type,
+			turnover_scale,
+			create_date,
+			last_update_date,
+			name,
+			position,
+			phoneNo,
+			wx,
+			email,
+			company,
+			step
+		from t_rl_trs_road_want
+		 where 1=1 
+ 		<if test="name !=null and  name !=''">
+ 			and name like CONCAT('%',#{name},'%' ) 
+ 		</if>
+ 		<if test="step !=null and  step !=''">
+ 			and step like CONCAT('%',#{step},'%' ) 
+ 		</if>
+ 		<if test="financingType !=null and  financingType !=''">
+ 			and financing_type like CONCAT('%',#{financingType},'%' ) 
+ 		</if>
+ 		<if test="turnoverScale !=null and  turnoverScale !=''">
+ 			and turnover_scale like CONCAT('%',#{financingType},'%' ) 
+ 		</if>
+ 		<if test="isVenture !=null and  isVenture !=''">
+ 			and is_venture =#{isVenture}
+ 		</if>
+  		order by last_update_date desc limit #{currentRecord},#{pageSize};
+		
+	</select>
+	<select id="TotalRecordRoadShowCount" resultType="java.lang.Integer" parameterType="com.xsbweb.vo.extend.RoadShowVO">
+		select count(1) from t_rl_trs_road_want
+ 			where 1=1 
+ 		<if test="name !=null and  name !=''">
+ 			and name like CONCAT('%',#{name},'%' ) 
+ 		</if>
+ 		<if test="step !=null and  step !=''">
+ 			and step like CONCAT('%',#{step},'%' ) 
+ 		</if>
+ 		<if test="financingType !=null and  financingType !=''">
+ 			and financing_type like CONCAT('%',#{financingType},'%' ) 
+ 		</if>
+ 		<if test="turnoverScale !=null and  turnoverScale !=''">
+ 			and turnover_scale like CONCAT('%',#{financingType},'%' ) 
+ 		</if>
+ 		<if test="isVenture !=null and  isVenture !=''">
+ 			and is_venture =#{isVenture}
+ 		</if>
+	</select>
+</mapper>

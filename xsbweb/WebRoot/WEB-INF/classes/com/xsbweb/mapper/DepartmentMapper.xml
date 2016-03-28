@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.DepartmentMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.Department" >
+    <result column="department_id" property="departmentId" jdbcType="VARCHAR" />
+    <result column="department_name" property="departmentName" jdbcType="VARCHAR" />
+    <result column="department_leader" property="departmentLeader" jdbcType="VARCHAR" />
+    <result column="father_department_id" property="fatherDepartmentId" jdbcType="VARCHAR" />
+    <result column="effective_date" property="effectiveDate" jdbcType="TIMESTAMP" />
+    <result column="extire_date" property="extireDate" jdbcType="TIMESTAMP" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <sql id="Base_Column">
+  		department_id,department_name,department_leader,father_department_id,effective_date,extire_date,create_date,last_update_date
+  </sql>
+  <select id="getDepartmentList" parameterType="com.xsbweb.vo.Department" resultMap="BaseResultMap">
+  	select <include refid="Base_Column"/>
+  	from t_rl_snap_department
+  </select>
+  <insert id="addDepartment" parameterType="com.xsbweb.vo.Department" >
+  	insert into t_rl_snap_department(
+  		<if test="departmentId !=null and departmentId !=''">
+  			department_id,
+  		</if>
+  		<if test="departmentName !=null and departmentName !=''">
+  			department_name,
+  		</if>
+  		<if test="departmentLeader !=null and departmentLeader !=''">
+  			department_leader,
+  		</if>
+  		<if test="fatherDepartmentId !=null and fatherDepartmentId !=''">
+  			father_department_id,
+  		</if>
+  		<if test="effectiveDate !=null and effectiveDate !=''">
+  			effective_date,
+  		</if>
+  		<if test="extireDate !=null and extireDate !=''">
+  			extire_date,
+  		</if>
+  		create_date
+  	)values(
+  		<if test="departmentId !=null and departmentId !=''">
+  			#{departmentId},
+  		</if>
+  		<if test="departmentName !=null and departmentName !=''">
+  			#{departmentId},
+  		</if>
+  		<if test="departmentLeader !=null and departmentLeader !=''">
+  			#{departmentLeader},
+  		</if>
+  		<if test="fatherDepartmentId !=null and fatherDepartmentId !=''">
+  			#{fatherDepartmentId},
+  		</if>
+  		<if test="effectiveDate !=null and effectiveDate !=''">
+  			#{effectiveDate},
+  		</if>
+  		<if test="extireDate !=null and extireDate !=''">
+  			#{extireDate},
+  		</if>
+  		sysdate()
+  	)
+  </insert>
+  <update id="updDepartment" parameterType="com.xsbweb.vo.Department" >
+  	update t_rl_snap_department set 
+  		<if test="departmentId !=null and departmentId !=''">
+  			department_id = #{departmentId},
+  		</if>
+  		<if test="departmentName !=null and departmentName !=''">
+  			department_name= #{departmentId},
+  		</if>
+  		<if test="departmentLeader !=null and departmentLeader !=''">
+  			department_leader= #{departmentLeader},
+  		</if>
+  		<if test="fatherDepartmentId !=null and fatherDepartmentId !=''">
+  			father_department_id= #{fatherDepartmentId},
+  		</if>
+  		<if test="effectiveDate !=null and effectiveDate !=''">
+  			effective_date= #{effectiveDate},
+  		</if>
+  		<if test="extireDate !=null and extireDate !=''">
+  			extire_date= #{extireDate},
+  		</if>
+  		last_update_date = sysdate()
+  </update>
+  <delete id="delDepartment" parameterType="java.lang.String" >
+  		delete from t_rl_snap_department where  department_id = #{departmentId}
+  </delete>
+</mapper>

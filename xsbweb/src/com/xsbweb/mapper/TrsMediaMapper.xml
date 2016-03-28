@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.TrsMediaMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.TrsMedia" >
+    <id column="media_no" property="mediaNo" jdbcType="VARCHAR" />
+    <result column="media_name" property="mediaName" jdbcType="VARCHAR" />
+    <result column="media_location" property="mediaLocation" jdbcType="VARCHAR" />
+    <result column="media_type" property="mediaType" jdbcType="VARCHAR" />
+    <result column="media_size" property="mediaSize" jdbcType="DOUBLE" />
+    <result column="media_format" property="mediaFormat" jdbcType="VARCHAR" />
+    <result column="media_length" property="mediaLength" jdbcType="INTEGER" />
+    <result column="media_width" property="mediaWidth" jdbcType="SMALLINT" />
+    <result column="media_height" property="mediaHeight" jdbcType="SMALLINT" />
+    <result column="media_author" property="mediaAuthor" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="object_id" property="objectId" jdbcType="VARCHAR" />
+    <result column="media_desc" property="mediaDesc" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    media_no, media_name, media_location, media_type, media_size, media_format, media_length, media_desc,
+    media_width, media_height, media_author, date_format(create_date,'%Y-%m-%d %H:%i:%s')create_date, date_format(last_update_date,'%Y-%m-%d %H:%i:%s')last_update_date,object_id
+  </sql>
+ <select id="getTrsMediaList" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.TrsMedia" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where 1=1 
+    <if test="mediaNo !=null and mediaNo !=''">
+    	and media_no like CONCAT('%',#{mediaNo},'%' ) 
+    </if>
+    <if test="mediaFormat !=null and mediaFormat !=''">
+    	and media_format like CONCAT('%',#{mediaFormat},'%' ) 
+    </if>
+    <if test="mediaName !=null and mediaName !=''">
+    	and media_name  =#{mediaName},
+    </if>
+    <if test="mediaDesc !=null and mediaDesc !=''">
+    	and media_desc  like CONCAT('%',#{mediaDesc},'%' ) 
+    </if>
+    <if test="objectId!=null and objectId!=''">
+    	and object_id = #{objectId}
+    </if>
+    order by last_update_date desc 
+    limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getTrsMediaCounts"  parameterType="com.xsbweb.vo.TrsMedia" resultType="java.lang.Integer">
+	select 
+    	count(1)
+    from t_rl_trs_media
+    where 1=1 
+    <if test="mediaNo!=null and mediaNo!=''">
+    	and media_no = #{mediaNo}
+    </if>
+    <if test="mediaFormat!=null and mediaFormat!=''">
+    	and media_format = #{mediaFormat}
+    </if>
+    <if test="mediaName!=null and mediaName!=''">
+    	and media_name = #{mediaName}
+    </if>
+    <if test="objectId!=null and objectId!=''">
+    	and object_id = #{objectId}
+    </if>
+    
+  </select>
+  
+  <select id="getTrsMediaListByObjectId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+	select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where object_id = #{objectId}
+  </select>
+  
+  <select id="getVideoListByObjectId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+	select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where media_format in ('youku') and object_id = #{objectId}
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where media_no = #{mediaNo,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from t_rl_trs_media
+    where media_no = #{mediaNo,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.xsbweb.vo.TrsMedia" useGeneratedKeys="true" keyProperty="mediaNo">
+    insert into t_rl_trs_media (
+    <if test="mediaNo !=null and mediaNo !=''">
+    	media_no,
+    </if>
+     <if test="mediaName !=null and mediaName !=''">
+    	media_name,
+    </if>
+     <if test="mediaLocation !=null and mediaLocation !=''">
+    	media_location, 
+    </if>
+     <if test="mediaType !=null and mediaType !=''">
+    	media_type, 
+    </if>
+     <if test="mediaSize !=null and mediaSize !=''">
+    	media_size, 
+    </if>
+     <if test="mediaFormat !=null and mediaFormat !=''">
+    	 media_format, 
+    </if>
+    <if test="mediaLength !=null and mediaLength !=''">
+    	media_length, 
+    </if>
+    <if test="mediaWidth !=null and mediaWidth !=''">
+    	media_width, 
+    </if>
+    <if test="mediaHeight !=null and mediaHeight !=''">
+    	 media_height, 
+    </if>
+    <if test="mediaAuthor !=null and mediaAuthor !=''">
+    	media_author,
+    </if>
+    <if test="objectId !=null and objectId !=''">
+    	object_id,
+    </if>
+    <if test="mediaDesc !=null and mediaDesc !=''">
+    	 media_desc,
+    </if>   
+       create_date, 
+       last_update_date
+      )
+    values (
+    <if test="mediaNo !=null and mediaNo !=''">
+    	#{mediaNo},
+    </if>
+     <if test="mediaName !=null and mediaName !=''">
+    	#{mediaName},
+    </if>
+     <if test="mediaLocation !=null and mediaLocation !=''">
+    	#{mediaLocation},
+    </if>
+     <if test="mediaType !=null and mediaType !=''">
+    	#{mediaType},
+    </if>
+     <if test="mediaSize !=null and mediaSize !=''">
+    	#{mediaSize},
+    </if>
+     <if test="mediaFormat !=null and mediaFormat !=''">
+    	#{mediaFormat},
+    </if>
+    <if test="mediaLength !=null and mediaLength !=''">
+    	#{mediaLength},
+    </if>
+    <if test="mediaWidth !=null and mediaWidth !=''">
+    	#{mediaWidth},
+    </if>
+    <if test="mediaHeight !=null and mediaHeight !=''">
+    	 #{mediaHeight},
+    </if>
+    <if test="mediaAuthor !=null and mediaAuthor !=''">
+    	 #{mediaAuthor},
+    </if>
+    <if test="objectId !=null and objectId !=''">
+    	#{objectId},
+    </if>
+    <if test="mediaDesc !=null and mediaDesc !=''">
+    	#{mediaDesc},
+    </if>   
+     now(), now()
+      )
+  </insert>
+  
+  <insert id="batchInsert" parameterType="java.util.List" >
+    insert into t_rl_trs_media (media_no, media_name, media_location, 
+      media_type, media_size, media_format, 
+      media_length, media_width, media_height, 
+      media_author, create_date, last_update_date,
+      object_id
+      )
+    values 
+    <foreach collection="list" item="item" index="index"  separator=",">  
+    	(#{item.mediaNo}, #{item.mediaName}, #{item.mediaLocation}, 
+      	#{item.mediaType}, #{item.mediaSize}, #{item.mediaFormat}, 
+      	#{item.mediaLength}, #{item.mediaWidth}, #{item.mediaHeight}, 
+      	#{item.mediaAuthor}, sysdate(), sysdate(),'null')
+       </foreach>
+  </insert>
+  
+  <insert id="insertSelective" parameterType="com.xsbweb.vo.TrsMedia" >
+    insert into t_rl_trs_media
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="mediaNo != null and mediaNo !='' " >
+        media_no,
+      </if>
+      <if test="mediaName != null and mediaName !='' " >
+        media_name,
+      </if>
+      <if test="mediaLocation != null and mediaLocation !='' " >
+        media_location,
+      </if>
+      <if test="mediaType != null and mediaType !='' " >
+        media_type,
+      </if>
+      <if test="mediaSize != null and mediaSize !='' " >
+        media_size,
+      </if>
+      <if test="mediaFormat != null and mediaFormat !='' " >
+        media_format,
+      </if>
+      <if test="mediaLength != null and mediaLength !='' " >
+        media_length,
+      </if>
+      <if test="mediaWidth != null and mediaWidth !='' " >
+        media_width,
+      </if>
+      <if test="mediaHeight != null and mediaHeight !='' " >
+        media_height,
+      </if>
+      <if test="mediaAuthor != null and mediaAuthor !='' " >
+        media_author,
+      </if>
+      <if test="createDate != null and createDate !='' " >
+        create_date,
+      </if>
+        last_update_date,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="mediaNo != null and mediaNo !='' " >
+        #{mediaNo,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaName != null and mediaName !='' " >
+        #{mediaName,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaLocation != null and mediaLocation !='' " >
+        #{mediaLocation,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaType != null and mediaType !='' " >
+        #{mediaType,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaSize != null and mediaSize !='' " >
+        #{mediaSize,jdbcType=DOUBLE},
+      </if>
+      <if test="mediaFormat != null and mediaFormat !='' " >
+        #{mediaFormat,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaLength != null and mediaLength !='' " >
+        #{mediaLength,jdbcType=INTEGER},
+      </if>
+      <if test="mediaWidth != null and mediaWidth !='' " >
+        #{mediaWidth,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaHeight != null and mediaHeight !='' " >
+        #{mediaHeight,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaAuthor != null and mediaAuthor !='' " >
+        #{mediaAuthor,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null and createDate !='' " >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      sysdate()     
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.xsbweb.vo.TrsMedia" >
+    update t_rl_trs_media
+    <set >
+      <if test="mediaName != null and mediaName != ''" >
+        media_name = #{mediaName,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaLocation != null and mediaLocation != ''" >
+        media_location = #{mediaLocation,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaType != null and mediaType != ''" >
+        media_type = #{mediaType,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaSize != null and mediaSize != ''" >
+        media_size = #{mediaSize,jdbcType=DOUBLE},
+      </if>
+      <if test="mediaFormat != null and mediaFormat != ''" >
+        media_format = #{mediaFormat,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaDesc != null and mediaDesc != ''" >
+        media_desc = #{mediaDesc},
+      </if>
+      <if test="mediaLength != null and mediaLength != ''" >
+        media_length = #{mediaLength,jdbcType=INTEGER},
+      </if>
+      <if test="mediaWidth != null and mediaWidth != ''" >
+        media_width = #{mediaWidth,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaHeight != null and mediaHeight != ''" >
+        media_height = #{mediaHeight,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaAuthor != null and mediaAuthor != ''" >
+        media_author = #{mediaAuthor,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null and createDate != ''" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      		last_update_date = sysdate()     
+      
+    </set>
+    where media_no = #{mediaNo,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.xsbweb.vo.TrsMedia" >
+    update t_rl_trs_media
+    <set >
+      <if test="mediaName != null and mediaName != ''" >
+        media_name = #{mediaName,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaLocation != null and mediaLocation != ''" >
+        media_location = #{mediaLocation,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaType != null and mediaType != ''" >
+        media_type = #{mediaType,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaSize != null and mediaSize != ''" >
+        media_size = #{mediaSize,jdbcType=DOUBLE},
+      </if>
+      <if test="mediaFormat != null and mediaFormat != ''" >
+        media_format = #{mediaFormat,jdbcType=VARCHAR},
+      </if>
+      <if test="mediaDesc != null and mediaDesc != ''" >
+        media_desc = #{mediaDesc},
+      </if>
+      <if test="mediaLength != null and mediaLength != ''" >
+        media_length = #{mediaLength,jdbcType=INTEGER},
+      </if>
+      <if test="mediaWidth != null and mediaWidth != ''" >
+        media_width = #{mediaWidth,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaHeight != null and mediaHeight != ''" >
+        media_height = #{mediaHeight,jdbcType=SMALLINT},
+      </if>
+      <if test="mediaAuthor != null and mediaAuthor != ''" >
+        media_author = #{mediaAuthor,jdbcType=VARCHAR},
+      </if>
+        last_update_date = sysdate()     
+    </set>
+    where media_no = #{mediaNo,jdbcType=VARCHAR}
+  </update>
+  <delete id="batchDeleteTrsMedia"  parameterType="java.lang.String" >
+  		delete from t_rl_trs_media where media_no in 
+  		<foreach collection="array" index="index" item="mediaNo" open="(" separator="," close=")">  
+	           #{mediaNo}   
+	     </foreach>
+  </delete>
+  
+  <select id="getForeMeetVedioList" resultMap="BaseResultMap" parameterType="java.lang.String" >
+	select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where object_id = #{objectId} and object_step='1';
+  </select>
+  
+  <select id="getForeMeetVedioListByArrs" resultMap="BaseResultMap" parameterType="java.lang.String" >
+	select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_media
+    where object_step='1' and object_id in 
+    <foreach collection="array" index="index" item="objectId" open="(" separator="," close=")">  
+           #{objectId}   
+     </foreach>
+  </select>
+  
+</mapper>

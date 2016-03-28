@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.AppToJ2eeLogMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.AppToJ2eeLog" >
+    <result column="request" property="request" jdbcType="VARCHAR" />
+    <result column="req_date" property="reqDate" jdbcType="VARCHAR" />
+    <result column="req_ip" property="reqIp" jdbcType="VARCHAR" />
+    <result column="req_id" property="reqId" jdbcType="VARCHAR" />
+    <result column="req_method" property="reqMethod" jdbcType="VARCHAR" />
+    <result column="res_status" property="resStatus" jdbcType="VARCHAR" />
+    <result column="response" property="response" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  
+  <sql id="Base_Column_List" >
+    request, req_date, req_ip, req_id, req_method, res_status, response, create_date, 
+    last_update_date
+  </sql>
+  
+  <insert id="insert" parameterType="com.xsbweb.vo.AppToJ2eeLog" >
+    insert into t_rl_trs_j2ee_log (request, req_date, req_ip, 
+      req_id, req_method, res_status, 
+      response, create_date, last_update_date
+      )
+    values (#{request,jdbcType=VARCHAR}, #{reqDate,jdbcType=VARCHAR}, #{reqIp,jdbcType=VARCHAR}, 
+      #{reqId,jdbcType=VARCHAR}, #{reqMethod,jdbcType=VARCHAR}, #{resStatus,jdbcType=VARCHAR}, 
+      #{response,jdbcType=VARCHAR}, sysdate(), sysdate()
+      )
+  </insert>
+</mapper>

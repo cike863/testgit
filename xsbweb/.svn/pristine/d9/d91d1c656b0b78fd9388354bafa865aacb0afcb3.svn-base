@@ -1,0 +1,895 @@
+package com.xsbweb.controller.app;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONObject;
+
+import org.apache.log4j.Logger;
+import org.jdom.JDOMException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.xsbweb.cloopen.rest.RSResultCode;
+import com.xsbweb.cloopen.rest.RestSDK;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.service.LoginRegisterService;
+import com.xsbweb.service.MeetRoomService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.RedisCommnUtils;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.util.XMLJDomUtil;
+import com.xsbweb.vo.Comment;
+import com.xsbweb.vo.ImSubAccount;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.extend.MeetCallVO;
+import com.xsbweb.vo.extend.MeetRoomVO;
+import com.xsbweb.vo.extend.MeetVideoRoomVO;
+
+@Controller
+public class AppMeetController {
+
+	@Autowired
+	private MeetRoomService meetRoomService;
+	
+	@Autowired
+	private LoginRegisterService loginRegisterService;  
+	
+	private static Logger log = Logger.getLogger(AppMeetController.class);
+
+    private Lock lock = new ReentrantLock();
+    
+    private static final String NUM_ONE="1";
+    
+    private static final String NUM_ZERO="0";
+    
+    @Resource
+	private RedisUtil redisUtil;
+    
+    /**
+	 * 进入路演直播页面获取数据
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/meet/toMeetRoomIndex.do")
+	public @ResponseBody Map<String,Object> toMeetRoomIndex(
+			HttpServletRequest request,
+			@RequestParam("loginMehod")String loginMehod,
+			@RequestParam(value="meetType",required=false)String meetType
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取路演中的集合
+		List<RObject> meetingRoomList=null;
+		List<RObject> meetForeRoomList=null;
+		try {
+			RObject rObject = new RObject();
+			rObject.setPageNo(1);
+			rObject.setPageSize(10);
+			meetingRoomList = meetRoomService.getShowingMeetRoomList(rObject,meetType);
+			if(meetingRoomList!=null){
+				for (RObject rj : meetingRoomList) {
+					rj.setStartMinute("已开始");
+					/*Long createDate = CommonUtils.getInstanceTime(rj.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj.setStartMinute(minute/60000);
+					}*/
+					//直播时间，只取到时分
+					if(CommonUtils.isNotBlank(rj.getShowDate()) && rj.getShowDate().length()>10){
+						String sdate = rj.getShowDate().substring(0, rj.getShowDate().length()-3);
+						rj.setShowDate(sdate);
+					}
+				}
+			}
+			meetForeRoomList = meetRoomService.getMeetRoomListByType(rObject,"1",meetType);
+			if(meetForeRoomList!=null){
+				for (RObject rj2 : meetForeRoomList) {
+					String timeof = "";
+					if(CommonUtils.isNotBlank(rj2.getShowDate())){
+						timeof = CommonUtils.dateOfTwo(new Date(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(rj2.getShowDate()));
+					}else{
+						timeof = "预告";
+					}
+					rj2.setStartMinute(timeof);
+					/*Long createDate = CommonUtils.getInstanceTime(rj2.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj2.setStartMinute(minute/60000);
+					}*/
+					//直播时间，只取到时分
+					if(CommonUtils.isNotBlank(rj2.getShowDate()) && rj2.getShowDate().length()>10){
+						String sdate = rj2.getShowDate().substring(0, rj2.getShowDate().length()-3);
+						rj2.setShowDate(sdate);
+					}
+				}
+			}
+			map.put("meetingRoomList", meetingRoomList);
+			map.put("meetForeRoomList", meetForeRoomList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取往期回放、直播预告
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/meet/getMeetRoomListByType.do")
+	public @ResponseBody Map<String,Object> getMeetRoomListByType(
+			HttpServletRequest request,
+			@RequestParam("type")String type,
+			@RequestParam(value="meetType",required=false)String meetType,
+			@RequestParam("pageNo")String pageNo,
+			@RequestParam("pageSize")String pageSize,
+			@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(pageNo)||CommonUtils.isBlank(type)
+				||CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取往期回放、直播预告
+		List<RObject> meetRoomList=null;
+		try {
+			RObject rObject = new RObject();
+			rObject.setPageNo(Integer.valueOf(pageNo));
+			rObject.setPageSize(Integer.valueOf(pageSize));
+			meetRoomList = meetRoomService.getMeetRoomListByType(rObject, type,meetType);
+			if(meetRoomList!=null){
+				for (RObject rj : meetRoomList) {
+					String timeof = "";
+					if(CommonUtils.isNotBlank(rj.getShowDate())){
+						timeof = CommonUtils.dateOfTwo(new Date(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(rj.getShowDate()));
+					}else{
+						timeof = "预告";
+					}
+					rj.setStartMinute(timeof);
+					/*Long showDate = CommonUtils.getInstanceTime(rj.getShowDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(showDate!=null && now!=null){
+						int minute = new Long(showDate-now).intValue();
+						rj.setStartMinute(minute/60000);
+					}*/
+					//直播时间，只取到时分
+					if(CommonUtils.isNotBlank(rj.getShowDate()) && rj.getShowDate().length()>10){
+						String sdate = rj.getShowDate().substring(0, rj.getShowDate().length()-3);
+						rj.setShowDate(sdate);
+					}
+				}
+			}
+			map.put("meetRoomList", meetRoomList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+    /**
+	 * 获取语音会议集合
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/meet/getMeetRoomList.do")
+	public @ResponseBody Map<String,Object> getMeetRoomList(
+			HttpServletRequest request,
+			@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<MeetRoomVO> meetRoomVOList=null;
+		try {
+			meetRoomVOList = meetRoomService.getMeetRoomList(new MeetRoomVO());
+			if(meetRoomVOList!=null){
+				for (MeetRoomVO meetRoomVO : meetRoomVOList) {
+					Long createDate = CommonUtils.getInstanceTime(meetRoomVO.getCreatedDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						meetRoomVO.setStartMinute(minute/60000);
+					}
+				}
+			}
+			map.put("meetRoomVOList", meetRoomVOList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	
+	/**
+	 * 举手操作
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/handsUp.do")
+	public @ResponseBody Map<String,Object> handsUp(
+				HttpServletRequest request,
+				@RequestParam("confid")String confid,
+				@RequestParam("customerPhoneNo")String customerPhoneNo,
+				@RequestParam("tmpToken")String tmpToken,
+				@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		log.info("#####################手机号码:"+customerPhoneNo);
+		//获取redis中该会议的成员信息
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		for (MeetCallVO meetCallVO : meetCallVOList) {
+			log.info("#######"+meetCallVO.getCustomerPhoneNo()+"------------"+meetCallVO.getCallSid());
+			if(customerPhoneNo.equals(meetCallVO.getCustomerPhoneNo())){
+				//设置成举手
+				meetCallVO.setIsHandsUp("1");
+				break;
+			}
+		}
+		//重新存储
+		RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList, confid);
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		return map;
+	}
+	
+	
+	/**
+	 * 获取语音会议下成员
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/getCallVOByconfid.do")
+	public @ResponseBody Map<String,Object> getCallVOByconfid(
+				HttpServletRequest request,
+				@RequestParam("confid")String confid,
+				@RequestParam(value="customerPhoneNo",required=false)String customerPhoneNo,
+				@RequestParam(value="tmpToken",required=false)String tmpToken,
+				@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取redis中该会议的成员信息
+		try {
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			if(meetCallVOList!=null){
+				for (MeetCallVO meetCallVO : meetCallVOList) {
+					log.info("#####################手机号码:"+meetCallVO.getCustomerPhoneNo()+",callid:"+meetCallVO.getCallSid());
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("meetCallVOList", meetCallVOList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取嘉宾信息，当前人数，以及伪实时聊天信息
+	 * @param request
+	 * @param confid
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMehod
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/getGuests.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getGuests(
+				HttpServletRequest request,
+				@RequestParam("confid")String confid,
+				@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取redis中该会议的成员信息
+		try {
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			List<MeetCallVO> resultList = new ArrayList<MeetCallVO>();
+			//获取当前会议中成成员总信息
+			int counts = 0;
+			if(meetCallVOList!=null && !meetCallVOList.isEmpty()){
+				for (MeetCallVO meetCallVO : meetCallVOList) {
+					log.info("#####################手机号码:"+meetCallVO.getCustomerPhoneNo()+",callid:"+meetCallVO.getCallSid());
+					if(NUM_ZERO.equals(meetCallVO.getIsBanVoice())){
+						resultList.add(meetCallVO);
+					}
+				}
+				counts = meetCallVOList.size();
+			}
+			map.put("guestsList", resultList);
+			map.put("personCounts", counts);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据成员手机号码获取成员信息
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/getCallVOByPhoneNo.do")
+	public @ResponseBody Map<String,Object> getCallVOByPhoneNo(
+				HttpServletRequest request,
+				@RequestParam("confid")String confid,
+				@RequestParam("customerPhoneNo")String customerPhoneNo,
+				@RequestParam("tmpToken")String tmpToken,
+				@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取redis中该会议的成员信息
+		try {
+			MeetCallVO meetCallVO = null;
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			for (MeetCallVO mcVO : meetCallVOList) {
+				if(customerPhoneNo.equals(mcVO.getCustomerPhoneNo())){
+					meetCallVO = mcVO;
+					break;
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("meetCallVO", meetCallVO);
+		} catch (Exception e) {
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	
+	/**
+	 * 申请加入会议
+	 * @throws IOException 
+	 * @throws JDOMException 
+	 */
+	@RequestMapping(value="/app/meet/inviteJoinConf.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> inviteJoinConf(
+			HttpServletRequest request,
+			@RequestParam(value="confid")String confid,
+			@RequestParam("customerPhoneNo")String customerPhoneNo,
+			@RequestParam("tmpToken")String tmpToken,
+			@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//这一段加锁，防止并发争抢同一个容联云账号
+		lock.lock();
+		try {
+			//----------查找会议信息----------
+			MeetRoomVO meetRoomVO = meetRoomService.getMeetRoomByConfid(confid);
+			if(meetRoomVO==null){
+				map.put(ResultCode.RESULT_CODE, ResultCode.MEET_CONF_NULL);
+				map.put("message", "会议不存在或者已经解散");
+				log.info("###########################################会议不存在或者已经解散！");
+				return map;
+			}
+			ImSubAccount subAccount = meetRoomService.getImSubAccount();
+			if(subAccount==null){
+				map.put(ResultCode.RESULT_CODE, ResultCode.IM_SUBACCOUNT_NOTENOUGH);
+				map.put("message", "容联子账户不足");
+				log.info("###########################################容联子账户不足！");
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				map.put("voipAccount", subAccount.getVoipAccount());
+				map.put("voipPwd", subAccount.getVoipPwd());
+			}
+			return map;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			lock.unlock();
+			//request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 加入会议
+	 * @param request
+	 * @param confid
+	 * @param projectNo
+	 * @param voipAccount
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMehod
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/joinConf.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> joinConf(
+			HttpServletRequest request,
+			@RequestParam(value="confid",required=false)String confid,
+			@RequestParam("voipAccount")String voipAccount,
+			@RequestParam("customerPhoneNo")String customerPhoneNo,
+			@RequestParam("tmpToken")String tmpToken,
+			@RequestParam("loginMehod")String loginMehod
+			){
+		log.info("##################################手机号吗："+customerPhoneNo+",voip："+voipAccount);
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(voipAccount)||CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMehod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		String action = "meet/inviteResult.do";
+		//加入会议的角色。会议中只有一个主持人，以最后一个为准。0：普通成员，1：主持人，默认值为0
+		String role = "0";
+		//是否可讲，0：不可讲，1：可讲，默认值为1
+		String speak = "0";
+		//加入会议通知的回调url地址
+		String joinurl = "meet/joinConfsucc.do";
+		String phoneNos = "";
+		try {
+			//----------查找会议信息----------
+			MeetRoomVO meetRoomVO = meetRoomService.getMeetRoomByConfid(confid);
+			if(meetRoomVO==null){
+				map.put(ResultCode.RESULT_CODE, ResultCode.MEET_CONF_NULL);
+				map.put("message", "会议不存在或者已经解散");
+				log.info("###########################################会议不存在或者已经解散！");
+				return map;
+			}
+			RestSDK restSDK = new RestSDK();
+			String resposenBody = restSDK.InviteJoinConf(confid, voipAccount, action, role, speak, joinurl);
+			Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+			
+			JSONObject json = JSONObject.fromObject(remap);
+			log.info("##############邀请加入会议操作返回："+json.toString());
+			
+			if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+				ImSubAccount isa = new ImSubAccount();
+				isa.setCustomerPhoneNo(customerPhoneNo);
+				//isa.setVoipAccount(subAccount.getVoipAccount());
+				isa.setVoipAccount(voipAccount);
+				meetRoomService.updateImSubAccount(isa);
+				//发送邀请成功
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				//log.info("######################"+voipAccount+"邀请发送成功");
+				//----获取redis中该会议的成员信息----------------
+				List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+				if(meetCallVOList==null){
+					log.info("######################redis中该会议的成员信息为空");
+				}
+				map.put("callid", remap.get("callSid"));
+				map.put("meetRoomVO", meetRoomVO);
+				//map.put("meetCallVOList", meetCallVOList);
+			}else{
+				log.info("######################"+voipAccount+"邀请发送失败");
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			//request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	
+	/**
+	 * 放权给用户自主禁音
+	 * @param request
+	 * @param confid
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMehod
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/banVoice.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> banVoice(
+			HttpServletRequest request,
+			@RequestParam(value="confid")String confid,
+			@RequestParam("customerPhoneNo")String customerPhoneNo,
+			@RequestParam("tmpToken")String tmpToken,
+			@RequestParam("loginMethod")String loginMethod
+			){
+		log.info("#########################放权给用户自主禁音 -------接口调用");
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			//----获取redis中该会议的成员信息----------------
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			if(meetCallVOList==null){
+				log.info("######################redis中该会议的成员信息为空");
+			}else{
+				for (MeetCallVO meetCallVO : meetCallVOList) {
+					if(customerPhoneNo.equals(meetCallVO.getCustomerPhoneNo())){
+						RestSDK restSDK = new RestSDK();
+						String resposenBody = restSDK.ConfMute(meetCallVO.getCallSid(), confid, RSResultCode.ACTION_MUTE_CONF_URL);
+						Map<String, String> remap = XMLJDomUtil.doXMLParse(resposenBody);
+						if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+							meetCallVO.setIsBanVoice("1");
+							map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+						}else{
+							map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+							map.put("message", "禁音失败");
+						}
+						break;
+					}
+				}
+				//重新存储
+				RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+			}
+		} catch (JDOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			//request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 退出会议
+	 * @param request
+	 * @param confid
+	 * @param quitConf
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMehod
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/quitConf.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> quitConf(
+			HttpServletRequest request,
+			@RequestParam(value="confid")String confid,
+			@RequestParam("callid")String callid,
+			@RequestParam("customerPhoneNo")String customerPhoneNo,
+			@RequestParam("tmpToken")String tmpToken,
+			@RequestParam("loginMethod")String loginMethod
+			){
+		log.info("#########################退出会议 -------接口调用");
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(callid)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			RestSDK restSDK = new RestSDK();
+			String resposenBody = restSDK.QuitConf(callid, confid, RSResultCode.ACTION_QUIT_CONF_URL);
+			Map<String, String> remap  = XMLJDomUtil.doXMLParse(resposenBody);
+			
+			JSONObject json = JSONObject.fromObject(remap);
+			log.info("##############退出会议操作返回："+json.toString());
+			
+			if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				map.put("message", "退出失败");
+			}
+		} catch (JDOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 举手超时调用接口
+	 * @param request
+	 * @param confid
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/meet/handsUpTomeOut.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> handsUpTomeOut(
+			HttpServletRequest request,
+			@RequestParam(value="confid")String confid,
+			@RequestParam("customerPhoneNo")String customerPhoneNo,
+			@RequestParam("tmpToken")String tmpToken,
+			@RequestParam("loginMethod")String loginMethod
+			){
+		log.info("#########################举手超时调用接口 -------接口调用");
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(confid)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//----获取redis中该会议的成员信息----------------
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		if(meetCallVOList==null){
+			log.info("######################redis中该会议的成员信息为空");
+		}else{
+			boolean flag = false;
+			for (MeetCallVO meetCallVO : meetCallVOList) {
+				if(customerPhoneNo.equals(meetCallVO.getCustomerPhoneNo())){
+					//设置为没有举手
+					meetCallVO.setIsHandsUp("0");
+					flag = true;
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+					break;
+				}
+			}
+			if(flag){
+				//重新存储
+				RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+			}else{
+				log.info("###########"+customerPhoneNo+"，不存在会议id为"+confid+"的会议中");
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				map.put("message", "该号码不存在会议中");
+			}
+		}
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	//-------------------------视频直播模块 begin------------------------------------------------
+	/**
+	 * 根据meetNo获取视频直播详情
+	 * @param request
+	 * @param meetNo
+	 * @param customerPhoneNo
+	 * @param tmpToken
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/viodemeet/{meetNo}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getViodeMeetByMeetNo(
+			HttpServletRequest request,
+			@PathVariable("meetNo")String meetNo,
+			@RequestParam(value="customerPhoneNo",required=false)String customerPhoneNo,
+			@RequestParam(value="tmpToken",required=false)String tmpToken,
+			@RequestParam("loginMethod")String loginMethod
+			){
+		log.info("#########################根据meetNo获取视频直播详情 -------接口调用");
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(meetNo)||CommonUtils.isBlank(loginMethod)
+				//||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(tmpToken)
+				){
+			log.info("###########"+customerPhoneNo+"，请求参数有误");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		MeetVideoRoomVO meetVideoRoomVO = null;
+		try {
+			meetVideoRoomVO = meetRoomService.getVideoMeetRoomByMeetNo(meetNo);
+			map.put("meetVideo", meetVideoRoomVO);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	//-------------------------视频直播模块 end--------------------------------------------------
+	
+	//------------------------单独给手机网页版wap提供的接口 begin------------------------
+	/**
+	 * 进入路演直播页面获取数据
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/wap/meet/toWapMeetRoomIndex.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> toWapMeetRoomIndex(
+			HttpServletRequest request,
+			@RequestParam("type")String type,
+			@RequestParam("pageNo")String pageNo,
+			@RequestParam("pageSize")String pageSize,
+			@RequestParam("loginMehod")String loginMehod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(type)||CommonUtils.isBlank(pageNo)
+				||CommonUtils.isBlank(pageSize)||CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取路演中的集合
+		List<RObject> meetingRoomList=null;
+		List<RObject> meetRoomList=null;
+		try {
+			RObject rObject = new RObject();
+			rObject.setPageNo(Integer.valueOf(pageNo));
+			rObject.setPageSize(Integer.valueOf(pageSize));
+			meetingRoomList = meetRoomService.getShowingMeetToWap(rObject);
+			if(meetingRoomList!=null){
+				for (RObject rj : meetingRoomList) {
+					rj.setStartMinute("已开始");
+					/*Long createDate = CommonUtils.getInstanceTime(rj.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj.setStartMinute(minute/60000);
+					}*/
+					//直播时间，只取到时分
+					if(CommonUtils.isNotBlank(rj.getShowDate()) && rj.getShowDate().length()>10){
+						String sdate = rj.getShowDate().substring(0, rj.getShowDate().length()-3);
+						rj.setShowDate(sdate);
+					}
+				}
+			}
+			
+			meetRoomList = meetRoomService.getMeetRoomListByTypeToWap(rObject,type);
+			if(meetRoomList!=null){
+				for (RObject rj2 : meetRoomList) {
+					/*Long createDate = CommonUtils.getInstanceTime(rj2.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj2.setStartMinute(minute/60000);
+					}*/
+					String timeof = "";
+					if(CommonUtils.isNotBlank(rj2.getShowDate())){
+						timeof = CommonUtils.dateOfTwo(new Date(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(rj2.getShowDate()));
+					}else{
+						timeof = "预告";
+					}
+					rj2.setStartMinute(timeof);
+					//直播时间，只取到时分
+					if(CommonUtils.isNotBlank(rj2.getShowDate()) && rj2.getShowDate().length()>10){
+						String sdate = rj2.getShowDate().substring(0, rj2.getShowDate().length()-3);
+						rj2.setShowDate(sdate);
+					}
+				}
+			}
+			map.put("meetingRoomList", meetingRoomList);
+			map.put("meetRoomList", meetRoomList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	
+	@RequestMapping(value="/wap/meet/toWapMeetRoomSreach.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> toWapMeetRoomSreach(
+			@RequestParam("type")String type,
+			@RequestParam("pageNo")String pageNo,
+			@RequestParam("pageSize")String pageSize,
+			@RequestParam("loginMehod")String loginMehod,
+			@RequestParam("objName")String objName
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(type)||CommonUtils.isBlank(pageNo)
+				||CommonUtils.isBlank(pageSize)||CommonUtils.isBlank(loginMehod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//获取路演中的集合
+		List<RObject> meetingRoomList=null;
+		List<RObject> meetRoomList=null;
+		try {
+			RObject rObject = new RObject();
+			rObject.setPageNo(Integer.valueOf(pageNo));
+			rObject.setPageSize(Integer.valueOf(pageSize));
+			meetingRoomList = meetRoomService.getShowingMeetToWap(rObject);
+			if(meetingRoomList!=null){
+				for (RObject rj : meetingRoomList) {
+					rj.setStartMinute("已开始");
+					/*Long createDate = CommonUtils.getInstanceTime(rj.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj.setStartMinute(minute/60000);
+					}*/
+				}
+			}
+			
+			meetRoomList = meetRoomService.getMeetRoomListByTypeToWap(rObject,type);
+			if(meetRoomList!=null){
+				for (RObject rj2 : meetRoomList) {
+					/*Long createDate = CommonUtils.getInstanceTime(rj2.getConfCreateDate());
+					Long now = CommonUtils.getInstanceTime();
+					if(createDate!=null && now!=null){
+						int minute = new Long(now-createDate).intValue();
+						rj2.setStartMinute(minute/60000);
+					}*/
+					String timeof = "";
+					if(CommonUtils.isNotBlank(rj2.getShowDate())){
+						timeof = CommonUtils.dateOfTwo(new Date(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(rj2.getShowDate()));
+					}else{
+						timeof = "预告";
+					}
+					rj2.setStartMinute(timeof);
+				}
+			}
+			map.put("meetingRoomList", meetingRoomList);
+			map.put("meetRoomList", meetRoomList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	//------------------------单独给手机网页版wap提供的接口 end------------------------
+}

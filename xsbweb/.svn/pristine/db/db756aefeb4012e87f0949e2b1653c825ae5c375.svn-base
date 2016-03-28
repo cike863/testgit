@@ -1,0 +1,274 @@
+package com.xsbweb.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.vo.CompanyAsset;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ProjectAndItems;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.SearchWord;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.EnumVO;
+
+public interface TrsProjectService {
+
+	public List<RObject> getProjectList(TrsProject trsProject,String projectType)throws Exception;
+	
+	public TrsProject getProjectByNo(String projectNo)throws Exception;
+	
+	public List<TrsProject> getProjectListByChoose(TrsProject trsProject)throws Exception;
+	
+	
+	
+	/**
+	 * 获取首页轮播集合
+	 * @return
+	 * @throws Exception
+	 */
+	public List<RObject> getIndexScrollList()throws Exception;
+	
+	/**
+	 * 该项目是否已经报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public int isApplyJoinRoad(String customerId,String objectNo)throws Exception;
+	
+	/**
+	 * 报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public int applyJoinRoadById(String customerId,String objectNo)throws Exception;
+	
+	/**
+	 * 获取公司财务指标信息
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	public CompanyAsset getCompanyAssetByStockId(String stockId)throws Exception;
+	
+	/**
+	 * 根据项目no获取报名该项目的用户列表
+	 * @param objectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Customer> getApplyProjectCustomerList(Customer customer)throws Exception;
+
+	List<ProjectItem> getProjectItemListByNo(ProjectItem projectItem) throws Exception;
+	
+	/**
+	 * 获取PE风云详情
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getPEByNo(String projectNo)throws Exception;
+	
+	/**
+	 * 获取PE风云集合
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getPEByList(int pageSize,int pageNo,String searchDate)throws Exception;
+	
+	/**
+	 * 获取项目集合列表
+	 * @param pageSize
+	 * @param pageNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject>getProjectList(TrsProject trsProject)throws Exception;
+	
+	/**
+	 * 获取项目列表总数
+	 * @return
+	 * @throws Exception
+	 */
+	public int getTotalRecordProjectCount(TrsProject trsProject) throws Exception;
+	
+	/**
+	 * 获取模糊查询集合列表
+	 * @param serachInformation
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> fuzzySearch(int pageSize, int pageNo,String serachInformation) throws Exception;
+	/**
+	 * 获取模糊查询的列表总数
+	 * @param serachInformation
+	 * @return
+	 * @throws Exception
+	 */
+	public int getfuzzySearchProjectCount(String serachInformation)throws Exception;
+	/**
+	 * 通过projectNo获得项目信息
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getProjectListByProjectNo(String projectNo)throws Exception;
+	/**
+	 * 通过projectNo删除记录
+	 * @param projectNo
+	 * @throws Exception
+	 */
+	public void deleteRecodeByProjectNo(String projectNo) throws Exception;
+	/**
+	 * 批量删除
+	 * @param projectNoArrs
+	 * @throws Exception
+	 */
+	public int deleteRecodeByProjectNo(String[] projectNoArrs) throws Exception;
+	
+	/**
+	 * 通过objectNo,itemKey删除item表中记录
+	 * @param objectNo
+	 * @param itemKey
+	 * @throws Exception
+	 */
+	public void deleteObjectByObjectNoAndItemKey(String objectNo,String itemKey) throws Exception;
+	/**
+	 * 通过projectNo更新记录
+	 * @param projectNo
+	 * @throws Exception
+	 */
+	public int updateRecodeByProjectNo(TrsProject trsProject) throws Exception;
+	/**
+	 * 新增数据
+	 * @param projectAndItems
+	 * @throws Exception
+	 */
+	public int addRecode(TrsProject trsProject) throws Exception;
+	/**
+	 * 通过objectNo获得列表集合
+	 * @param objectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<ProjectItem>getObjectListByObjectNo(String objectNo)throws Exception;
+	
+	/**
+	 * 取消我要看路演报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public int cancelApplyJoinRoad(Customer customer)throws Exception;
+	/**
+	 * 通过projectno更新url或status
+	 * @param projectNo
+	 * @param projCpUrl
+	 * @param projectStatus
+	 * @return
+	 */
+	public int updateUrlOrStatusByProjectNo(String projectNo, String projCpUrl,String projShowStatus)throws Exception;
+	/**
+	 * 添加item
+	 * @param item
+	 * @return
+	 */
+	public int addItem(ProjectItem item)throws Exception;
+	/**
+	 * 获取items
+	 * @param projectNo
+	 * @return
+	 */
+	public List<ProjectItem> getItemsList(String projectNo)throws Exception;
+	/**
+	 * 更新item
+	 * @param item
+	 * @return
+	 */
+	public int updateItem(ProjectItem item)throws Exception;
+	
+	/**
+	 * 获取敲钟列表
+	 * @param trsProject
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getQZProjectList(TrsProject trsProject)throws Exception;
+	/**
+	 * 获取项目列表数量
+	 * @param trsProject
+	 * @return
+	 * @throws Exception
+	 */
+	public int getApplyProjectCount(String objectNo) throws Exception;
+
+	List<Customer> getApplyProjectCustomerList(String projectNo)throws Exception;
+	/**
+	 * 项目词条获取
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<SearchWord> getWordsList(String projectNo)throws Exception;
+	/**
+	 * 词条修改提交
+	 * @param word
+	 * @return
+	 * @throws Exception
+	 */
+	public int addWords(SearchWord word)throws Exception;
+	/**
+	 * 获取该项目为添加的词条
+	 * @param word
+	 * @return
+	 * @throws Exception
+	 */
+	public List<EnumVO> getProjectEnum() throws Exception;
+	/**
+	 * 更新词条
+	 * @param word
+	 * @return
+	 * @throws Exception
+	 */
+	int updateWords(SearchWord word) throws Exception;
+
+	/**
+	 * 路演大厅首页行业过滤
+	 * @param pageNo
+	 * @param pageSize
+	 * @param code
+	 * @param type
+	 * @return
+	 * @throws Exception
+	 */
+	public List<RObject> getProjectListByIndustry(Integer pageNo,Integer pageSize, String code, String type)throws Exception;
+
+	/**
+	 * 根据projectNo数组获取对应实时行情价格
+	 * @param projectNos
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getQuotesByProjectNos(String[] projectNos)throws Exception;
+	
+	public String getQuotesByProjectNo(String projectNo)throws Exception;
+	
+	/**
+	 * 根据stockId获取项目信息
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getProjectByStockId(String stockId)throws Exception;
+	/**
+	 * 一键还原排序
+	 * @return
+	 * @throws Exception
+	 */
+	public int resetOrder()throws Exception;
+}

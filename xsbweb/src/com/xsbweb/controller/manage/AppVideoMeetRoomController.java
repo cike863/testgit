@@ -1,0 +1,447 @@
+package com.xsbweb.controller.manage;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.http.HttpRequest;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.exception.ApplicationException;
+import com.xsbweb.service.EnumService;
+import com.xsbweb.service.MeetRoomService;
+import com.xsbweb.service.StaffService;
+import com.xsbweb.util.BaseUtil;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.ProjectAndItems;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.EnumVO;
+import com.xsbweb.vo.extend.MeetRoomVO;
+import com.xsbweb.vo.extend.MeetVideoRoomVO;
+
+@Controller
+public class AppVideoMeetRoomController {
+
+	private static Logger log = Logger.getLogger(AppMeetRoomController.class);
+
+    private static RedisUtil redisUtil = new RedisUtil();
+    @Autowired
+	private StaffService staffService;
+    
+    @Autowired
+    private  MeetRoomService meetRoomService; 
+    
+    /**
+	 * 进入视频直播列表页
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toVideoMeetRoomList.do")
+	public ModelAndView toVideoMeetRoomList(MeetVideoRoomVO meetVideoRoomVO,HttpServletRequest request)throws Exception{
+		if(meetVideoRoomVO==null){
+			meetVideoRoomVO = new MeetVideoRoomVO();
+		}
+		//String QueryCondition=meetVideoRoomVO.getConfName();
+		//System.out.println("数据:"+QueryCondition);
+		ModelAndView mav = new ModelAndView();
+		Staff staff = new Staff();
+		staff.setDepartmentNames(XsbBusinessConstant.CHECK_DEPT_NAMES);
+		staff.setPageSize(100);
+		List<Staff> staffList = staffService.getStaffByDeptName(staff);
+		String customerId = BaseUtil.getCookieValue("customerId", request);
+		if(staffList!=null && !staffList.isEmpty()){
+			for(Staff staffs : staffList){
+				if(staffs!=null&&staffs.getStaffId().equals(customerId)){
+					meetVideoRoomVO.setHandler(customerId);
+					break;
+				}
+			}
+		}
+		int totalCounts = meetRoomService.getVideoMeetRoomCounts(meetVideoRoomVO);
+		meetVideoRoomVO.setTotalRecord(totalCounts);
+		List<MeetVideoRoomVO> meetVideoRoomVOList = meetRoomService.getVideoMeetRoomList(meetVideoRoomVO);
+		/*if(meetVideoRoomVOList!=null){
+			for (MeetVideoRoomVO mmoomVO : meetVideoRoomVOList) {
+				Long createDate = CommonUtils.getInstanceTime(mmoomVO.getCreatedDate());
+				Long now = CommonUtils.getInstanceTime();
+				if(createDate!=null && now!=null){
+					int minute = new Long(now-createDate).intValue();
+					mmoomVO.setStartMinute(minute/60000);
+				}
+			}
+		}*/
+		mav.setViewName("manage/videomeet/queryVideoMeetRoomList");
+		//mav.addObject("QueryCondition", QueryCondition);
+		mav.addObject("meetVideoRoomVO", meetVideoRoomVO);
+		mav.addObject("meetVideoRoomVOList", meetVideoRoomVOList);
+		return mav;
+	}
+
+
+	/**
+	 * 进入新增视频直播
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toAddVideoMeetRoom.do")
+	public ModelAndView toAddVideoMeetRoom(String MeetNo)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		MeetVideoRoomVO meetVideoRoomVO = new MeetVideoRoomVO();
+		meetVideoRoomVO.setMeetNo(MeetNo);
+		Staff staff = new Staff();
+		staff.setPageSize(100);
+		staff.setDepartmentNames(XsbBusinessConstant.CHECK_DEPT_NAMES);
+		List<Staff> staffList = staffService.getStaffByDeptName(staff);
+		 if(staffList!=null&&!staffList.isEmpty()){
+			mav.addObject("staffList", staffList);
+		}
+		mav.addObject("meetVideoRoomVO",meetVideoRoomVO);
+		mav.setViewName("manage/videomeet/addVideoMeetRoom");
+		return mav;
+	}
+	
+	/**
+	 * 进入新增视频直播预告页面
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toAddForeVideoMeetRoom.do")
+	public ModelAndView toAddForeVideoMeetRoom()throws Exception{
+		ModelAndView mav = new ModelAndView();
+		mav.addObject("projectNo","123456");
+		Staff staff = new Staff();
+		staff.setPageSize(100);
+		staff.setDepartmentNames(XsbBusinessConstant.CHECK_DEPT_NAMES);
+		List<Staff> staffList = staffService.getStaffByDeptName(staff);
+		 if(staffList!=null&&!staffList.isEmpty()){
+			mav.addObject("staffList", staffList);
+		}
+		mav.setViewName("manage/videomeet/addForeVideoMeetRoom");
+		return mav;
+	}
+	
+	//项目
+/*	@RequestMapping(value="/uploadData",method=RequestMethod.GET)
+	public ModelAndView toLoginDataList(HttpServletRequest request) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		String projectNo=request.getParameter("projectNo");
+		mav.addObject("projectNo",projectNo);
+		mav.setViewName("manage/videomeet/addForeVideoMeetRoomUploadeData");
+		return mav;
+	}*/
+	
+	
+	/**
+	 * 新增视频直播预告
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/addForeVideoMeetRoom.do")
+	public String addForeVideoMeetRoom(MeetVideoRoomVO meetVideoRoomVO,ModelMap mode,HttpServletRequest request)throws Exception{
+		/*TrsMedia videoListMedia = (TrsMedia) request.getSession().getAttribute("videoListMediaNo");	
+		TrsMedia videoShareMedia = (TrsMedia)  request.getSession().getAttribute("videoShareMediaNo");
+		TrsMedia bigMedia = (TrsMedia)  request.getSession().getAttribute("videobigPicNo");
+		request.getSession().removeAttribute("videoListMediaNo");
+		request.getSession().removeAttribute("videoShareMediaNo");
+		request.getSession().removeAttribute("videobigPicNo");
+		if(videoListMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(videoListMedia);
+		}
+		if(videoShareMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(videoShareMedia);
+		}
+		if(bigMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(bigMedia);
+		}*/
+		int flag = meetRoomService.addForeVideoMeetRoom(meetVideoRoomVO);		
+		/*String meetMediaNo = meetVideoRoomVO.getMeetMediaNo();
+		String shareMediaNo = meetVideoRoomVO.getShareMediaNo();*/
+
+		if(flag>0){
+			return "redirect:/meet/toVideoMeetRoomList.do";
+		}else{
+			mode.put("error", "新增失败");
+			mode.put("meetVideoRoomVO", meetVideoRoomVO);
+			return "manage/videomeet/addForeVideoMeetRoom";
+		}
+	}
+	
+	/**
+	 * 开始直播，结束直播
+	 * @param meetNo
+	 * @param confName
+	 * @param baseUrl
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/admin/meet/updateMeetToShowStatus",method=RequestMethod.PUT)
+	@ResponseBody
+	public Map<String,Object> updateMeetToShowing(
+	//public ModelAndView updateMeetToShowing(
+				@RequestParam("meetNo") String meetNo,
+				@RequestParam("confName") String confName,
+				@RequestParam("baseUrl") String baseUrl,
+				@RequestParam("meetRole") String meetRole
+			)throws Exception{
+		//ModelAndView mav = new ModelAndView();
+		//修改直播状态和baseUrl
+		Map<String,Object> map = new HashMap<String,Object>();
+		int flag = meetRoomService.updateMeetToShowStatus(meetNo,baseUrl,meetRole);
+		if(flag<0){
+			if(Integer.valueOf(meetRole)>128 && Integer.valueOf(meetRole)<256){
+				//mav.addObject("error","名称为："+confName+",开始直播操作失败！");
+				map.put(ResultCode.RESULT_CODE, ResultCode.VIDEO_DOING_FAIL);
+			}else{
+				//mav.addObject("error","名称为："+confName+",结束直播操作失败！");
+				map.put(ResultCode.RESULT_CODE, ResultCode.VIDEO_DONE_FAIL);
+			}
+		}else{
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}
+		/*List<MeetVideoRoomVO> meetVideoRoomVOList = meetRoomService.getVideoMeetRoomList(new MeetVideoRoomVO());
+		mav.addObject("meetVideoRoomVO", new MeetVideoRoomVO());
+		mav.addObject("meetVideoRoomVOList", meetVideoRoomVOList);
+		mav.setViewName("manage/videomeet/queryVideoMeetRoomList");*/
+		//mav.setViewName("redirect:/meet/toVideoMeetRoomList.do");
+		//return mav;
+		return map;
+	}
+		
+	/**
+	 * 删除视频直播预告(软删除)
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/deleteVideoMeetRoomByMeetNo.do")
+	public ModelAndView deleteVideoMeetRoomByMeetNo(String meetNo)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		log.info("meetNo:"+meetNo);
+		int flag = meetRoomService.deleteVideoMeetRoomBymeetNo(meetNo);
+		if(flag<=0){
+			mav.addObject("error", "删除失败");
+		}
+		
+		/*List<MeetVideoRoomVO> meetVideoRoomVOList = meetRoomService.getVideoMeetRoomList(new MeetVideoRoomVO());
+		mav.addObject("meetVideoRoomVO", new MeetVideoRoomVO());
+		mav.addObject("meetVideoRoomVOList", meetVideoRoomVOList);
+		mav.setViewName("manage/videomeet/queryVideoMeetRoomList");*/
+		mav.setViewName("redirect:/meet/toVideoMeetRoomList.do");
+		return mav;
+	}
+	
+	/**
+	 * 编辑视频直播预告跳转
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/admin/meet/toEditVideoMeetRoom.do")
+	public ModelAndView toEditVideoMeetRoom(String meetNo)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		Staff staff = new Staff();
+		staff.setPageSize(100);
+		staff.setDepartmentNames(XsbBusinessConstant.CHECK_DEPT_NAMES);
+		List<Staff> staffList = staffService.getStaffByDeptName(staff);
+		 if(staffList!=null&&!staffList.isEmpty()){
+			mav.addObject("staffList", staffList);
+		}
+		MeetVideoRoomVO meetVideoRoomVO = meetRoomService.getVideoMeetRoomByMeetNo(meetNo);
+		log.info("获取Role"+meetVideoRoomVO.getMeetRole());
+		mav.addObject("meetVideoRoomVO", meetVideoRoomVO==null?new MeetVideoRoomVO():meetVideoRoomVO);
+		mav.setViewName("manage/videomeet/editVideoMeetRoom");
+		return mav;
+	}
+
+/*	public ModelAndView updateVideoMeetRecode(@PathVariable("projectNo")String projectNo,MeetVideoRoomVO meetVideoRoomVO ,HttpServletRequest request)
+	TrsMedia videoListMediaNo = (TrsMedia) request.getSession().getAttribute("videoListMediaNo");
+	TrsMedia videoShareMediaNo = (TrsMedia)  request.getSession().getAttribute("videoShareMediaNo");
+=======
+	/**
+	 * 更新视频直播预告
+	 * @param projectNo
+	 * @param meetVideoRoomVO
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value="/admin/meet/{meetNo}/upd",method=RequestMethod.PUT)
+	public ModelAndView updateVideoMeetRecode(@PathVariable("meetNo")String meetNo,MeetVideoRoomVO meetVideoRoomVO ,HttpServletRequest request){
+		/*TrsMedia videoListMedia = (TrsMedia) request.getSession().getAttribute("videoListMediaNo");	
+		TrsMedia videoShareMedia = (TrsMedia)  request.getSession().getAttribute("videoShareMediaNo");
+		TrsMedia bigMedia = (TrsMedia)  request.getSession().getAttribute("videobigPicNo");
+		request.getSession().removeAttribute("videoListMediaNo");
+		request.getSession().removeAttribute("videoShareMediaNo");
+		request.getSession().removeAttribute("videobigPicNo");
+		if(videoListMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(videoListMedia);
+		}
+		if(videoShareMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(videoShareMedia);
+		}
+		if(bigMedia!=null){
+			meetVideoRoomVO.getOldMediaList().add(bigMedia);
+		}*/
+	//获取itemKeys以及itemValues的集合
+	/*String[] oldItemKeys= request.getParameterValues("oldItemKey");
+	String[] itemKeys= request.getParameterValues("itemKey");
+	String[] itemValues= request.getParameterValues("itemValue");
+	List<ProjectItem> projectItems = new ArrayList<ProjectItem>();
+	//更新时，无添加itemKey以及itemValue情况执行update动作
+	if(oldItemKeys!=null&&itemKeys!=null&&itemKeys.length>0){
+		for(int i=0;i<oldItemKeys.length;i++){
+			if(itemKeys[i]!=""){
+				ProjectItem projectItem = new ProjectItem();
+				projectItem.setObjectNo(meetVideoRoomVO.getMeetProjectNo());
+				projectItem.setItemKey(itemKeys[i]);
+				projectItem.setOldItemKey(oldItemKeys[i]);
+				projectItem.setItemValue(itemValues[i]);
+				projectItem.setObjectNo(meetNo);
+				projectItems.add(projectItem);
+			}
+		}
+	}
+	//更新时，有添加itemKey以及itemValue情况执行insert动作
+	List<ProjectItem> addObjectItems = new ArrayList<ProjectItem>();
+	if(itemKeys!=null&&(oldItemKeys!=null?oldItemKeys.length:0)<itemKeys.length){
+		for(int i=(oldItemKeys!=null?oldItemKeys.length:0);i<itemKeys.length;i++){
+			if(itemKeys[i]!=""){
+				ProjectItem projectItem = new ProjectItem();
+				projectItem.setItemKey(itemKeys[i]);
+				projectItem.setItemValue(itemValues[i]);
+				projectItem.setObjectNo(meetNo);
+				addObjectItems.add(projectItem);
+			}
+		}
+	}*/
+	ModelAndView mav = new ModelAndView();
+	log.info("编辑Role"+meetVideoRoomVO.getMeetRole());
+	try{
+		meetRoomService.updateVideoMeetRoomByMeetNo(meetVideoRoomVO);
+		//mav=toVideoMeetRoomList(new MeetVideoRoomVO());
+		mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		mav.setViewName("redirect:/meet/toVideoMeetRoomList.do");
+	}catch(Exception e){
+		mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		mav.addObject("meetVideoRoomVO",meetVideoRoomVO);
+	}
+	return mav;
+	}
+	
+	/**
+	 * 	//测试
+	@RequestMapping(value="/admin/meet/{meetNo}/upd",method=RequestMethod.PUT)
+	public ModelAndView updateVideoMeetRecodes(@PathVariable("meetNo")String meetNo,MeetVideoRoomVO meetVideoRoomVO ,HttpServletRequest request){
+	TrsMedia videoListMedia = (TrsMedia) request.getSession().getAttribute("videoListMediaNo");	
+	TrsMedia videoShareMedia = (TrsMedia)  request.getSession().getAttribute("videoShareMediaNo");
+	request.getSession().removeAttribute("videoListMediaNo");
+	request.getSession().removeAttribute("videoShareMediaNo");
+	request.getSession().removeAttribute("videoListMediaNo");
+	request.getSession().removeAttribute("videoShareMediaNo");
+	List<TrsMedia> trsMedias = new ArrayList<TrsMedia>();
+	//判断用户是否对列表以及分享的资源有更新操作--是否有文件上传
+	if(videoListMedia!=null){
+		//设置列表以及分享用mediaNo
+		meetVideoRoomVO.setMeetMediaNo(videoListMedia.getMediaNo());		
+		//将列表以及分享的TrsMedia封装成list集合
+		trsMedias.add(videoListMedia);		
+	}
+	if(videoShareMedia!=null){
+		//设置列表以及分享用mediaNo
+		meetVideoRoomVO.setShareMediaNo(videoShareMedia.getMediaNo());
+		//将列表以及分享的TrsMedia封装成list集合
+		trsMedias.add(videoShareMedia);
+	}
+	ModelAndView mav = new ModelAndView();
+	try{
+		meetRoomService.mm(trsMedias,meetVideoRoomVO);
+		mav=toVideoMeetRoomList(new MeetVideoRoomVO());
+		mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+	}catch(Exception e){
+		mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+	}
+	return mav;
+	}
+	 */
+	/**
+	 * 视频置顶
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/admin/meet/lastEditDate.do")
+	public ModelAndView lastEditDate(MeetVideoRoomVO meetVideoRoomVO) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		try{
+			meetVideoRoomVO.setLastEditDate("0");
+			meetRoomService.updateVideoMeetRoomByMeetNo(meetVideoRoomVO);
+			mav.setViewName("redirect:/meet/toVideoMeetRoomList.do");
+		}catch(Exception e){
+			mav.addObject("error", "置顶失败");
+		}
+		return mav;
+	}
+	/**
+	 * 批量删除视频直播预告(软删除)
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/videoMeetRoom/{meetNoArrs}/del",method=RequestMethod.DELETE)
+	@ResponseBody
+	public Map<String,Object> batchDeleteVideoMeetRoomByMeetNos(@PathVariable("meetNoArrs")String[] meetNoArrs)throws Exception{
+		Map<String,Object>map = new HashMap<String,Object>();
+		log.info("批量删除视频 meetNoArrs:"+meetNoArrs);
+		int flag = meetRoomService.batchDeleteVideoMeetRoomByMeetNos(meetNoArrs);
+		if(flag>0){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}else{
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	//选择关联视频
+		@RequestMapping(value="/meet/chooseRelevanceMeet",method=RequestMethod.GET)
+		public ModelAndView toLoginDataList(MeetVideoRoomVO meetVideoRoomVO) throws Exception{
+			ModelAndView mav = new ModelAndView();		
+			int totalCounts = meetRoomService.getVideoMeetRoomCounts(meetVideoRoomVO);
+			meetVideoRoomVO.setTotalRecord(totalCounts);
+			List<MeetVideoRoomVO> meetVideoRoomVOList = meetRoomService.getVideoMeetRoomList(meetVideoRoomVO);
+			mav.addObject("meetVideoRoomVOList", meetVideoRoomVOList);
+			mav.addObject("meetVideoRoomVO", meetVideoRoomVO);
+			mav.setViewName("manage/media/addForeVideoMeetRoom");
+			return mav;
+		}
+}

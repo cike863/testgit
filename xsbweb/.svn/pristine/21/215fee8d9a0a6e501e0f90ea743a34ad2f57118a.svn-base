@@ -1,0 +1,241 @@
+package com.xsbweb.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.CustomerVO;
+
+public interface TrsProjectMapper {
+
+	public List<TrsProject> getProjectList(TrsProject trsProject)throws Exception;
+		
+	public TrsProject getProjectByNo(String projectNo)throws Exception;
+	
+	public  List<ProjectItem> getProjectItemListByNo(ProjectItem projectItem)throws Exception;
+	
+	public  List<ProjectItem> getProjectItemListByNos(String[] objectNos)throws Exception;
+	
+	public  List<ProjectItem> getProjectItemList()throws Exception;
+	
+	public List<TrsProject> getProjectListByNoArr(TrsProject trsProject)throws Exception;
+	
+	
+	
+	/*public int insertProjectItem(ProjectItem projectItem)throws Exception;
+	
+	public int updateProjectItem(ProjectItem projectItem)throws Exception;
+	
+	public int deleteProjectItem(ProjectItem projectItem)throws Exception;*/
+	
+	public int isApplyJoinRoad(Customer customer)throws Exception;
+	
+	public int addCustSignProject(Customer customer)throws Exception;
+	
+	/**
+	 * 根据项目no获取报名该项目的用户列表
+	 * @param objectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Customer> getApplyProjectCustomerList(String objectNo)throws Exception;
+	
+	/**
+	 * 获取PE风云详情
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getPEByNo(String projectNo)throws Exception;
+	
+	/**
+	 * 获取PE风云集合
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getPEByList(Map<String,Object> param)throws Exception;
+	/**
+	 * 获取项目集合oltp.t_rl_trs_project列表
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject>getProjectList(Map<String,Object> param) throws Exception;
+	
+	/**
+	 * 获取项目oltp.t_rl_trs_project总数
+	 */
+	public int getTotalRecordProjectCount (TrsProject trsProject)throws Exception;
+	/**
+	 * 通过projectNo获取oltp.t_rl_trs_project项目信息
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getProjectListByProjectNo(String projectNo)throws Exception;
+	/**
+	 * 通过ProjectNo删除oltp.t_rl_trs_project记录
+	 * @param projectNo
+	 * @throws Exception
+	 */
+	public void deleteProjectRecordByProjectNo(String projectNo)throws Exception;
+	/**
+	 * 通过objectNo获得oltp.t_rl_trs_project是否有记录
+	 * @param objectNo
+	 * @throws Exception
+	 */
+	public List<ProjectItem> getObjectRecordByObjectNo(String objectNo)throws Exception;
+	/**
+	 * 模糊查询 条件为项目编号、项目名称、公司名称，获取project列表集合
+	 * @param serachInformation
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> fuzzySearch(Map<String,Object> param) throws Exception;
+	/**
+	 * 模糊查询 条件为项目编号、项目名称、公司名称，获取project列表集合总数
+	 * @param information
+	 * @return
+	 * @throws Exception
+	 */
+	public int getfuzzySearchProjectCount(String information) throws Exception;
+	/**
+	 * 通过objectNo删除oltp.t_rl_trs_object记录
+	 * @param objectNo
+	 * @throws Exception
+	 */
+	public void deleteObjectByObjectNo(String objectNo) throws Exception;
+	/**
+	 * 
+	 * @param map
+	 * @throws Exception
+	 */
+	public void deleteObjectByObjectNoAndItemKey(Map<String,Object> param)throws Exception;
+	/**
+	 * 通过projectNo更新oltp.t_rl_trs_project记录
+	 * @param projectNo
+	 * @throws Exception
+	 */
+	public int updateProjectRecodeByProjectNo(TrsProject trsProject) throws Exception;
+	
+	/**
+	 * 通过objectNo更新oltp.t_rl_trs_object记录
+	 * @param objectNo
+	 * @throws Exception
+	 */
+	public int updateObjectRecodeByObjectNo(List<ProjectItem> ProjectItemList)throws Exception;
+	/**
+	 * 新增oltp.t_rl_trs_object记录
+	 * @param param
+	 * @throws Exception
+	 */
+	/*public int addObjectRecode(ProjectItem item)throws Exception;*/
+	public int addObjectRecode(List<ProjectItem> ProjectItemList)throws Exception;
+	/**
+	 * 新增oltp.t_rl_trs_project记录
+	 * @param trsProject
+	 * @throws Exception
+	 */
+	public void addProjectRecode(TrsProject trsProject)throws Exception;
+	
+	/**
+	 * 取消我要看路演报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public int cancelApplyJoinRoad(Customer customer)throws Exception;
+	/**
+	 * 批量插入项目报名信息
+	 * @param customerList
+	 * @return
+	 * @throws Exception
+	 */
+	public void batchAddCustSignProject(List<CustomerVO> customerList)throws Exception;
+	/**
+	 * 通过projectNo更新url或status
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
+	public int updateUrlOrStatusByProjectNo(Map<String,Object> params)throws Exception;
+	
+	/**
+	 * 获取敲钟列表
+	 * @param trsProject
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getQZProjectList(TrsProject trsProject)throws Exception;
+	/**
+	 * 获取项目报名列表
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Customer> getApplyProjectList(Customer customer)throws Exception;
+	/**
+	 * 获取项目报名列表总数量
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public int getApplyProjectCount(String object)throws Exception;
+	/**
+	 * 通过号码集合获取已该项目用户是否已报名
+	 * @param customer
+	 * @return
+	 * @throws Exception
+	 */
+	public List<Customer> getApplyProjectCustomerByIds(CustomerVO customerVO)throws Exception;
+	
+	public List<RObject> getProjectListByIndustry(Map<String,Object> param)throws Exception;
+	
+	/**
+	 * 根据projectNo数组获取对应实时行情价格
+	 * @param projectNos
+	 * @return
+	 * @throws Exception
+	 */
+	public List<TrsProject> getQuotesByProjectNos(String[] projectNos)throws Exception;
+	
+	public String getQuotesByProjectNo(String projectNo)throws Exception;
+	
+	/**
+	 * 根据stockId获取项目信息
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	public TrsProject getProjectByStockId(String stockId)throws Exception;
+	
+	/**
+	 * 根据项目编号获取对应集体敲钟的集体项目编号
+	 * @param projectNo
+	 * @return
+	 * @throws Exception
+	 */
+	public String getPrmtParentNoByProjectNo(String projectNo)throws Exception;
+	/**
+	 * 批量删除items
+	 * @param projectNoArrs
+	 * @throws Exception
+	 */
+	public void deleteObjectByObjectNos(String[] projectNoArrs)throws Exception;
+	/**
+	 * 批量删除project
+	 * @param projectNoArrs
+	 * @throws Exception
+	 */
+	public void deleteProjectRecordByprojectNoArrs(String[] projectNoArrs)throws Exception;
+	/**
+	 * 批量删除project报名
+	 * @param projectNoArrs
+	 * @throws Exception
+	 */
+	public void deleteSignProjectByprojectNoArrs(String[] projectNoArrs)throws Exception;
+}

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.StaffMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.Staff" >
+    <id column="staff_id" property="staffId" jdbcType="VARCHAR" />
+    <result column="staff_name" property="staffName" jdbcType="VARCHAR" />
+    <result column="department_id" property="departmentId" jdbcType="VARCHAR" />
+    <result column="effective_date" property="effectiveDate" jdbcType="TIMESTAMP" />
+    <result column="extire_date" property="extireDate" jdbcType="TIMESTAMP" />
+    <result column="create_date" property="createDate" jdbcType="VARCHAR" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="staff_phone_no" property="staffPhoneNo" jdbcType="VARCHAR" />
+    <result column="staff_email" property="staffEmail" jdbcType="VARCHAR" />
+    <result column="staff_role" property="staffRole" jdbcType="VARCHAR" />
+    <result column="staff_password" property="staffPassword" jdbcType="VARCHAR" />
+    <result column="staff_qq" property="staffQq" jdbcType="VARCHAR" />
+    <result column="staff_tel" property="staffTel" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="menuMap" type="com.xsbweb.vo.extend.EnumVO" >
+    <result column="enum_desc" property="enumDesc" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    staff_id,staff_name, department_id, effective_date, extire_date, create_date, last_update_date, staff_phone_no,staff_email,staff_role,staff_password
+  </sql>
+  
+  <select id="checkStaff" parameterType="java.util.HashMap" resultMap="BaseResultMap">
+  	select  
+  	<include refid="Base_Column_List" />
+  	from t_rl_snap_staff where staff_name=#{loginName} or staff_phone_no=#{loginName} or staff_email=#{loginName};
+  </select>
+  
+  <select id="validateLogin" parameterType="java.util.HashMap" resultMap="BaseResultMap">
+  	select  
+  	<include refid="Base_Column_List" />
+  	from t_rl_snap_staff where (staff_name=#{loginName} or staff_phone_no=#{loginName} or staff_email=#{loginName} )and staff_password=#{staffPassword};  
+  </select>
+  
+  
+  <select id="getStaffCounts" parameterType="com.xsbweb.vo.Staff" resultType="java.lang.Integer">
+  		select count(1) from t_rl_snap_staff 
+  		<where>
+  		1=1 and staff_phone_no !=''
+  		<if test="staffPhoneNo!=null and staffPhoneNo!=''">
+			and staff_phone_no = #{staffPhoneNo}
+		</if>
+		<if test="staffEmail!=null and staffEmail!=''">
+			and staff_email = #{staffEmail}
+		</if>
+  		</where>
+   </select>
+   <select id="getAllStaffList" parameterType="com.xsbweb.vo.Staff" resultMap="BaseResultMap">
+  		select 
+	  		s.staff_id, s.staff_name, s.department_id, s.effective_date, s.extire_date,date_format(s.create_date,'%Y-%c-%d %h:%i:%s') create_date, s.last_update_date, s.staff_phone_no, s.staff_email, s.staff_role, s.staff_password
+  		from t_rl_snap_staff s
+  		left join oltp.t_rl_snap_department d on s.department_id = d.department_id
+  		<where>
+  		1=1 and s.staff_phone_no !=''
+  		<if test="staffPhoneNo !=null and staffPhoneNo !=''">
+			and s.staff_phone_no = #{staffPhoneNo}
+		</if>
+		<if test="staffEmail !=null and staffEmail !=''">
+			and s.staff_email = #{staffEmail}
+		</if>
+		<if test="departmentName !=null and departmentName !=''">
+			and d.department_name = #{departmentName}
+		</if>
+  		</where>
+  		limit #{currentRecord},#{pageSize};
+  </select>
+  <select id="checkRegisteredByPhoneNo" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	select 
+  	<include refid="Base_Column_List" />
+  	from t_rl_snap_staff where staff_phone_no=#{staffPhoneNo};  	
+  </select>
+  <update id="updatePassword" parameterType="com.xsbweb.vo.Staff">
+  	update t_rl_snap_staff set staff_password=#{staffPassword} where staff_phone_no=#{staffPhoneNo}
+  </update>
+  <select id="addStaff" statementType="CALLABLE" parameterType="com.xsbweb.vo.Staff">
+  	call add_staff(#{staffId,mode=IN,jdbcType=VARCHAR},
+	  				#{staffName,mode=IN,jdbcType=VARCHAR},
+	  				#{departmentId,mode=IN,jdbcType=VARCHAR},							
+	  				<!--  #{effectiveDate,mode=IN,jdbcType=VARCHAR},
+	  				#{extireDate,mode=IN,jdbcType=VARCHAR},
+	  				#{createDate,mode=IN,jdbcType=VARCHAR},
+	  				#{lastUpdateDate,mode=IN,jdbcType=VARCHAR},-->
+	  				
+	  				#{staffPhoneNo,mode=IN,jdbcType=VARCHAR},
+	  				#{staffEmail,mode=IN,jdbcType=VARCHAR},
+	  				#{staffPassword,mode=IN,jdbcType=VARCHAR},	
+	  				#{staffQq,mode=IN,jdbcType=VARCHAR},	  	
+	  			    #{staffTel,mode=IN,jdbcType=VARCHAR},	  	  				
+	  				#{prcFlag,mode=OUT,jdbcType=INTEGER});
+  </select>
+  
+  <select id="selectStaffByPhoneNoOrEmail" parameterType="com.xsbweb.vo.Staff" resultMap="BaseResultMap">
+  	select  
+  	<include refid="Base_Column_List" />
+  	from t_rl_snap_staff where staff_phone_no=#{staffPhoneNo} or staff_email=#{staffEmail};
+  </select>
+    <select id="getStaffById"  parameterType="java.lang.String" resultMap="BaseResultMap">  
+		select * from t_rl_snap_staff v where v.staff_id = #{staffId} 
+	</select>  
+    
+    <delete id="delStaff" parameterType="java.lang.String">
+  	    delete from t_rl_snap_staff where staff_id = #{staffId};  
+    </delete>	
+  
+  <update id="editStaff" parameterType="com.xsbweb.vo.Staff">
+  		update t_rl_snap_staff 
+  		<set>
+  			<if test="staffRole!=null and staffRole!=''">
+  				staff_role = #{staffRole},
+  			</if>
+  			<if test="staffName!=null and staffName!=''">
+  				staff_name = #{staffName},
+  			</if>
+  			<if test="staffPhoneNo!=null and staffPhoneNo!=''">
+  				staff_phone_no = #{staffPhoneNo},
+  			</if>
+  			<if test="staffPassword!=null and staffPassword!=''">
+  				staff_password = #{staffPassword},
+  			</if>
+  			<if test="staffQq!=null and staffQq!=''">
+  				staff_qq = #{staffQq},
+  			</if>
+  			<if test="staffTel!=null and staffTel!=''">
+  				staff_tel = #{staffTel},
+  			</if>
+  			<if test="staffEmail!=null and staffEmail!=''">
+  				staff_email = #{staffEmail},
+  			</if>
+  			<if test="departmentId !=null and departmentId !=''">
+  				department_id = #{departmentId},
+  			</if>
+  			<!-- last_update_date = sysdate()      -->
+  		</set>
+  		where staff_id = #{staffId};
+  </update>
+  
+   <select id="getStaffRoleByPrc" statementType="CALLABLE" parameterType="java.util.Map" resultMap="menuMap">
+  	call get_sys_role_enum(#{staffId,mode=IN,jdbcType=VARCHAR},
+	  						#{prcFlag,mode=OUT,jdbcType=INTEGER});	  							
+  </select>
+  
+</mapper>

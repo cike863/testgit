@@ -1,0 +1,821 @@
+package com.xsbweb.controller.manage;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import jxl.read.biff.BiffException;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.exception.ApplicationException;
+import com.xsbweb.service.CustomerService;
+import com.xsbweb.service.StaffService;
+import com.xsbweb.service.TrsProjectService;
+import com.xsbweb.service.XSBBaseService;
+import com.xsbweb.service.impl.RoadShowServiceImp;
+import com.xsbweb.util.BaseUtil;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.ExcelUtil;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ProjectAndItems;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.SearchWord;
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.CustomerVO;
+import com.xsbweb.vo.extend.EnumVO;
+import com.xsbweb.vo.extend.RoadShowVO;
+
+
+@Controller
+@RequestMapping("/admin")
+public class TrsObjectController {
+	
+	@Autowired
+	private TrsProjectService trsProjectService;
+	
+	@Autowired
+	private RoadShowServiceImp roadShowServiceImp;
+	
+	@Autowired
+    private CustomerService customerService;
+	
+	@Autowired
+	private StaffService staffService;
+	
+	@Autowired
+	private XSBBaseService xsbBaseService;
+	 private static Logger log = Logger.getLogger(TrsObjectController.class);
+	//页面初始化
+	@RequestMapping(value="/project",method=RequestMethod.GET)
+	public ModelAndView toProjectList(TrsProject trsProject,HttpServletRequest request) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//项目中，项目部以及市场人员只看自己项目过滤
+		if(trsProject.getProjRole()==null&&"".equals(trsProject.getPrmtParentNo())){
+			Staff staff = new Staff();
+			staff.setDepartmentName(XsbBusinessConstant.PROJECTDEPT_NAME);
+			staff.setPageSize(100);
+			List<Staff> staffProjectList = staffService.getAllStaffList(staff);
+			staff.setDepartmentName(XsbBusinessConstant.MARKETDEPT_NAME);
+			List<Staff> staffMarketList = staffService.getAllStaffList(staff);
+			staffProjectList.addAll(staffMarketList);
+			String customerId = BaseUtil.getCookieValue("customerId", request);
+			if(staffProjectList!=null && !staffProjectList.isEmpty()){
+				for(Staff staffs : staffProjectList){
+					if(staffs!=null&&staffs.getStaffId().equals(customerId)){
+						trsProject.setHandler(customerId);
+						break;
+					}
+				}
+			}
+		}
+		int count = trsProjectService.getTotalRecordProjectCount(trsProject);
+		trsProject.setTotalRecord(count);
+		List<TrsProject> trsObject = trsProjectService.getProjectList(trsProject);
+		
+		mav.addObject("trsProjectVOList", trsObject);
+		mav.addObject("trsProject", trsProject);//分页
+		mav.addObject("serachInformation", "");
+		if(trsProject.getProjRole()==null&&"".equals(trsProject.getPrmtParentNo())){
+			mav.setViewName("manage/project/queryProjectList");
+		}else if("16777216".equals(trsProject.getProjRole())&&(trsProject.getPrmtParentNo()==null||"".equals(trsProject.getPrmtParentNo()))){//敲钟列表
+			mav.setViewName("manage/project/lockQueryProjectList");
+		}else if(!"".equals(trsProject.getPrmtParentNo())){//集体项目列表
+			mav.setViewName("manage/project/queryCollProjectList");
+		}else{//项目客服列表
+			mav.setViewName("manage/projectServices/queryProjectServicesList");
+		}		
+		return mav;
+	}
+	
+	//获取记录
+	@RequestMapping(value="/project/{projectNo}",method=RequestMethod.GET)
+	public ModelAndView getProjectListByProjectNo(@PathVariable("projectNo") String projectNo) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		TrsProject trsProject = trsProjectService.getProjectListByProjectNo(projectNo);
+		mav.addObject("trsProject", trsProject);
+		Staff staff = new Staff();
+		staff.setPageSize(100);
+		staff.setDepartmentName(XsbBusinessConstant.PROJECTDEPT_NAME);
+		List<Staff> staffList = staffService.getAllStaffList(staff);
+		staff.setDepartmentName(XsbBusinessConstant.MARKETDEPT_NAME);
+		List<Staff> staffMarketList = staffService.getAllStaffList(staff);
+		staffList.addAll(staffMarketList);
+		 if(staffList!=null&&!staffList.isEmpty()){
+			mav.addObject("staffList", staffList);
+		}
+		/*List<ProjectItem> objectList =trsProjectService.getObjectListByObjectNo(projectNo);
+		mav.addObject("objectList", objectList);*/
+		if("16777216".equals(trsProject.getProjRole())){
+			mav.setViewName("manage/project/editLockForeProject");
+		}else{
+			mav.setViewName("manage/project/editForeProject");
+		}
+		return mav;
+	}
+	
+	//删除记录--列表页面
+	@RequestMapping(value="/project/{projectNo}/delete")
+	@ResponseBody
+	public Map<String,Integer> deleteRecode(@PathVariable("projectNo") String projectNo){
+		Map<String,Integer> map = new HashMap<String,Integer>();
+		try{
+			MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+			trsProjectService.deleteRecodeByProjectNo(projectNo);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}catch(Exception e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	//删除记录--列表页面
+		@RequestMapping(value="/project/{projectNoArrs}/del")
+		@ResponseBody
+		public Map<String,Integer> bathDeleteProject(@PathVariable("projectNoArrs") String[] projectNoArrs){
+			Map<String,Integer> map = new HashMap<String,Integer>();
+			try{
+				MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+				int result = trsProjectService.deleteRecodeByProjectNo(projectNoArrs);
+				if(result>0){
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				}else{
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				}
+				
+			}catch(Exception e){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+			return map;
+		}
+	//删除记录--编辑页面删除item记录
+	@RequestMapping(value="/project/deleteItem")
+	@ResponseBody
+	public Map<String,Integer> deleteObjectRecode(@RequestParam("objectNo") String objectNo,@RequestParam("itemKey") String itemKey){
+		Map<String,Integer> map = new HashMap<String,Integer>();
+		try{
+			trsProjectService.deleteObjectByObjectNoAndItemKey(objectNo,itemKey);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}catch(Exception e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	
+	//更新记录
+	@RequestMapping(value="/project/{projectNo}/upd",method=RequestMethod.PUT)
+	@ResponseBody
+	public ModelAndView updateRecode(@PathVariable("projectNo")String projectNo,TrsProject trsProject ,HttpServletRequest request){
+		/*TrsMedia projListMedia = (TrsMedia) request.getSession().getAttribute("projListMediaNo");
+		TrsMedia projShareMedia = (TrsMedia)  request.getSession().getAttribute("projShareMediaNo");
+		TrsMedia projbigPicNo = (TrsMedia)  request.getSession().getAttribute("projbigPicNo");
+		request.getSession().removeAttribute("projListMediaNo");
+		request.getSession().removeAttribute("projShareMediaNo");
+		request.getSession().removeAttribute("projbigPicNo");
+		if(projListMedia!=null){
+			//设置列表以及分享用mediaNo
+			trsProject.setProjMediaNo(projListMedia.getMediaNo());			
+			//将列表以及分享的TrsMedia封装成list集合
+			trsProject.getTrsMediaList().add(projListMedia);
+		}
+		if(projShareMedia!=null){
+			trsProject.setShareMediaNo(projShareMedia.getMediaNo());
+			trsProject.getTrsMediaList().add(projShareMedia);
+		}
+		if(projbigPicNo!=null){
+			trsProject.setBigPicNo(projbigPicNo.getMediaNo());
+			trsProject.getTrsMediaList().add(projbigPicNo);
+		}*/
+		
+		/*String[] oldItemKeys= request.getParameterValues("oldItemKey");
+		String[] itemKeys= request.getParameterValues("itemKey");
+		String[] itemValues= request.getParameterValues("itemValue");
+		List<ProjectItem> projectItems = new ArrayList<ProjectItem>();*/
+		//更新时，无添加itemKey以及itemValue情况执行update动作
+		/*if(oldItemKeys!=null&&itemKeys!=null&&itemKeys.length>0){			
+			for(int i=0;i<oldItemKeys.length;i++){
+				ProjectItem projectItem = new ProjectItem();
+				projectItem.setItemKey(itemKeys[i]);
+				projectItem.setOldItemKey(oldItemKeys[i]);
+				projectItem.setItemValue(itemValues[i]);
+				projectItems.add(projectItem);
+			}
+		}*/
+		//更新时，有添加itemKey以及itemValue情况执行insert动作
+		/*List<ProjectItem> addObjectItems = new ArrayList<ProjectItem>();
+		if(itemKeys!=null&&(oldItemKeys!=null?oldItemKeys.length:0)<itemKeys.length){
+			for(int i=(oldItemKeys!=null?oldItemKeys.length:0);i<itemKeys.length;i++){
+				ProjectItem projectItem = new ProjectItem();
+				projectItem.setItemKey(itemKeys[i]);
+				projectItem.setItemValue(itemValues[i]);
+				projectItem.setObjectNo(projectNo);
+				addObjectItems.add(projectItem);
+			}
+		}*/
+		/*ProjectAndItems  projectAndItems = new ProjectAndItems();
+		projectAndItems.setTrsProject(trsProject);*/
+	/*	projectAndItems.setProjectItems(projectItems);*/
+		
+		/*String [] oldWordListword=request.getParameterValues("oldWordListword");
+    	String [] Listword=request.getParameterValues("Listword");
+    	String [] ListLabOrder=request.getParameterValues("ListLabOrder");
+    	if(Listword!=null&&Listword.length>0){
+    		for(int i=0;i<Listword.length;i++){
+    			SearchWord oldWord = new SearchWord();
+    			oldWord.setWord(Listword[i]);
+    			oldWord.setOldWord(oldWordListword[i]);
+    			oldWord.setLabOrder(Integer.parseInt(ListLabOrder[i].trim()));
+    			oldWord.setObject(trsProject.getProjectNo());
+    			trsProject.getOldWordList().add(oldWord);
+    		}
+    	}*/
+		ModelAndView mav = new ModelAndView();
+		try{
+			trsProjectService.updateRecodeByProjectNo(trsProject);
+			//mav=toProjectList(trsProject);/project
+			if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())&&(trsProject.getPrmtParentNo()==null||"".equals(trsProject.getPrmtParentNo()))){
+				mav.setViewName("redirect:/admin/project?projRole=16777216");
+			}else if(trsProject.getPrmtParentNo()!=null&&!"".equals(trsProject.getPrmtParentNo())){
+				mav.setViewName("redirect:/admin/project?prmtParentNo="+trsProject.getPrmtParentNo());
+			}else{
+				mav.setViewName("redirect:/admin/project?projShowStatus=0");
+			}
+			//mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}catch(Exception e){
+			//mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())){
+				mav.setViewName("manage/project/editLockForeProject");
+			}else{
+				mav.setViewName("manage/project/editForeProject");
+			}
+			mav.addObject("trsProject", trsProject);
+		}
+		return mav;
+	}
+	//新增数据
+	@RequestMapping(value="/project/addProject")
+	public ModelAndView addRecode (TrsProject trsProject ,HttpServletRequest request){
+		ModelAndView mav = new ModelAndView();
+		//新增页面没有值，就返回
+//		if(trsProject==null){
+//			mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+//			return mav;
+//		}
+
+		//分别从session中取projListMediaNo以及projShareMediaNo
+		/*TrsMedia projListMedia = (TrsMedia) request.getSession().getAttribute("projListMediaNo");
+		TrsMedia projShareMedia = (TrsMedia)  request.getSession().getAttribute("projShareMediaNo");
+		TrsMedia projbigPicNo = (TrsMedia)  request.getSession().getAttribute("projbigPicNo");
+		request.getSession().removeAttribute("projListMediaNo");
+		request.getSession().removeAttribute("projShareMediaNo");
+		request.getSession().removeAttribute("projbigPicNo");
+		if(projListMedia!=null){		
+			trsProject.getTrsMediaList().add(projListMedia);			
+		}
+		if(projShareMedia!=null){
+			trsProject.getTrsMediaList().add(projShareMedia);
+		}
+		if(projbigPicNo!=null){
+			trsProject.getTrsMediaList().add(projbigPicNo);
+		}*/
+		/*//获取itemKeys以及itemValues的集合
+		String[] itemKeys= request.getParameterValues("itemKey");
+		String[] itemValues= request.getParameterValues("itemValue");
+		List<ProjectItem> projectItems = new ArrayList<ProjectItem>();
+		//如果用户没有输入itemKeys，不会执行添加
+		if(itemValues!=null&&itemValues.length>0&&itemKeys!=null&&itemKeys.length>0){			
+			for(int i=0;i<itemKeys.length;i++){
+				ProjectItem projectItem = new ProjectItem();
+				projectItem.setItemKey(itemKeys[i]);
+				projectItem.setItemValue(itemValues[i]);
+				projectItems.add(projectItem);
+			}
+		}
+		ProjectAndItems  projectAndItems = new ProjectAndItems();
+		projectAndItems.setTrsProject(trsProject);
+		projectAndItems.setProjectItems(projectItems);	*/
+		try{
+			int result = trsProjectService.addRecode(trsProject);
+			if(result==1){
+				//mav=toProjectList(trsProject);
+				if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())&&(trsProject.getPrmtParentNo()==null||"".equals(trsProject.getPrmtParentNo()))){
+					mav.setViewName("redirect:/admin/project?projRole=16777216");
+				}else if(trsProject.getPrmtParentNo()!=null&&!"".equals(trsProject.getPrmtParentNo())){
+					mav.setViewName("redirect:/admin/project?prmtParentNo="+trsProject.getPrmtParentNo());
+				}else{
+					mav.setViewName("redirect:/admin/project?projShowStatus=0");
+				}
+				
+				//mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				//mav.addObject(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+				//throw new ApplicationException("操作失败");
+				if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())){
+					mav.setViewName("manage/project/addLockForeProject");
+				}else{
+					mav.setViewName("manage/project/addForeProject");
+				}
+				mav.addObject("trsProject", trsProject);
+			}
+		}catch(Exception e){
+			if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())){
+				mav.setViewName("manage/project/addLockForeProject");
+			}else{
+				mav.setViewName("manage/project/addForeProject");
+			}
+			mav.addObject("trsProject", trsProject);
+		}
+		return mav;
+	}
+	//新增页面的跳转
+	@RequestMapping("project/toAddForieProject.do")
+	public ModelAndView getToAddForeProject (
+			@RequestParam(value="projRole",required=false) String projRole,
+			@RequestParam(value="prmtParentNo",required=false) String prmtParentNo) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		Staff staff = new Staff();
+		staff.setDepartmentName(XsbBusinessConstant.PROJECTDEPT_NAME);
+		staff.setPageSize(100);
+		List<Staff> staffList = staffService.getAllStaffList(staff);
+		staff.setDepartmentName(XsbBusinessConstant.MARKETDEPT_NAME);
+		List<Staff> staffMarketList = staffService.getAllStaffList(staff);
+		staffList.addAll(staffMarketList);
+		if((projRole!=null&&!"".equals(projRole))||prmtParentNo!=null&&!"".equals(prmtParentNo)){
+			mav.setViewName("manage/project/addLockForeProject"); 
+		}else{
+			mav.setViewName("manage/project/addForeProject");
+			if(staffList!=null&&!staffList.isEmpty()){
+				 mav.addObject("staffList", staffList);
+			 }
+		}
+		TrsProject trsProject = new TrsProject();
+		trsProject.setPrmtParentNo(prmtParentNo);
+		mav.addObject("trsProject", trsProject);
+		return mav;
+	}
+	
+	//搜索
+	@RequestMapping(value="/project/serach",method=RequestMethod.GET)
+	public ModelAndView serach(@RequestParam("serachInformation")String information,HttpServletRequest request) throws Exception{
+		String pageNo = request.getParameter("pageNo");
+		ModelAndView mav = new ModelAndView();
+		TrsProject trsProject= new TrsProject();		
+		if(pageNo!=null){
+			trsProject.setPageNo(Integer.parseInt(pageNo));
+		}
+		int count = trsProjectService.getfuzzySearchProjectCount(information);
+		trsProject.setTotalRecord(count);
+		List<TrsProject> trsObject = trsProjectService.fuzzySearch(trsProject.getPageSize(), trsProject.getPageNo(),information);
+		mav.addObject("trsProjectVOList", trsObject);
+		mav.addObject("trsProject", trsProject);
+		mav.addObject("serachInformation", information);
+		mav.setViewName("manage/project/queryProjectList");
+		return mav;
+	}
+	
+/*	//视频直播管理,列表用图片,上传显示的数据;
+	@RequestMapping(value="/uploading",method=RequestMethod.GET)
+	public ModelAndView uploadingData(HttpServletRequest request) throws Exception{
+		String pageNo = request.getParameter("pageNo");
+		ModelAndView mav = new ModelAndView();
+		BasePo basePo = new BasePo();
+		if(pageNo!=null){
+			basePo.setPageNo(Integer.parseInt(pageNo));
+		}
+		int count = trsProjectService.getTotalRecordProjectCount();
+		basePo.setTotalRecord(count);
+		List<TrsProject> trsObject = trsProjectService.getProjectList(basePo.getPageSize(), basePo.getPageNo());
+		mav.addObject("trsProjectVOList", trsObject);
+		mav.addObject("basePo", basePo);
+		mav.addObject("serachInformation", "");
+		mav.setViewName("manage/project/queryProjectList");
+		return mav;
+	}*/
+	
+	//选择关联项目
+	@RequestMapping(value="/chooseRelevanceProject",method=RequestMethod.GET)
+	public ModelAndView toLoginDataList(HttpServletRequest request,TrsProject trsProject) throws Exception{
+		/*String pageNo = request.getParameter("pageNo");
+		String projectNo=request.getParameter("projectNo");
+		if(pageNo!=null){
+			trsProject.setPageNo(Integer.parseInt(pageNo));
+		}*/
+		ModelAndView mav = new ModelAndView();		
+		int count = trsProjectService.getTotalRecordProjectCount(trsProject);
+		trsProject.setTotalRecord(count);
+		List<TrsProject> trsObject = trsProjectService.getProjectList(trsProject);
+		mav.addObject("trsProjectVOList", trsObject);
+		mav.addObject("trsProject", trsProject);
+		/*mav.addObject("trsProject", trsProject);*/
+		/*mav.addObject("projectNo",projectNo);*/
+		mav.setViewName("manage/videomeet/addForeVideoMeetRoomUploadeData");
+		return mav;
+	}
+
+
+	//查看报名用户列表
+	@RequestMapping(value="/queryApplyList.do",method=RequestMethod.GET)
+	public ModelAndView queryApplyList(Customer customer)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		//BasePo basePo = new BasePo();
+		List<Customer> custList = trsProjectService.getApplyProjectCustomerList(customer);
+		int count = trsProjectService.getApplyProjectCount(customer.getObjectNo());
+		customer.setTotalRecord(count);
+		//List<TrsProject> custLista = trsProjectService.getProjectList(basePo.getPageSize(), basePo.getPageNo());
+		//mav.addObject("custLista",custLista);
+		mav.addObject("custList",custList);
+		//mav.addObject("basePo", basePo);
+		mav.addObject("customer",customer);
+		mav.setViewName("manage/project/queryApply");
+	return mav;
+	}
+	
+
+
+	//我要路演信息
+	@RequestMapping(value="/road.do",method=RequestMethod.GET)
+	public ModelAndView queryRoadShow(RoadShowVO roadShowVO){
+		ModelAndView mav = new ModelAndView();
+		int count = roadShowServiceImp.TotalRecordRoadShowCount(roadShowVO);
+		List<RoadShowVO> roadShowVOList = roadShowServiceImp.queryRoadShowInfo(roadShowVO);
+		roadShowVO.setTotalRecord(count);
+		mav.addObject("roadShowVOList",roadShowVOList);
+		mav.addObject("roadShowVO",roadShowVO);
+		mav.setViewName("manage/roadShow/roadShowInfo");
+		return mav;
+	}
+	/**
+	 * excel文件上传
+	 * @param response
+	 * @param request
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/uploadExcel.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Map<String,Object> getExcel(@RequestParam("theFilePath") String filepath,@RequestParam("projectNo")String projectNo,HttpServletResponse response,HttpServletRequest request) throws Exception{
+		//String filepath=request.getSession().getServletContext().getRealPath("/");
+		//filepath="D:\\cese.xls";
+		/*if(filepath.contains(",")){
+			filepath=filepath.substring(0, filepath.indexOf(","));
+		}
+		if(projectNo.contains(",")){
+			projectNo=projectNo.substring(0, projectNo.indexOf(","));
+		}*/
+		filepath=filepath.replaceAll("\\\\","//");
+		Map<String,Object> map = new HashMap<String,Object>();
+		List<CustomerVO> customerList = new ArrayList<CustomerVO>();
+		List<EnumVO> gzIndustryEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.GZ_INDUSTRY);
+		List<EnumVO> capitalScaleEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.CAPITAL_SCALE);
+		List<EnumVO> customerTypeEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.CUSTOMER_TYPE);
+		try{
+			customerList = ExcelUtil.getAllByExcel(filepath,gzIndustryEnumList,capitalScaleEnumList,customerTypeEnumList);
+			int result=0;
+			if(customerList!=null&&!customerList.isEmpty()){
+				result=customerService.projectRegistrationByExcel(customerList,projectNo);
+				if(result!=0){
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				}else{
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				}
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_EXCEL_FAIL);
+			}
+		}catch(BiffException e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.REARD_EXCEL_FAIL);
+		}catch(Exception e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		} 
+		return map;
+	}
+	/**
+	 * excel文件下载校验
+	 * @param response
+	 * @param request
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/toCheckExcel.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Map<String,Object> toCheckExcel(@RequestParam("projectNo")String projectNo,HttpServletRequest request,HttpServletResponse response) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		List<Customer> customerList = customerService.getCustomerByProjectNo(projectNo);
+		ResourceBundle bundle = ResourceBundle.getBundle("config");  
+		String	excelCount = bundle.getString("excelCount");  //IP地址
+		if(customerList==null||customerList.isEmpty()){
+			map.put(ResultCode.RESULT_CODE, ResultCode.GET_EXCEL_FAIL);;
+		}else if(customerList!=null&&!customerList.isEmpty()&&Integer.parseInt(excelCount)<customerList.size()){
+			map.put(ResultCode.RESULT_CODE, ResultCode.EXCEL_COUNT_TOMAX);
+			map.put("excelCount", excelCount);
+		}else{
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}
+		return map;
+	}
+	/**
+	 * excel文件下载
+	 * @param response
+	 * @param request
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/toExcel.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Map<String,Object> toExcel(@RequestParam("projectNo")String projectNo,HttpServletRequest request,HttpServletResponse response) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		List<Customer> customerList = customerService.getCustomerByProjectNo(projectNo);
+		List<EnumVO> gzIndustryEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.GZ_INDUSTRY);
+		List<EnumVO> capitalScaleEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.CAPITAL_SCALE);
+		List<EnumVO> customerTypeEnumList = xsbBaseService.getEnumVOListByColumnFullName(XsbBusinessConstant.CUSTOMER_TYPE);
+		try{
+			ExcelUtil.toExcel(customerList,response,XsbBusinessConstant.OBJECT_EXCEL,gzIndustryEnumList,capitalScaleEnumList,customerTypeEnumList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}catch(Exception e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		} 
+		return map;
+	}
+	/**
+	 * 项目报名列表导入导出页面跳转
+	 * @return
+	 */
+	@RequestMapping(value="/projectRegistration",method=RequestMethod.GET)
+	public ModelAndView projectRegistration(Customer customer){
+		ModelAndView mav = new ModelAndView();
+		/*List<CustomerVO> customerList = customerService.getCustomerByProjectNo(projectNo);*/
+		mav.setViewName("manage/project/projectRegistration");
+		return mav;
+	}
+	/**
+	 *通过prijectNo更新UrlOrStatus
+	 * @param projectNo
+	 * @param projShowStatus
+	 * @param projCpUrl
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/project/updateUrlOrStatus",method=RequestMethod.GET)
+	@ResponseBody
+	public Map<String,Object>updateUrlOrStatusByProjectNo(@RequestParam("projectNo")String projectNo,
+			@RequestParam("projShowStatus")String projShowStatus,
+			@RequestParam(value="projCpUrl",required=false)String projCpUrl)throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		int result = trsProjectService.updateUrlOrStatusByProjectNo(projectNo,
+				projCpUrl, projShowStatus);
+		if (result > 0) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} else {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	/**
+	 * item添加
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/item/add",method=RequestMethod.POST)
+	@ResponseBody
+	public ModelAndView addItems(ProjectItem item) throws Exception{
+		//Map<String,Object> map = new HashMap<String,Object>();
+		ModelAndView mav = new ModelAndView();
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int result =0;
+		/*if(item.getItemValue().contains("&amp;nbsp;")){
+			item.setItemValue(item.getItemValue().replaceAll("&amp;nbsp;","&emsp;"));
+		}*/
+		
+		if(item.getOldItemKey()!=item.getItemKey()){//更新时key值没有更新过滤，新增时oldItemKey为对象null而ItemKey为string类型，默认""
+			List<ProjectItem> items = trsProjectService.getProjectItemListByNo(item);
+			if (!items.isEmpty() && items.get(0) != null) {
+				mav.addObject("error", "存在相同的key值");
+				mav.addObject("item", item);
+				mav.setViewName("manage/itemEditor");
+				return mav;
+			}
+		}
+		//item图片路径替换
+		item.setItemValue(item.getItemValue().replaceAll((XsbBusinessConstant.DYLY_URL+"/"),"/dyly/"));
+		log.info("item.getItemValue()："+item.getItemValue());
+		if(item.getOldItemKey()==null){
+			result = trsProjectService.addItem(item);
+		}else{
+			result = trsProjectService.updateItem(item);
+		}		
+		if (result > 0) {
+			//map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			mav.setViewName("redirect:/admin/item?projectNo="+item.getObjectNo());
+		} else {
+			item.setItemValue(item.getItemValue().replaceAll("/dyly/",(XsbBusinessConstant.DYLY_URL+"/")));
+			mav.addObject("error", "操作失败");
+			mav.addObject("item", item);
+			mav.setViewName("manage/itemEditor");
+			//map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return mav;
+	}
+	/**
+	 * item获取
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/item",method=RequestMethod.GET)
+	public ModelAndView getItemsList(@RequestParam("projectNo")String projectNo,ProjectItem item) throws Exception{
+		ModelAndView map = new ModelAndView("manage/itemList");
+		List<ProjectItem>  items= trsProjectService.getItemsList(projectNo);
+		map.addObject("projectNo", projectNo);
+		map.addObject("itemList", items);
+		map.addObject("item", item);		
+		return map;
+	}
+	/**
+	 * item更新
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/item/update",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String,Object>updateItems(@RequestBody ProjectItem item) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		
+		int result = trsProjectService.updateItem(item);
+		if (result > 0) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} else {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	/**
+	 * words获取
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/project/words",method=RequestMethod.GET)
+	public ModelAndView getWordsList(@RequestParam("projectNo")String projectNo) throws Exception{
+		ModelAndView map = new ModelAndView("manage/project/wordList");
+		List<SearchWord> words = trsProjectService.getWordsList(projectNo);
+		map.addObject("projectNo", projectNo);
+		map.addObject("words", words);
+		return map;
+	}
+	/**
+	 * words修改提交
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/project/editword",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String,Object> updateProjectWords(@RequestBody SearchWord word) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int result = trsProjectService.updateWords(word);
+		if (result > 0) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			//return "redirect:/admin/project/words?projectNo="+word.getObject();
+		} else {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			//return "redirect:/admin/project/editwordList?projectNo="+word.getObject();
+		}
+		return map;
+	}
+	/**
+	 * words修改提交
+	 * @param item
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/project/addword",method=RequestMethod.POST)
+	@ResponseBody
+	public Map<String,Object> addProjectWords(@RequestBody SearchWord word) throws Exception{
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String,Object> map = new HashMap<String,Object>();
+		int result = trsProjectService.addWords(word);
+		if (result > 0) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			//return "redirect:/admin/project/words?projectNo="+word.getObject();
+		} else {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			//return "redirect:/admin/project/addword?projectNo="+word.getObject();
+		}
+		return map;
+	}
+	/**
+	 * words修改跳转
+	 * @param item
+	 * @return
+	 * @throws Exceptionhttp://localhost:8080/xsbweb/project/editwordList?projectNo=proj009984&word=%E6%B5%8B%E8%AF%95%E8%AF%8D%E6%9D%A11&labOrder=1
+	 */
+	@RequestMapping(value="/project/editwordList",method=RequestMethod.GET)
+	public ModelAndView editWords(@RequestParam("projectNo")String projectNo,SearchWord word) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		List<SearchWord> words = trsProjectService.getWordsList(projectNo);
+		List<EnumVO> projectEnum = trsProjectService.getProjectEnum();
+		List<EnumVO> projectWords = new ArrayList<EnumVO>();
+		for(int i=0;i<projectEnum.size();i++){
+			boolean flg=true;
+			for(int j=0;j<words.size();j++){
+				if(projectEnum.get(i).getEnumDesc().equals(words.get(j).getWord())){
+					flg=false;
+				}
+			}
+			if(flg){
+				projectWords.add(projectEnum.get(i));
+			}
+		}
+		if(word!=null&&word.getWord()!=null){
+			mav.setViewName("manage/project/editWord");
+		}else{
+			mav.setViewName("manage/project/addWord");
+		}
+		mav.addObject("projectNo", projectNo);
+		mav.addObject("projectWords", projectWords);
+		mav.addObject("word", word);
+		return mav;
+	}
+	/**
+	 * 置顶操作
+	 * @param trsProject
+	 * @return
+	 */
+	@RequestMapping(value="/project/lastEditDate.do")
+	public ModelAndView lastEditDate (TrsProject trsProject){
+		ModelAndView mav = new ModelAndView();
+		trsProject.setLastEditDate("0");
+		try{
+			int result = trsProjectService.updateRecodeByProjectNo(trsProject);
+			if(result==1){
+				if(trsProject.getProjRole()!=null&&"16777216".equals(trsProject.getProjRole())){
+					mav.setViewName("redirect:/admin/project?projRole=16777216");
+				}else if(trsProject.getPrmtParentNo()!=null&&!"".equals(trsProject.getPrmtParentNo())){
+					mav.setViewName("redirect:/admin/project?prmtParentNo="+trsProject.getPrmtParentNo());
+				}else{
+					mav.setViewName("redirect:/admin/project?projShowStatus=0");
+				}
+				
+			}
+		}catch(Exception e){
+			mav.addObject("error", "置顶失败");
+		}
+		return mav;
+	}
+	@RequestMapping(value="/project/resetOrder.do",method=RequestMethod.GET)
+	@ResponseBody
+	public Map<String,Object>resetOrder() throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		int result = trsProjectService.resetOrder();
+		if (result > 0) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} else {
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+	@RequestMapping(value="/project/{projectNo}/{customerIdArrs}/del")
+	@ResponseBody
+	public Map<String,Integer> batchDeleteApplyCustomer(
+			@PathVariable("projectNo") String  projectNo,
+			@PathVariable("customerIdArrs") String[] customerIdArrs){
+		Map<String,Integer> map = new HashMap<String,Integer>();
+		try{
+			MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+			int result = trsProjectService.batchDeleteApplyCustomer(projectNo,customerIdArrs);
+			if(result>0){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+			
+		}catch(Exception e){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+}

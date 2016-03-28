@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.SnapEtlScheduleMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.SnapEtlSchedule" >
+    <id column="task_table" property="taskTable" jdbcType="VARCHAR" />
+    <result column="task_desc" property="taskDesc" jdbcType="VARCHAR" />
+    <result column="task_period" property="taskPeriod" jdbcType="INTEGER" />
+    <result column="task_dependency" property="taskDependency" jdbcType="VARCHAR" />
+    <result column="effective_date" property="effectiveDate" jdbcType="VARCHAR" />
+    <result column="extire_date" property="extireDate" jdbcType="VARCHAR" />
+    <result column="last_exec_time" property="lastExecTime" jdbcType="VARCHAR" />
+    <result column="next_exec_time" property="nextExecTime" jdbcType="VARCHAR" />
+    <result column="intrfc_record_type" property="intrfcRecordType" jdbcType="VARCHAR" />
+    <result column="intrfc_method" property="intrfcMethod" jdbcType="VARCHAR" />
+    <result column="intrfc_type" property="intrfcType" jdbcType="VARCHAR" />
+    <result column="exec_status" property="execStatus" jdbcType="VARCHAR" />
+    <result column="url_part_1" property="urlPart1" jdbcType="VARCHAR" />
+    <result column="url_part_1_logic" property="urlPart1Logic" jdbcType="VARCHAR" />
+    <result column="url_part_2" property="urlPart2" jdbcType="VARCHAR" />
+    <result column="url_part_2_logic" property="urlPart2Logic" jdbcType="VARCHAR" />
+    <result column="url_part_3" property="urlPart3" jdbcType="VARCHAR" />
+    <result column="url_part_3_logic" property="urlPart3Logic" jdbcType="VARCHAR" />
+    <result column="url_part_4" property="urlPart4" jdbcType="VARCHAR" />
+    <result column="url_part_4_logic" property="urlPart4Logic" jdbcType="VARCHAR" />
+    <result column="url_part_5" property="urlPart5" jdbcType="VARCHAR" />
+    <result column="url_part_5_logic" property="urlPart5Logic" jdbcType="VARCHAR" />
+    <result column="regex" property="regex" jdbcType="VARCHAR" />
+    <result column="target_column_01" property="targetColumn01" jdbcType="VARCHAR" />
+    <result column="target_column_02" property="targetColumn02" jdbcType="VARCHAR" />
+    <result column="target_column_03" property="targetColumn03" jdbcType="VARCHAR" />
+    <result column="target_column_04" property="targetColumn04" jdbcType="VARCHAR" />
+    <result column="target_column_05" property="targetColumn05" jdbcType="VARCHAR" />
+    <result column="target_column_06" property="targetColumn06" jdbcType="VARCHAR" />
+    <result column="target_column_07" property="targetColumn07" jdbcType="VARCHAR" />
+    <result column="target_column_08" property="targetColumn08" jdbcType="VARCHAR" />
+    <result column="target_column_09" property="targetColumn09" jdbcType="VARCHAR" />
+    <result column="target_column_10" property="targetColumn10" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="VARCHAR" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="VARCHAR" />
+    <result column="thread_host" property="threadHost" jdbcType="VARCHAR" />
+    <result column="thread_port" property="threadPort" jdbcType="VARCHAR" />
+    <result column="thread_name" property="threadName" jdbcType="VARCHAR" />
+  </resultMap>
+ 
+<!--   <sql id="Base_Column_List" >
+    task_table, task_desc, task_period, task_dependency, effective_date, extire_date, 
+    last_exec_time, next_exec_time, intrfc_record_type, intrfc_type, exec_status, 
+    url_part_1, url_part_1_logic, url_part_2, url_part_2_logic, url_part_3, url_part_3_logic, 
+    url_part_4, url_part_4_logic, url_part_5, url_part_5_logic, regex, target_column_01, 
+    target_column_02, target_column_03, target_column_04, target_column_05, target_column_06, 
+    target_column_07, target_column_08, target_column_09, target_column_10, date_format(create_date,'%Y-%m-%d %H:%i:%S')create_date, 
+    date_format(last_update_date,'%Y-%m-%d %H:%i:%S')last_update_date, date_format(schedule_date,'%Y-%m-%d %H:%i:%S')schedule_date
+  </sql> -->
+  
+  <sql id="Base_Column_List" >
+    task_table, task_desc, task_period, task_dependency, 
+    last_exec_time, next_exec_time, intrfc_record_type, intrfc_type, exec_status, 
+    url_part_1, url_part_1_logic, url_part_2, url_part_2_logic, url_part_3, url_part_3_logic, 
+    url_part_4, url_part_4_logic, url_part_5, url_part_5_logic, regex, target_column_01, 
+    target_column_02, target_column_03, target_column_04, target_column_05, target_column_06, 
+    target_column_07, target_column_08, target_column_09, target_column_10, date_format(create_date,'%Y-%m-%d %H:%i:%S')create_date, 
+    date_format(last_update_date,'%Y-%m-%d %H:%i:%S')last_update_date, date_format(schedule_date,'%Y-%m-%d %H:%i:%S')schedule_date,
+    thread_host,
+	thread_port,
+	thread_name
+  </sql>
+  
+   <select id="getEtlScheduleList" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_etl_schedule
+    where 1=1
+    	<if test="taskTable !=null and taskTable !=''">
+    		and task_table = #{taskTable}
+    	</if>
+    	<if test="taskDesc !=null and taskDesc !=''">
+    		and task_desc like CONCAT('%',#{taskDesc},'%' ) 
+    	</if>
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_etl_schedule
+    where task_table = #{taskTable}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    delete from t_rl_snap_etl_schedule
+    where task_table = #{taskTable}
+  </delete>
+  <!-- <update id="deleteByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule">
+  	update t_rl_snap_etl_schedule 
+	<set>
+		<if test="taskTable!=null">
+			
+		</if>
+	</set>
+  </update> -->
+  
+  <insert id="insert" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    insert into t_rl_snap_etl_schedule (task_table, task_desc, task_period, 
+      task_dependency, effective_date, extire_date, 
+      last_exec_time, next_exec_time, intrfc_record_type, 
+      intrfc_method, intrfc_type, exec_status, 
+      url_part_1, url_part_1_logic, url_part_2, 
+      url_part_2_logic, url_part_3, url_part_3_logic, 
+      url_part_4, url_part_4_logic, url_part_5, 
+      url_part_5_logic, regex, target_column_01, 
+      target_column_02, target_column_03, target_column_04, 
+      target_column_05, target_column_06, target_column_07, 
+      target_column_08, target_column_09, target_column_10, 
+      create_date, last_update_date, schedule_date
+      )
+    values (#{taskTable,jdbcType=VARCHAR}, #{taskDesc,jdbcType=VARCHAR}, #{taskPeriod,jdbcType=INTEGER}, 
+      #{taskDependency,jdbcType=VARCHAR}, #{effectiveDate,jdbcType=TIMESTAMP}, #{extireDate,jdbcType=TIMESTAMP}, 
+      #{lastExecTime,jdbcType=TIMESTAMP}, #{nextExecTime,jdbcType=TIMESTAMP}, #{intrfcRecordType,jdbcType=VARCHAR}, 
+      #{intrfcMethod,jdbcType=VARCHAR}, #{intrfcType,jdbcType=VARCHAR}, #{execStatus,jdbcType=VARCHAR}, 
+      #{urlPart1,jdbcType=VARCHAR}, #{urlPart1Logic,jdbcType=VARCHAR}, #{urlPart2,jdbcType=VARCHAR}, 
+      #{urlPart2Logic,jdbcType=VARCHAR}, #{urlPart3,jdbcType=VARCHAR}, #{urlPart3Logic,jdbcType=VARCHAR}, 
+      #{urlPart4,jdbcType=VARCHAR}, #{urlPart4Logic,jdbcType=VARCHAR}, #{urlPart5,jdbcType=VARCHAR}, 
+      #{urlPart5Logic,jdbcType=VARCHAR}, #{regex,jdbcType=VARCHAR}, #{targetColumn01,jdbcType=VARCHAR}, 
+      #{targetColumn02,jdbcType=VARCHAR}, #{targetColumn03,jdbcType=VARCHAR}, #{targetColumn04,jdbcType=VARCHAR}, 
+      #{targetColumn05,jdbcType=VARCHAR}, #{targetColumn06,jdbcType=VARCHAR}, #{targetColumn07,jdbcType=VARCHAR}, 
+      #{targetColumn08,jdbcType=VARCHAR}, #{targetColumn09,jdbcType=VARCHAR}, #{targetColumn10,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{lastUpdateDate,jdbcType=TIMESTAMP}, #{scheduleDate,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    insert into t_rl_snap_etl_schedule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="taskTable != null" >
+        task_table,
+      </if>
+      <if test="taskDesc != null" >
+        task_desc,
+      </if>
+      <if test="taskPeriod != null" >
+        task_period,
+      </if>
+      <if test="taskDependency != null" >
+        task_dependency,
+      </if>
+      <if test="effectiveDate != null" >
+        effective_date,
+      </if>
+      <if test="extireDate != null" >
+        extire_date,
+      </if>
+      <if test="lastExecTime != null" >
+        last_exec_time,
+      </if>
+      <if test="nextExecTime != null" >
+        next_exec_time,
+      </if>
+      <if test="intrfcRecordType != null" >
+        intrfc_record_type,
+      </if>
+      <if test="intrfcMethod != null" >
+        intrfc_method,
+      </if>
+      <if test="intrfcType != null" >
+        intrfc_type,
+      </if>
+      <if test="execStatus != null" >
+        exec_status,
+      </if>
+      <if test="urlPart1 != null" >
+        url_part_1,
+      </if>
+      <if test="urlPart1Logic != null" >
+        url_part_1_logic,
+      </if>
+      <if test="urlPart2 != null" >
+        url_part_2,
+      </if>
+      <if test="urlPart2Logic != null" >
+        url_part_2_logic,
+      </if>
+      <if test="urlPart3 != null" >
+        url_part_3,
+      </if>
+      <if test="urlPart3Logic != null" >
+        url_part_3_logic,
+      </if>
+      <if test="urlPart4 != null" >
+        url_part_4,
+      </if>
+      <if test="urlPart4Logic != null" >
+        url_part_4_logic,
+      </if>
+      <if test="urlPart5 != null" >
+        url_part_5,
+      </if>
+      <if test="urlPart5Logic != null" >
+        url_part_5_logic,
+      </if>
+      <if test="regex != null" >
+        regex,
+      </if>
+      <if test="targetColumn01 != null" >
+        target_column_01,
+      </if>
+      <if test="targetColumn02 != null" >
+        target_column_02,
+      </if>
+      <if test="targetColumn03 != null" >
+        target_column_03,
+      </if>
+      <if test="targetColumn04 != null" >
+        target_column_04,
+      </if>
+      <if test="targetColumn05 != null" >
+        target_column_05,
+      </if>
+      <if test="targetColumn06 != null" >
+        target_column_06,
+      </if>
+      <if test="targetColumn07 != null" >
+        target_column_07,
+      </if>
+      <if test="targetColumn08 != null" >
+        target_column_08,
+      </if>
+      <if test="targetColumn09 != null" >
+        target_column_09,
+      </if>
+      <if test="targetColumn10 != null" >
+        target_column_10,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="lastUpdateDate != null" >
+        last_update_date,
+      </if>
+      <if test="scheduleDate != null" >
+        schedule_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="taskTable != null" >
+        #{taskTable,jdbcType=VARCHAR},
+      </if>
+      <if test="taskDesc != null" >
+        #{taskDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="taskPeriod != null" >
+        #{taskPeriod,jdbcType=INTEGER},
+      </if>
+      <if test="taskDependency != null" >
+        #{taskDependency,jdbcType=VARCHAR},
+      </if>
+      <if test="effectiveDate != null" >
+        #{effectiveDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="extireDate != null" >
+        #{extireDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastExecTime != null" >
+        #{lastExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="nextExecTime != null" >
+        #{nextExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="intrfcRecordType != null" >
+        #{intrfcRecordType,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcMethod != null" >
+        #{intrfcMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcType != null" >
+        #{intrfcType,jdbcType=VARCHAR},
+      </if>
+      <if test="execStatus != null" >
+        #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1 != null" >
+        #{urlPart1,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1Logic != null" >
+        #{urlPart1Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2 != null" >
+        #{urlPart2,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2Logic != null" >
+        #{urlPart2Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3 != null" >
+        #{urlPart3,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3Logic != null" >
+        #{urlPart3Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4 != null" >
+        #{urlPart4,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4Logic != null" >
+        #{urlPart4Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5 != null" >
+        #{urlPart5,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5Logic != null" >
+        #{urlPart5Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="regex != null" >
+        #{regex,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn01 != null" >
+        #{targetColumn01,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn02 != null" >
+        #{targetColumn02,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn03 != null" >
+        #{targetColumn03,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn04 != null" >
+        #{targetColumn04,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn05 != null" >
+        #{targetColumn05,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn06 != null" >
+        #{targetColumn06,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn07 != null" >
+        #{targetColumn07,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn08 != null" >
+        #{targetColumn08,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn09 != null" >
+        #{targetColumn09,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn10 != null" >
+        #{targetColumn10,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="scheduleDate != null" >
+        #{scheduleDate,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKey" parameterType="com.xsbweb.vo.SnapEtlSchedule" >
+    update t_rl_snap_etl_schedule
+    <set >
+      <if test="taskDesc != null" >
+        task_desc = #{taskDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="taskPeriod != null" >
+        task_period = #{taskPeriod,jdbcType=INTEGER},
+      </if>
+      <if test="taskDependency != null" >
+        task_dependency = #{taskDependency,jdbcType=VARCHAR},
+      </if>
+      <if test="effectiveDate != null" >
+        effective_date = #{effectiveDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="extireDate != null" >
+        extire_date = #{extireDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastExecTime != null" >
+        last_exec_time = #{lastExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="nextExecTime != null" >
+        next_exec_time = #{nextExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="intrfcRecordType != null" >
+        intrfc_record_type = #{intrfcRecordType,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcMethod != null" >
+        intrfc_method = #{intrfcMethod,jdbcType=VARCHAR},
+      </if>
+      <if test="intrfcType != null" >
+        intrfc_type = #{intrfcType,jdbcType=VARCHAR},
+      </if>
+      <if test="execStatus != null" >
+        exec_status = #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1 != null" >
+        url_part_1 = #{urlPart1,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart1Logic != null" >
+        url_part_1_logic = #{urlPart1Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2 != null" >
+        url_part_2 = #{urlPart2,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart2Logic != null" >
+        url_part_2_logic = #{urlPart2Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3 != null" >
+        url_part_3 = #{urlPart3,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart3Logic != null" >
+        url_part_3_logic = #{urlPart3Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4 != null" >
+        url_part_4 = #{urlPart4,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart4Logic != null" >
+        url_part_4_logic = #{urlPart4Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5 != null" >
+        url_part_5 = #{urlPart5,jdbcType=VARCHAR},
+      </if>
+      <if test="urlPart5Logic != null" >
+        url_part_5_logic = #{urlPart5Logic,jdbcType=VARCHAR},
+      </if>
+      <if test="regex != null" >
+        regex = #{regex,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn01 != null" >
+        target_column_01 = #{targetColumn01,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn02 != null" >
+        target_column_02 = #{targetColumn02,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn03 != null" >
+        target_column_03 = #{targetColumn03,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn04 != null" >
+        target_column_04 = #{targetColumn04,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn05 != null" >
+        target_column_05 = #{targetColumn05,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn06 != null" >
+        target_column_06 = #{targetColumn06,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn07 != null" >
+        target_column_07 = #{targetColumn07,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn08 != null" >
+        target_column_08 = #{targetColumn08,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn09 != null" >
+        target_column_09 = #{targetColumn09,jdbcType=VARCHAR},
+      </if>
+      <if test="targetColumn10 != null" >
+        target_column_10 = #{targetColumn10,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        last_update_date = #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="scheduleDate != null" >
+        schedule_date = #{scheduleDate,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where task_table = #{taskTable,jdbcType=VARCHAR}
+  </update>
+ 
+</mapper>

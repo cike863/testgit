@@ -1,0 +1,138 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>index</title>
+    <link href="<%=path%>/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mt10{margin-top:10px;}
+        .row-div{width:100%;padding-left:5%;}
+        .row-div-div{width:18%;display:inline-block;}
+    </style>
+</head>
+ 	<script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/layer/layer.js" ></script>
+ <script type="text/javascript" language="javascript">
+ 	var index = parent.layer.getFrameIndex(window.name); 
+		window.onload = function() {
+			$("input[name='enumDesc']").each(function(){
+				if('${checkEnumDesc}'.indexOf($(this).val())>-1){					
+					$(this).attr("checked","checked");
+				}				
+			});
+			$("#closeIframe").click(function(){
+				 parent.isOk();
+				 parent.layer.close(index);
+			});
+		}
+		function checkNewType(enumDesc) {
+			var objectId = null;
+			if ($("#" + enumDesc + "").is(':checked')) {
+				objectId = '${objectId}';
+				//console.log('${objectId}');
+			}
+			//console.log(objectId);
+			$.ajax({
+				url : "enum/editScrollList?objectId=" + objectId + "&enumDesc="
+						+ enumDesc,
+				async: false,
+				success : function(data) {
+					if (data.resultCode == '0') {
+						alert("修改失败");
+					}
+				},
+				error : function() {
+					alert("修改失败");
+				}
+			});
+		}
+	</script>
+<body>
+<!--<form action="meet/toMeetRoomList.do" name="confForm" method="post">-->
+${error }
+<div class="container-full">
+	<div class="container">
+		<div class="row">
+			<div class="row-div mt10">
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="obj_scroll_1" id="obj_scroll_1"
+						onclick="checkNewType('obj_scroll_1')"><span>广告_1<!-- 路演大厅_轮播1 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="obj_scroll_2" id="obj_scroll_2"
+						onclick="checkNewType('obj_scroll_2')"><span>广告_2<!-- 路演大厅_轮播2 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="obj_scroll_3" id="obj_scroll_3"
+						onclick="checkNewType('obj_scroll_3')"><span>广告_3<!-- 路演大厅_轮播3 --></span>
+				</div>
+			<!-- </div>
+			
+			<div class="row-div mt10"> -->
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="obj_scroll_4" id="obj_scroll_4"
+						onclick="checkNewType('obj_scroll_4')"><span>广告_4<!-- 路演大厅_轮播4 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="obj_scroll_5" id="obj_scroll_5"
+						onclick="checkNewType('obj_scroll_5')"><span>广告_5<!-- 路演大厅_轮播5 --></span>
+				</div>
+				
+				
+			</div>
+		<c:if test="${fn:contains(objectId,'news')}">
+			<div class="row-div mt10">
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="news_scroll_1" id="news_scroll_1"
+						onclick="checkNewType('news_scroll_1')"><span>轮播_1<!-- 三版头条_轮播1 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="news_scroll_2" id="news_scroll_2"
+						onclick="checkNewType('news_scroll_2')"><span>轮播_2<!-- 三版头条_轮播2 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="news_scroll_3" id="news_scroll_3"
+						onclick="checkNewType('news_scroll_3')"><span>轮播_3<!-- 三版头条_轮播3 --></span>
+				</div>
+			<!-- </div>
+			<div class="row-div mt10"> -->
+			<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="news_scroll_4" id="news_scroll_4"
+						onclick="checkNewType('news_scroll_4')"><span>轮播_4<!-- 三版头条_轮播4 --></span>
+				</div>
+				<div class="row-div-div">
+					<input type="checkbox" name="enumDesc" value="news_scroll_5" id="news_scroll_5"
+						onclick="checkNewType('news_scroll_5')"><span>轮播_5<!-- 三版头条_轮播5 --></span>
+				</div>
+			</div>
+	</c:if>
+	
+		<div class="row mt10">
+			<div class="col-md-9 mt10 text-center">
+				<!-- <button type="button" class="btn btn-success" onclick="ok();">确定</button> -->
+				<button class="btn btn-success" id="closeIframe">关闭</button>
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+	<!--</form>-->
+</body>
+
+</html>

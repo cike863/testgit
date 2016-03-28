@@ -1,0 +1,92 @@
+package com.xsbweb.vo.zt;
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.util.CommonUtils;
+
+public class SubsConsume extends BasePo{
+
+	private int cnsumNo;
+	
+	private String wxSubsId;
+	
+	private int voteScore;
+	
+	private int cnsumStatus;
+	
+	private String exCnsumNo;
+	
+	private String createdDate;
+	
+	private String sartQueryDate;
+	
+	private String endQueryDate;
+
+	public int getCnsumNo() {
+		return cnsumNo;
+	}
+
+	public void setCnsumNo(int cnsumNo) {
+		this.cnsumNo = cnsumNo;
+	}
+
+	public String getWxSubsId() {
+		return wxSubsId;
+	}
+
+	public void setWxSubsId(String wxSubsId) {
+		this.wxSubsId = wxSubsId;
+	}
+
+	public int getVoteScore() {
+		return voteScore;
+	}
+
+	public void setVoteScore(int voteScore) {
+		this.voteScore = voteScore;
+	}
+
+	public int getCnsumStatus() {
+		return cnsumStatus;
+	}
+
+	public void setCnsumStatus(int cnsumStatus) {
+		this.cnsumStatus = cnsumStatus;
+	}
+
+	public String getExCnsumNo() {
+		return exCnsumNo;
+	}
+
+	public void setExCnsumNo(String exCnsumNo) {
+		this.exCnsumNo = exCnsumNo;
+	}
+
+	public String getCreatedDate() {
+		if(createdDate !=null &&createdDate !=""){
+			return createdDate;
+		}else{
+			return CommonUtils.getNowDateStringOf8();
+		}
+	}
+
+	public void setCreatedDate(String createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getSartQueryDate() {
+		return sartQueryDate;
+	}
+
+	public void setSartQueryDate(String sartQueryDate) {
+		this.sartQueryDate = sartQueryDate;
+	}
+
+	public String getEndQueryDate() {
+		return endQueryDate;
+	}
+
+	public void setEndQueryDate(String endQueryDate) {
+		this.endQueryDate = endQueryDate;
+	}
+	
+}

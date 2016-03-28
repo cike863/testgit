@@ -1,0 +1,58 @@
+#全局控制
+#生产环境pro、测试环境test
+#env=test
+env=pro
+
+##############redis连接配置################
+jedis_port=6379
+jedis_url_pro=120.55.188.47
+jedis_password_pro=xsbdyly_redis_!@#47
+##jedis_url_pro=120.27.194.22
+##jedis_password_pro=redis
+jedis_url_test=192.168.1.179
+jedis_password_test=redis
+jedis_timeout=10000
+##############   redis end ###############
+
+###########云之讯系统配置 请勿修改  star ####
+
+##############FTP配置 start#################
+ftp_port=21
+ftp_url_pro=120.55.188.47
+ftp_login_name=ftp_xsb
+ftp_login_pass=Ftp_xsb2604!@#
+
+##ftp_port=21
+##ftp_url_pro=192.168.1.179
+##ftp_login_name=test
+##ftp_login_pass=test
+
+file_max=10
+##############FTP配置    end #################
+#################### end###################
+
+################ DB #################
+jdbc.olapdataSource.driverClassName=com.mysql.jdbc.Driver
+jdbc.olapdataSource.url=jdbc:mysql://192.168.1.179:3306/oltp?useUnicode=true&amp;characterEncoding=utf8
+jdbc.olapdataSource.username=admin
+jdbc.olapdataSource.password=admin
+
+jdbc.oltpdataSource.driverClassName=com.mysql.jdbc.Driver
+jdbc.oltpdataSource.url=jdbc:mysql://192.168.1.179:3306/olap?useUnicode=true&amp;characterEncoding=utf8
+jdbc.oltpdataSource.username=admin
+jdbc.oltpdataSource.password=admin
+
+jdbc.metadataSource.driverClassName=com.mysql.jdbc.Driver
+jdbc.metadataSource.url=jdbc:mysql://192.168.1.179:3306/meta?useUnicode=true&amp;characterEncoding=utf8
+jdbc.metadataSource.username=admin
+jdbc.metadataSource.password=admin
+################ DB #################
+
+############### email begin ####################
+##邮件发送协议 
+email.protocol=smtp;
+##SMTP邮件服务器
+email.host=smtp.163.com;
+##SMTP邮件服务器默认端口
+email.prot=25;
+############### email end ######################

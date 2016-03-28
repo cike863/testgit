@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.TrsExeLogMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.TrsExeLog" >
+    <id column="task_id" property="taskId" jdbcType="VARCHAR" />
+    <id column="exec_time" property="execTime" jdbcType="TIMESTAMP" />
+    <result column="exec_user" property="execUser" jdbcType="VARCHAR" />
+    <result column="exec_status" property="execStatus" jdbcType="VARCHAR" />
+    <result column="return_code" property="returnCode" jdbcType="VARCHAR" />
+    <result column="exec_log" property="execLog" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    task_id, exec_time, exec_user, exec_status, return_code, exec_log, create_date, last_update_date
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_exe_log
+    where task_id = #{taskId,jdbcType=VARCHAR}
+
+  </select>
+  
+  <select id="getTrsExeLogList" resultMap="BaseResultMap" parameterType="com.xsbweb.vo.TrsExeLog" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_trs_exe_log
+    where and 1=1
+    <if test="taskId !=null and taskId !='' ">
+    	  and task_id = #{taskId}
+    </if>
+  </select>
+  
+  <delete id="deleteByPrimaryKey" parameterType="com.xsbweb.vo.TrsExeLog" >
+    delete from t_rl_trs_exe_log
+    where task_id = #{taskId,jdbcType=VARCHAR}
+      and exec_time = #{execTime,jdbcType=TIMESTAMP}
+  </delete>
+  
+  <insert id="insert" parameterType="com.xsbweb.vo.TrsExeLog" >
+    insert into t_rl_trs_exe_log (task_id, exec_time, exec_user, 
+      exec_status, return_code, exec_log, 
+      create_date, last_update_date)
+    values (#{taskId,jdbcType=VARCHAR}, #{execTime,jdbcType=TIMESTAMP}, #{execUser,jdbcType=VARCHAR}, 
+      #{execStatus,jdbcType=VARCHAR}, #{returnCode,jdbcType=VARCHAR}, #{execLog,jdbcType=VARCHAR}, 
+      #{createDate,jdbcType=TIMESTAMP}, #{lastUpdateDate,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.xsbweb.vo.TrsExeLog" >
+    insert into t_rl_trs_exe_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="taskId != null and taskId !=''  "   >
+        task_id,
+      </if>
+      <if test="execTime != null  and execTime !='' " >
+        exec_time,
+      </if>
+      <if test="execUser != null and execUser !='' " >
+        exec_user,
+      </if>
+      <if test="execStatus != null and execStatus !='' " >
+        exec_status,
+      </if>
+      <if test="returnCode != null  and returnCode !='' "   >
+        return_code,
+      </if>
+      <if test="execLog != null  and execLog !='' " >
+        exec_log,
+      </if>
+      <if test="createDate != null  and createDate !='' " >
+        create_date,
+      </if>
+        last_update_date,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="taskId != null   and taskId !=''" >
+        #{taskId,jdbcType=VARCHAR},
+      </if>
+      <if test="execTime != null  and execTime !=''" >
+        #{execTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="execUser != null  and execUser !=''" >
+        #{execUser,jdbcType=VARCHAR},
+      </if>
+      <if test="execStatus != null  and execStatus !=''" >
+        #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="returnCode != null  and returnCode !=''" >
+        #{returnCode,jdbcType=VARCHAR},
+      </if>
+      <if test="execLog != null  and execLog !=''" >
+        #{execLog,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null  and createDate !=''" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      sysdate()     
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.xsbweb.vo.TrsExeLog" >
+    update t_rl_trs_exe_log
+    <set >
+      <if test="execUser != null and execUser !=''"   >
+        exec_user = #{execUser,jdbcType=VARCHAR},
+      </if>
+      <if test="execStatus != null  and execStatus !=''" >
+        exec_status = #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="returnCode != null  and returnCode !=''" >
+        return_code = #{returnCode,jdbcType=VARCHAR},
+      </if>
+      <if test="execLog != null and execLog !=''" >
+        exec_log = #{execLog,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null and createDate !=''" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      last_update_date = sysdate()     
+    </set>
+    where task_id = #{taskId,jdbcType=VARCHAR}
+      and exec_time = #{execTime,jdbcType=TIMESTAMP}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.xsbweb.vo.TrsExeLog" >
+    update t_rl_trs_exe_log
+    set exec_user = #{execUser,jdbcType=VARCHAR},
+      exec_status = #{execStatus,jdbcType=VARCHAR},
+      return_code = #{returnCode,jdbcType=VARCHAR},
+      exec_log = #{execLog,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      last_update_date = #{lastUpdateDate,jdbcType=TIMESTAMP}
+    where task_id = #{taskId,jdbcType=VARCHAR}
+      and exec_time = #{execTime,jdbcType=TIMESTAMP}
+  </update>
+</mapper>

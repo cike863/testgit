@@ -1,0 +1,784 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.TrsProjectMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.TrsProject" >
+    <id column="project_no" property="projectNo" jdbcType="VARCHAR" />
+    <result column="proj_online_date" property="projOnlineDate" jdbcType="TIMESTAMP" />
+    <result column="proj_pv" property="projPv" jdbcType="INTEGER" />
+    <result column="proj_show_status" property="projShowStatus" jdbcType="VARCHAR" />
+    <result column="proj_name" property="projName" jdbcType="VARCHAR" />
+    <result column="proj_dyn_quotes" property="projDynQuotes" jdbcType="VARCHAR" />
+    <result column="proj_coach_org" property="projCoachOrg" jdbcType="VARCHAR" />
+    <result column="proj_assignment_may" property="projAssignmentMay" jdbcType="VARCHAR" />
+    <result column="proj_apply_counts" property="projApplyCounts" jdbcType="INTEGER" />
+    <result column="proj_percentage" property="projPercentage" jdbcType="DOUBLE" />
+    <result column="proj_cp_code" property="projCpCode" jdbcType="VARCHAR" />
+    <!-- <result column="project_cp_code" property="projectCpCode" jdbcType="VARCHAR" /> -->
+    <result column="proj_cp_fullname" property="projCpFullname" jdbcType="VARCHAR" />
+    <result column="proj_register_adress" property="projRegisterAdress" jdbcType="VARCHAR" />
+    <result column="proj_legal_person" property="projLegalPerson" jdbcType="VARCHAR" />
+    <result column="proj_ch_secretary" property="projChSecretary" jdbcType="VARCHAR" />
+    <result column="proj_registered_assets" property="projRegisteredAssets" jdbcType="INTEGER" />
+    <result column="proj_industry_type" property="projIndustryType" jdbcType="VARCHAR" />
+    <result column="proj_shingle_date" property="projShingleDate" jdbcType="TIMESTAMP" />
+    <result column="proj_cp_url" property="projCpUrl" jdbcType="VARCHAR" />
+    <result column="proj_zb_trader" property="projZbTrader" jdbcType="VARCHAR" />
+    <result column="proj_zs_trader" property="projZsTrader" jdbcType="VARCHAR" />
+    <result column="proj_cp_lightspot" property="projCpLightspot" jdbcType="VARCHAR" />
+    <result column="proj_cp_intro" property="projCpIntro" jdbcType="VARCHAR" />
+    <result column="proj_main_business" property="projMainBusiness" jdbcType="VARCHAR" />
+    <result column="proj_industry_analysis" property="projIndustryAnalysis" jdbcType="VARCHAR" />
+    <result column="proj_industry_prospect" property="projIndustryProspect" jdbcType="VARCHAR" />
+    <result column="proj_competitive_edge" property="projCompetitiveEdge" jdbcType="VARCHAR" />
+    <result column="proj_strategic_plan" property="projStrategicPlan" jdbcType="VARCHAR" />
+    <result column="proj_expected_earnings" property="projExpectedEarnings" jdbcType="VARCHAR" />
+    <result column="project_type" property="projectType" jdbcType="VARCHAR" />
+    <result column="proj_media_no" property="projMediaNo" jdbcType="VARCHAR" />
+    <result column="share_media_no" property="shareMediaNo" jdbcType="VARCHAR" />
+    <result column="submitter" property="submitter" jdbcType="VARCHAR" />
+    <result column="project_status" property="projectStatus" jdbcType="VARCHAR" />
+    <result column="handler" property="handler" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="project_title" property="projectTitle" jdbcType="VARCHAR" />
+    <result column="project_ex_title" property="projectExTitle" jdbcType="VARCHAR" />
+    <result column="max_project_person_amt" property="maxProjectPersonAmt" jdbcType="INTEGER" />
+    <result column="is_show" property="isShow" jdbcType="VARCHAR" />
+    <result column="project_role" property="projRole" jdbcType="VARCHAR" />
+    <result column="proj_media_path" property="projMediaPath" jdbcType="VARCHAR" />
+    <result column="share_media_path" property="shareMediaPath" jdbcType="VARCHAR" />
+    <result column="trade_plan_media_path" property="tradePlanMediaPath" jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigMediaPath" jdbcType="VARCHAR" />
+    <result column="trade_plan_type" property="tradePlanType" jdbcType="VARCHAR" />
+    <result column="big_pic_no" property="bigPicNo" jdbcType="VARCHAR" />
+    <result column="project_desc" property="projectDesc" jdbcType="VARCHAR" />
+    <result column="youku_code" property="youkuCode" jdbcType="VARCHAR" />
+    <result column="prmt_parent_no" property="prmtParentNo" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="itemResultMap" type="com.xsbweb.vo.ProjectItem" >
+  	 <result column="object_no" property="objectNo" jdbcType="VARCHAR" />
+  	 <result column="item_key" property="itemKey" jdbcType="VARCHAR" />
+  	 <result column="item_value" property="itemValue" jdbcType="VARCHAR" />
+  	 <result column="item_type" property="itemType" jdbcType="VARCHAR" />
+  	 <result column="item_location_order" property="itemLocationOrder" jdbcType="VARCHAR" />
+  	 <result column="item_pic_path" property="itemPicPath" jdbcType="VARCHAR" />
+  	 <result column="item_id"  property="itemId" jdbcType="INTEGER" />
+  	 <result column="create_date" property="createDate" jdbcType="VARCHAR" />
+  	 <result column="item_media_no" property="itemMediaNo" jdbcType="VARCHAR" />
+  	 <result column="item_media_path" property="itemMediaPath" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="cResultMap" type="com.xsbweb.vo.Customer" >
+  	 <result column="object_no" property="objectNo" jdbcType="VARCHAR" />
+  	 <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+  	 <result column="sign_status" property="signStatus" jdbcType="VARCHAR" />
+  	 <result column="head_pic_path" property="headPicPath" jdbcType="VARCHAR" />
+  	 <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+  	 <result column="customer_phone_no" property="customerPhoneNo" jdbcType="VARCHAR" />
+  	 <result column="create_date" property="createDate" javaType="java.sql.Date" jdbcType="TIMESTAMP"/>
+  </resultMap>
+  
+  <resultMap id="commonResultMap" type="com.xsbweb.vo.RObject" >
+    <result column="object_id" property="objectId" jdbcType="VARCHAR" />
+    <result column="object_pic_no" property="objectPicNo" jdbcType="VARCHAR" />
+    <result column="share_pic_no" property="sharePicNo" jdbcType="VARCHAR" />
+    <result column="big_pic_no" property="bigPicNo" jdbcType="VARCHAR" />
+    <result column="text_desc" property="textDesc" jdbcType="VARCHAR" />
+    <result column="online_date" property="onlineDate" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="pv" property="pv" jdbcType="INTEGER" />
+    <result column="conf_create_date" property="confCreateDate" jdbcType="VARCHAR" />
+    <result column="obj_name" property="objName" jdbcType="VARCHAR" />
+    <result column="news_source" property="newsSource" jdbcType="VARCHAR" />
+    <result column="news_title" property="newsTitle" jdbcType="VARCHAR" />
+    <result column="proj_dyn_quotes" property="projDynQuotes" jdbcType="VARCHAR" />
+    <result column="proj_coach_org" property="projCoachOrg" jdbcType="VARCHAR" />
+    <result column="proj_assignment_may" property="projAssignmentMay" jdbcType="VARCHAR" />
+    <result column="proj_apply_counts" property="projApplyCounts" jdbcType="VARCHAR" />
+    <result column="proj_percentage" property="projPercentage" jdbcType="VARCHAR" />
+    <result column="object_pic_path" property="objectPicPath" jdbcType="VARCHAR" />
+    <result column="share_pic_path" property="sharePicPath" jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigPicPath" jdbcType="VARCHAR" />
+    <result column="object_type" property="objectType" jdbcType="VARCHAR" />
+    <result column="conf_id" property="confId" jdbcType="VARCHAR" />
+    <result column="base_url" property="baseUrl" jdbcType="VARCHAR" />
+    <result column="share_url" property="shareUrl" jdbcType="VARCHAR" />
+    <result column="role" property="role" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    project_no,proj_name, project_type, submitter, project_status, handler, create_date, last_update_date
+  </sql>
+ 
+  <select id="getProjectByNo" parameterType="java.lang.String" resultMap="resultMap">
+  	select 
+  		tp.project_no,
+  		tp.proj_name,
+  		tp.proj_dyn_quotes,
+  		(select count(1) from t_rl_trs_cust_sign_project where object_no = #{projectNo}) proj_apply_counts,
+  		date_format(tp.proj_online_date,'%Y-%c-%d') proj_online_date,
+  		(select count(1) from oltp.t_rl_trs_cust_sign_project where object_no = #{projectNo})/(IF(tp.max_project_person_amt IS NULL ,40,tp.max_project_person_amt )) as proj_percentage,
+  		tp.proj_cp_code,
+  		tp.is_show,
+  		tp.proj_assignment_may,
+  		tp.proj_coach_org,
+  		date_format(tp.proj_shingle_date,'%Y-%c-%d') proj_shingle_date,
+  		tp.project_media_no,
+  		tp.share_media_no,
+  		tp.project_title,
+  		tp.project_ex_title,
+  		tp.proj_show_status,
+  		tp.max_project_person_amt,
+  		if(tp.proj_pv is null or  tp.proj_pv='',0,tp.proj_pv) + 
+        	if(tp.proj_pv_till_last_day is null or tp.proj_pv_till_last_day='',0,tp.proj_pv_till_last_day) as proj_pv,
+  		tp.handler,
+  		tp.project_role,
+  		tm1.media_location proj_media_path,
+  		tm2.media_location share_media_path,
+  		tm3.media_location trade_plan_media_path,
+  		tm3.media_type trade_plan_type
+  	from t_rl_trs_project tp
+  		left join t_rl_trs_media tm1 on tp.project_media_no = tm1.media_no
+  		left join t_rl_trs_media tm2 on tp.share_media_no = tm2.media_no
+  		left join t_rl_trs_media tm3 on tp.trade_plan_media_no = tm3.media_no
+  	where project_no = #{projectNo};
+  </select>			
+  
+  <!-- <select id="getProjectList" parameterType="com.xsbweb.vo.TrsProject" resultMap="resultMap">
+  	select 
+  	<include refid="Base_Column_List" />
+  	from v_rl_trs_project limit #{pageNo},#{pageSize};
+  </select> -->
+  
+  <select id="getProjectItemListByNo" parameterType="com.xsbweb.vo.ProjectItem" resultMap="itemResultMap">
+  	select object_no,
+  			t.item_key,
+  			t.item_value,
+  			t.item_type,
+  			t.item_location_order,
+  			date_format(t.create_date,'%Y-%m-%d %H:%i:%s')create_date,
+  			t.item_media_no,
+  			tm.media_location item_media_path
+  		from t_rl_trs_object_item t
+  		left join t_rl_trs_media tm on t.item_media_no = tm.media_no 
+  		where t.object_no = #{objectNo}
+  		<if test="itemKey!=null "><!-- key='' 时还能查到一条数据 -->
+  			and t.item_key = #{itemKey}
+  		</if>
+  		 order by t.item_location_order asc; 
+  </select>
+  
+  <select id="getProjectItemListByNos" parameterType="java.util.Arrays" resultMap="itemResultMap">
+		select t.object_no,
+  			t.item_key,
+  			t.item_value,
+  			t.item_type,
+  			t.item_location_order,
+  			date_format(t.create_date,'%Y-%m-%d %H:%i:%s')create_date,
+  			t.item_media_no,
+  			tm.media_location item_media_path
+  		from t_rl_trs_object_item t
+  		left join t_rl_trs_media tm on t.item_media_no = tm.media_no 
+  		where t.object_no in 
+  		<foreach collection="array" index="index" item="objectNos" open="(" separator="," close=")">  
+	           #{objectNo}   
+	    </foreach> 
+  		 order by t.object_no, t.item_location_order asc; 
+  	</select>
+  
+  <select id="getProjectItemList" parameterType="java.lang.String" resultMap="itemResultMap">
+  	select object_no,
+  			item_key,
+  			item_value,
+  			item_type,
+  			item_location_order
+  		from t_rl_trs_object_item ; 
+  </select>
+  
+  <select id="getProjectListByNoArr" parameterType="java.lang.String" resultMap="resultMap">
+  	select 
+	  	<include refid="Base_Column_List" />
+	  	from v_rl_trs_project where project_no in 
+	  	<foreach collection="projectNoArrs" index="index" item="projectNo" open="(" separator="," close=")">  
+           #{projectNo}   
+      </foreach>  
+  </select>
+  
+  
+  <select id="isApplyJoinRoad" parameterType="com.xsbweb.vo.Customer" resultType="java.lang.Integer">
+  	select count(1) from t_rl_trs_cust_sign_project where 
+  		customer_id=#{customerId} and object_no=#{objectNo};
+  </select>
+  
+  <update id="cancelApplyJoinRoad" parameterType="com.xsbweb.vo.Customer">.
+  	update t_rl_trs_cust_sign_project set sign_status = '0' 
+  		where customer_id=#{customerId} and object_no=#{objectNo}; 
+  </update>
+  
+  <insert id="addCustSignProject" parameterType="com.xsbweb.vo.Customer">
+  	insert into t_rl_trs_cust_sign_project (
+  	<if test="customerId !=null and customerId !='' ">
+  		customer_id,
+  	</if>
+  	<if test="objectNo !=null and objectNo !='' ">
+  		object_no,
+  	</if>
+  	<if test="signStatus !=null and signStatus !='' ">
+  		sign_status,
+  	</if>
+  		create_date,
+  		last_update_date
+  	)values(
+  	<if test="customerId !=null and customerId !='' ">
+  		#{customerId},
+  	</if>
+  	<if test="objectNo !=null and objectNo !='' ">
+  		#{objectNo},
+  	</if>
+  	<if test="signStatus !=null and signStatus !='' ">
+  		#{signStatus},
+  	</if>
+  		sysdate(),
+  		sysdate()
+  	);
+  </insert>
+  <insert id="batchAddCustSignProject" parameterType="com.xsbweb.vo.Customer">
+  <foreach collection="list" item="item" index="index" separator="," >  
+  	insert into t_rl_trs_cust_sign_project (
+  		<if test="item.customerId =null and item.customerId !='' !">
+  			customer_id,
+  		</if>
+  		<if test="item.objectNo =null and item.objectNo !='' !">
+  			sign_status,
+  		</if>
+  		<if test="item.signStatus =null and item.signStatus !='' !">
+  			customer_id,
+  		</if>
+  		create_date,
+  		last_update_date )
+  	values
+        (
+        <if test="item.customerId =null and item.customerId !='' !">
+  			 #{item.customerId},
+  		</if>
+  		<if test="item.objectNo =null and item.objectNo !='' !">
+  			#{item.objectNo},
+  		</if>
+  		<if test="item.signStatus =null and item.signStatus !='' !">
+  			#{item.signStatus},
+  		</if>
+  		sysdate(),sysdate())
+    </foreach>  
+  	
+  </insert>
+  
+  <select id="getApplyProjectCustomerList" parameterType="java.lang.String" resultMap="cResultMap">
+  	select  
+  		tc.customer_name,
+  		tc.customer_phone_no,
+  		tp.customer_id,
+  		tp.create_date,
+  		tm.media_location head_pic_path 
+	from oltp.t_rl_trs_cust_sign_project tp 
+		left join oltp.t_rl_snap_customer tc on tp.customer_id = tc.customer_id 
+		left join oltp.t_rl_trs_media tm on tc.customer_media_no = tm.media_no
+  	where 
+  		object_no=#{objectNo};
+  </select>
+  
+  <select id="getApplyProjectCustomerByIds" parameterType="com.xsbweb.vo.extend.CustomerVO" resultMap="cResultMap">
+  	select  
+  		tc.customer_name,
+  		tc.customer_phone_no,
+  		tp.customer_id,
+  		tp.create_date,
+  		tm.media_location head_pic_path 
+	from oltp.t_rl_trs_cust_sign_project tp 
+		left join oltp.t_rl_snap_customer tc on tp.customer_id = tc.customer_id 
+		left join oltp.t_rl_trs_media tm on tc.customer_media_no = tm.media_no
+  	where object_no=#{objectNo} and customer_phone_no in
+  		<foreach collection="customerPhoneNos" index="index" item="customerPhoneNo" open="(" separator="," close=")">  
+	           #{customerPhoneNo}   
+	      </foreach> 
+  </select>
+  
+  <select id="getApplyProjectCount" parameterType="java.lang.String" resultType="java.lang.Integer" >
+  	select  count(1)
+	from oltp.t_rl_trs_cust_sign_project tp 
+		left join oltp.t_rl_snap_customer tc on tp.customer_id = tc.customer_id 
+		left join oltp.t_rl_trs_media tm on tc.customer_media_no = tm.media_no
+  	where 
+  		object_no=#{objectNo};
+  </select>
+  
+  <select id="getApplyProjectList" parameterType="com.xsbweb.vo.Customer" resultMap="cResultMap">
+  	select  
+  		tc.customer_name,
+  		tc.customer_phone_no,
+  		tp.customer_id,
+  		tp.create_date,
+  		tm.media_location head_pic_path 
+	from oltp.t_rl_trs_cust_sign_project tp 
+		left join oltp.t_rl_snap_customer tc on tp.customer_id = tc.customer_id 
+		left join oltp.t_rl_trs_media tm on tc.customer_media_no = tm.media_no
+  	where 1=1 
+  	<if test="objectNo !=null and objectNo !=''">
+  		and object_no = #{objectNo} 
+  	</if>
+  		order by tp.create_date desc limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getPEByNo" parameterType="java.lang.String" resultMap="resultMap">
+  	select t.*,
+  		 t1.media_location proj_media_path,
+  		 t2.media_location share_media_path
+ 	from t_rl_trs_project t 
+  		left join t_rl_trs_media t1 on t1.media_no=t.proj_media_no
+  		left join t_rl_trs_media t2 on t2.media_no=t.share_media_no
+  	where t.project_no = #{projectNo} 
+  </select>
+  
+  <select id="getPEByList" parameterType="java.util.HashMap" resultMap="resultMap">
+  	select t.*
+ 		from t_rl_trs_project t 
+ 	where project_no like '%expr%' 
+  	order by t.proj_online_date desc limit #{currentRecord},#{pageSize};
+  </select>
+  <select id="getProjectList"  parameterType="com.xsbweb.vo.TrsProject" resultMap="resultMap">
+  			select 
+  				t.project_no,
+  				t.proj_cp_code,
+  				t.proj_name,
+  				t.proj_online_date,
+  				t.project_role,
+  				t.project_desc,
+  				t.proj_show_status,
+  				t.proj_cp_code,
+  				t.is_show,
+		 		CASE 
+					WHEN project_role>=32 and project_role&lt; 64    THEN 3
+					WHEN project_role>=64     THEN 2 
+				ELSE 1 end role 
+ 			from t_rl_trs_project t 
+ 			 where 1=1 and (proj_name !='' or proj_name is not null)
+ 		<if test="projRole !=null and  projRole !=''">
+ 			and project_role=#{projRole}
+ 		</if>
+ 		<if test="projectNo !=null and  projectNo !=''">
+ 			and project_no like CONCAT('%',#{projectNo},'%' ) 
+ 		</if>
+ 		<if test="projName !=null and  projName !=''">
+ 			and proj_name like CONCAT('%',#{projName},'%' ) 
+ 		</if>
+ 		<if test="projCpCode !=null and  projCpCode !=''">
+ 			and proj_cp_code like CONCAT('%',#{projCpCode},'%' ) 
+ 		</if>
+ 		<if test="projShowStatus !=null and  projShowStatus !=''">
+ 			and (proj_show_status is null or proj_show_status='')
+ 		</if>
+ 		<if test="prmtParentNo != null and  prmtParentNo !=''">
+ 			and prmt_parent_no =#{prmtParentNo}
+ 		</if>
+ 		<if test="prmtParentNo == null or prmtParentNo ==''">
+ 			and (prmt_parent_no is null or prmt_parent_no='')
+ 		</if>
+  		order by role desc,
+  		<if test="projShowStatus !=0 or projShowStatus =='' ">
+  		proj_show_status ,
+  		</if>
+  		last_edit_date desc, proj_online_date desc limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getProjectListByProjectNo"  parameterType="java.lang.String" resultMap="resultMap">
+  	select 
+  		project_no,
+  		proj_cp_code,
+  		is_show,
+  		project_desc,
+  		proj_assignment_may,
+  		proj_coach_org,
+  		date_format(proj_online_date,'%Y-%m-%d %H:%i') proj_online_date,
+  		proj_media_no,
+  		share_media_no,
+  		big_pic_no,
+  		project_title,
+  		project_ex_title,
+  		proj_show_status,
+  		max_project_person_amt,
+  		if(proj_pv is null or  proj_pv='',0,proj_pv) + 
+        	if(proj_pv_till_last_day is null or proj_pv_till_last_day='',0,proj_pv_till_last_day) as proj_pv,
+  		project_role,
+  		proj_name,
+  		proj_cp_fullname,
+  		handler,
+  		proj_show_status,
+  		prmt_parent_no,
+  		tm1.media_location proj_media_path,
+		tm2.media_location share_media_path,
+		tm3.media_location big_pic_path
+  		from t_rl_trs_project t 
+  		left join t_rl_trs_media tm1 on tm1.media_no=t.proj_media_no 
+		left join t_rl_trs_media tm2 on tm2.media_no=t.share_media_no 
+		left join t_rl_trs_media tm3 on tm3.media_no=t.big_pic_no 
+  		where project_no = #{projectNo};
+  </select>
+  <update id="updateUrlOrStatusByProjectNo" parameterType="java.util.HashMap" >
+  		update t_rl_trs_project
+  		<set>
+  			<if test="projCpUrl != null and projCpUrl != ''">
+  				proj_cp_url = #{projCpUrl},
+  			</if>
+  			<if test="projShowStatus != null and projShowStatus != ''">
+  				proj_show_status = #{projShowStatus},
+  			</if>
+  			last_update_date = sysdate()
+  		</set>
+  		where project_no = #{projectNo};
+  </update>
+  
+  <select id="getTotalRecordProjectCount"   resultType="java.lang.Integer"  parameterType="com.xsbweb.vo.TrsProject">
+  			select count(1) from t_rl_trs_project where 1=1 and (proj_name !='' or proj_name is not null)
+  		<if test="projRole!=null and  projRole!=''" >
+ 			and project_role=#{projRole}
+ 		</if>
+ 		<if test="projectNo!=null and  projectNo!=''" >
+ 			and project_no like CONCAT('%',#{projectNo},'%' ) 
+ 		</if>
+ 		<if test="projName!=null and  projName!=''" >
+ 			and proj_name like CONCAT('%',#{projName},'%' ) 
+ 		</if>
+ 		<if test="projCpCode !=null and  projCpCode !=''">
+ 			and proj_cp_code like CONCAT('%',#{projCpCode},'%' ) 
+ 		</if>
+ 		<if test="projShowStatus !=null and  projShowStatus !=''">
+ 			and (proj_show_status is null or proj_show_status='')
+ 		</if>
+ 		
+ 		<if test="prmtParentNo != null and  prmtParentNo !=''">
+ 			and prmt_parent_no =#{prmtParentNo}
+ 		</if>
+ 		<if test="prmtParentNo == null or prmtParentNo ==''">
+ 			and (prmt_parent_no is null or prmt_parent_no='')
+ 		</if>
+  </select>
+  <delete id="deleteProjectRecordByProjectNo" parameterType="java.lang.String" >
+  		delete from t_rl_trs_project where project_no=#{projectNo};
+  </delete>
+  <!-- 先依据objectNo查找是否有数据，有数据就执行删除操作 -->
+  <select  id="getObjectRecordByObjectNo" parameterType="java.lang.String"  resultMap="itemResultMap">
+  		select object_no,item_key,item_value,item_location_order,create_date from t_rl_trs_object_item where object_no=#{objectNo} order by item_location_order;
+  </select> 
+  <delete id="deleteObjectByObjectNo" parameterType="java.lang.String" >
+  		delete from t_rl_trs_object_item where object_no=#{objectNo};
+  </delete> 
+  <delete id="deleteObjectByObjectNoAndItemKey" parameterType="java.util.HashMap" >
+  		delete from t_rl_trs_object_item where object_no=#{objectNo} and item_key=#{itemKey};
+  </delete>
+  <update id="updateProjectRecodeByProjectNo" parameterType="com.xsbweb.vo.TrsProject">
+  		update t_rl_trs_project 
+  		<set>
+  			<if test="projCpCode !=null and projCpCode !=''">
+  				proj_cp_code=#{projCpCode},
+  			</if>
+  			<if test="isShow !=null and isShow !=''">
+  				is_show=#{isShow},
+  			</if>
+  			<if test="projAssignmentMay !=null and projAssignmentMay !=''">
+  				proj_assignment_may=#{projAssignmentMay},
+  			</if>
+  			<if test="projCoachOrg !=null and projCoachOrg !=''">
+  				proj_coach_org=#{projCoachOrg},
+  			</if>
+  			<if test="projOnlineDate !=null and projOnlineDate !=''">
+  				proj_online_date=str_to_date(#{projOnlineDate},'%Y-%m-%d %H:%i:%s'),
+  			</if>
+  			<if test="projMediaNo !=null and projMediaNo !=''">
+  				proj_media_no=#{projMediaNo},
+  			</if>
+  			<if test="shareMediaNo !=null and shareMediaNo !=''">
+  				share_media_no=#{shareMediaNo},
+  			</if>
+  			<if test="bigPicNo !=null and bigPicNo !=''">
+  				big_pic_no=#{bigPicNo},
+  			</if>
+  			<if test="projectTitle !=null and projectTitle !=''">
+  				project_title=#{projectTitle},
+  			</if>
+  			<if test="projectExTitle !=null and projectExTitle !=''">
+  				project_ex_title=#{projectExTitle},
+  			</if>
+  			<if test="projRole !=null and projRole !=''">
+  				project_role=#{projRole},
+  			</if>
+  			<if test="maxProjectPersonAmt !=null and maxProjectPersonAmt !=''">
+  				max_project_person_amt=#{maxProjectPersonAmt},
+  			</if>
+  			<if test="projPv !=null and projPv !=''">
+  				proj_pv=#{projPv},
+  			</if>
+  			<if test="projCpCode !=null and projCpCode !=''">
+  				proj_cp_code=#{projCpCode},
+  			</if>
+  			<if test="projectDesc !=null and projectDesc !=''">
+  				project_desc=#{projectDesc},
+  			</if>
+  			<if test="projCpFullname !=null and projCpFullname !=''">
+  				proj_cp_fullname=#{projCpFullname},
+  			</if>
+  			<if test="handler !=null and handler !=''">
+  				handler=#{handler},
+  			</if>
+  			<if test="projShowStatus !=null and projShowStatus !=''">
+  				proj_show_status=#{projShowStatus},
+  			</if>
+  			<if test="projName !=null and projName !=''">
+  				proj_name=#{projName},
+  			</if>
+  			<if test="lastEditDate !=null and lastEditDate !=''">
+  				 last_edit_date=sysdate()
+  			</if>
+  		</set>
+  		where project_no=#{projectNo};
+  </update>
+  <!-- object_item批量更新 -->
+  <update id="updateObjectRecodeByObjectNo" parameterType="java.util.List" >
+  		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+  			update oltp.t_rl_trs_object_item
+  				 <set>
+                	<if test="item.itemKey != null  and item.itemKey !=''">
+                		item_key = #{item.itemKey },
+                	</if>
+                 	<if test="item.itemValue !=null and item.itemValue !=''">
+						item_value = #{item.itemValue},
+					</if>
+					<if test="item.itemMediaNo !=null and item.itemMediaNo !=''">
+						item_media_no = #{item.itemMediaNo},
+					</if>
+					<if test="item.itemLocationOrder !=null and item.itemLocationOrder !=''">
+						item_location_order = #{item.itemLocationOrder},
+					</if>
+					last_update_date= sysdate()
+				</set>
+				where object_no=#{item.objectNo} and item_key=#{item.oldItemKey}
+  		</foreach>
+  	</update>
+  	
+  	<select id="addProjectRecode" statementType="CALLABLE" parameterType="com.xsbweb.vo.TrsProject">
+	  	call upd_project(#{projectNo,mode=IN,jdbcType=VARCHAR},
+	  							#{projOnlineDate,mode=IN,jdbcType=VARCHAR},
+	  							#{projRole,mode=IN,jdbcType=VARCHAR},
+	  							#{projName,mode=IN,jdbcType=VARCHAR},
+	  							#{projCoachOrg,mode=IN,jdbcType=VARCHAR},
+	  							#{projAssignmentMay,mode=IN,jdbcType=VARCHAR},
+								#{projCpCode,mode=IN,jdbcType=VARCHAR},					  							
+	  							#{projectTitle,mode=IN,jdbcType=VARCHAR},
+	  							#{projectExTitle,mode=IN,jdbcType=VARCHAR}, 
+	  							#{projMediaNo,mode=IN,jdbcType=VARCHAR}, 
+	  							#{shareMediaNo,mode=IN,jdbcType=VARCHAR},  
+	  							#{isShow,mode=IN,jdbcType=VARCHAR}, 
+	  							#{projShowStatus,mode=IN,jdbcType=VARCHAR},
+	  							#{projPv,mode=IN,jdbcType=INTEGER}, 
+	  							#{maxProjectPersonAmt,mode=IN,jdbcType=INTEGER},
+	  							#{bigPicNo,mode=IN,jdbcType=VARCHAR}, 
+	  							#{projectDesc,mode=IN,jdbcType=VARCHAR}, 
+	  							#{projCpFullname,mode=IN,jdbcType=VARCHAR}, 
+	  							#{handler,mode=IN,jdbcType=VARCHAR}, 
+	  							#{prmtParentNo,mode=IN,jdbcType=VARCHAR}, 
+	  							#{projectNo,mode=OUT,jdbcType=VARCHAR},
+	  							#{prcFlag,mode=OUT,jdbcType=INTEGER});
+  	</select>
+  	<insert id="addObjectRecode"  parameterType="java.util.List">
+  		
+ 	 <foreach collection="list" item="item" index="index"  
+        separator=",">  
+        insert into t_rl_trs_object_item (
+  		<if test="item.objectNo !=null and item.objectNo !=''">
+  			object_no,
+  		</if>
+  		<if test="item.itemKey !=null and item.itemKey !=''">
+  			item_key,
+  		</if>
+  		<if test="item.itemValue !=null and item.itemValue !=''">
+  			item_value,
+  		</if>
+  		<if test="item.itemMediaNo !=null and item.itemMediaNo !=''">
+  			item_media_no,
+  		</if>
+  		<if test="item.itemType !=null and item.itemType !=''">
+  			item_type,
+  		</if>
+  		<if test="item.itemLocationOrder !=null and item.itemLocationOrder !=''">
+  			item_location_order,
+  		</if>
+  		create_date
+  		)values 
+        ( 
+        <if test="item.objectNo !=null and item.objectNo !=''">
+  			#{item.objectNo}, 
+  		</if>
+  		<if test="item.itemKey !=null and item.itemKey !=''">
+  			#{item.itemKey}, 
+  		</if>
+  		<if test="item.itemValue !=null and item.itemValue !=''">
+  			#{item.itemValue},
+  		</if>
+  		<if test="item.itemMediaNo !=null and item.itemMediaNo !=''">
+  			#{item.itemMediaNo},
+  		</if>
+  		<if test="item.itemType !=null and item.itemType !=''">
+  			#{item.itemType}, 
+  		</if>
+  		<if test="item.itemLocationOrder !=null and item.itemLocationOrder !=''">
+  			#{item.itemLocationOrder}, 
+  		</if>
+        sysdate())
+    </foreach>
+  	</insert>	
+  	<!-- <insert id="addObjectRecode"  parameterType="com.xsbweb.vo.ProjectItem">
+  		insert into t_rl_trs_object_item (
+  		object_no,item_key,item_value,item_type,item_location_order,create_date
+  	)values 
+        ( #{objectNo}, #{itemKey}, #{itemValue},  
+        #{itemType}, #{itemLocationOrder}, sysdate())
+  	</insert>	 -->
+  	  <select id="fuzzySearch" parameterType="java.util.HashMap" resultMap="resultMap">
+  	select 
+  	*
+  	from t_rl_trs_project where project_no like CONCAT('%',#{serachInformation},'%' ) 
+  								or proj_name like CONCAT('%',#{serachInformation},'%' ) 
+  								or proj_cp_fullname like CONCAT('%',#{serachInformation},'%' ) 
+  								and <![CDATA[ (is_show!='0' or is_show ='') ]]>
+  								order by last_update_date desc limit #{currentRecord},#{pageSize};
+  	</select>  	
+  	<select id="getfuzzySearchProjectCount"   resultType="java.lang.Integer" parameterType="java.lang.String" >
+  			select count(1) from t_rl_trs_project where project_no like CONCAT('%',#{serachInformation},'%' ) 
+  													or proj_name like CONCAT('%',#{serachInformation},'%' ) 
+  													or proj_cp_fullname like CONCAT('%',#{serachInformation},'%' )  
+  													and <![CDATA[ (is_show!='0' or is_show ='') ]]> ;
+  </select>
+  <!-- 查询敲钟数据 -->
+  <select id="getQZProjectList"  parameterType="com.xsbweb.vo.TrsProject" resultMap="resultMap">
+  			select 
+  				distinct(t.project_no) project_no,
+  				t.proj_cp_code,
+  				t.proj_name,
+  				date_format(t.proj_online_date,'%Y-%m-%d %H:%i:%s') proj_online_date,
+  				t.project_role,
+  				t.is_show,
+  				if(t.proj_pv is null or  t.proj_pv='',0,t.proj_pv) + 
+        			if(t.proj_pv_till_last_day is null or t.proj_pv_till_last_day='',0,t.proj_pv_till_last_day) as proj_pv,
+  				t.project_desc,
+  				t.proj_cp_url,
+  				t.proj_show_status,
+  				tm1.media_location proj_media_path,
+  				tm2.media_location youku_code,
+  				tm3.media_location share_media_path,
+  				t.project_title,
+  				t.project_ex_title
+ 			from t_rl_trs_project t 
+ 			left join t_rl_trs_media tm1 on t.proj_media_no = tm1.media_no
+  			left join t_rl_trs_media tm2 on t.project_no = tm2.object_id and tm2.media_format='youku'
+  			left join t_rl_trs_media tm3 on t.share_media_no = tm3.media_no
+ 			 where  project_role='16777216'
+ 		<if test="projName!=null and  projName!=''">
+ 			and (proj_name like CONCAT('%',#{projName},'%') or proj_cp_code=#{projName})
+ 		</if>
+ 		<if test="projOnlineDate!=null and  projOnlineDate!=''">
+ 			and date_format(proj_online_date,'%Y%m%d') =  #{projOnlineDate}
+ 		</if>
+  		order by t.proj_show_status,t.proj_online_date desc limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getProjectListByIndustry"  parameterType="java.util.Map" resultMap="commonResultMap">
+	  select t2.project_no as object_id,
+       t2.proj_media_no as object_pic_no,
+       t2.share_media_no as share_pic_no,
+	   t2.big_pic_no as big_pic_no,
+       t2.project_desc as text_desc,
+       date_format(t2.proj_online_date,'%Y-%c-%d') as online_date,
+	   t2.last_update_date,
+       null as show_date,
+       if(t2.proj_pv is null or  t2.proj_pv='',0,t2.proj_pv) + 
+        	if(t2.proj_pv_till_last_day is null or t2.proj_pv_till_last_day='',0,t2.proj_pv_till_last_day) as pv,
+       null as conf_create_date,
+       t2.proj_name as obj_name,
+	   null as conf_id,
+       null as news_source,
+       null as news_title,
+       t2.proj_dyn_quotes as proj_dyn_quotes,
+       t2.proj_coach_org as proj_coach_org,
+       t2.proj_assignment_may as proj_assignment_may,
+       IF(tcp. proj_apply_counts IS NULL ,0,tcp. proj_apply_counts )  proj_apply_counts,
+	   IF(tcp. proj_apply_counts IS NULL ,0,tcp. proj_apply_counts )/(IF(t2.max_project_person_amt IS NULL ,40,t2.max_project_person_amt )) as proj_percentage,
+       'project' as object_type,
+	   null as base_url,
+	   t2.project_role as role,
+	   null share_url,
+	   tm1.media_location object_pic_path,
+	   tm2.media_location share_pic_path,
+	   t2.proj_cp_code as stock_id 
+from oltp.t_rl_trs_project t2
+ <![CDATA[inner join meta.t_mt_column_enum t3 on t3.enum_code & t2.project_role > 0]]> 
+ left join (select count(1) as proj_apply_counts,object_no from oltp.t_rl_trs_cust_sign_project group by object_no) tcp on tcp.object_no = t2.project_no  
+ left join t_rl_trs_media tm1 on tm1.media_no=t2.proj_media_no 
+ left join t_rl_trs_media tm2 on tm2.media_no=t2.share_media_no  
+ where t3.enum_desc = #{type}
+ and t3.enum_full_name = 'role'
+  and t2.is_show = '1'
+  and exists (select null from meta.t_mt_column_enum where enum_desc = #{type} and enum_full_name = 'role' and enum_group_code in ('road_show','ad','news'))
+  and project_no in 
+ 	<foreach collection="projectNos" index="index" item="projectNo" open="(" separator="," close=")">
+	      #{projectNo}   
+     </foreach>
+     order by t2.proj_online_date desc  limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getQuotesByProjectNos" parameterType="java.util.Arrays" resultMap="resultMap">
+  	select 
+  		t.project_no,
+		case when ifnull(v.stock_price,'--')=0.0000 then '--' else v.stock_price end proj_dyn_quotes
+	 from oltp.t_rl_trs_project t
+  	left join oltp.v_stock_info v on v.stock_id=t.proj_cp_code 
+  	where t.project_no in
+  	<foreach collection="array" index="index" item="projectNo" open="(" separator="," close=")">  
+           #{projectNo}   
+    </foreach>  
+  </select>
+  
+  <select id="getQuotesByProjectNo" parameterType="java.lang.String" resultType="java.lang.String">
+  	select 
+		case when ifnull(v.stock_price,'--')=0.0000 then '--' else v.stock_price end proj_dyn_quotes
+	 from oltp.t_rl_trs_project t
+  	left join oltp.v_stock_info v on v.stock_id=t.proj_cp_code 
+  	where t.project_no = #{projectNo} ;  
+  </select>
+	
+	<select id="getProjectByStockId" parameterType="java.lang.String" resultMap="resultMap">
+		select 
+  			t.project_no
+  		from t_rl_trs_project t
+  			where t.proj_cp_code = #{stockId};
+	</select>
+	
+	<select id="getPrmtParentNoByProjectNo" parameterType="java.lang.String" resultType="java.lang.String">
+		select 
+	  		t1.project_no
+  		from t_rl_trs_project t1 
+	  		left join t_rl_trs_project t2 on t2.prmt_parent_no = t1.proj_cp_code  
+		where  t2.project_no=#{projectNo} and t1.project_no like 'prmt%';
+	</select>
+
+	<delete id="deleteProjectRecordByprojectNoArrs" parameterType="java.lang.String" >
+  		delete from t_rl_trs_project where project_no  in 
+		  <foreach collection="array" index="index" item="projectNo" open="(" separator="," close=")">  
+	           #{projectNo}   
+	      </foreach>   
+  </delete>
+  <delete id="deleteObjectByObjectNos" parameterType="java.lang.String" >
+  		delete from t_rl_trs_object_item where object_no  in 
+		  <foreach collection="array" index="index" item="objectNo" open="(" separator="," close=")">  
+	           #{objectNo}   
+	      </foreach>   
+  </delete>
+</mapper>

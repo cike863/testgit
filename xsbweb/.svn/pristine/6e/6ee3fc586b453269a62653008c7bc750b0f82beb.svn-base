@@ -1,0 +1,750 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.SbhqMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.extend.SbhqVO" >
+    <result column="name" property="name" />
+    <result column="cnt" property="cnt" />
+    <result column="up" property="up"  />
+    <result column="down" property="down"  />
+    <result column="amt" property="amt"  />
+    <result column="pe" property="pe"  />
+    <result column="date" property="date" />
+    <result column="price" property="price"  />
+    <result column="increaseCnt" property="increaseCnt"  />
+    <result column="increasePrice" property="increasePrice"  />
+    <result column="step" property="step"  />
+    <result column="stockId" property="stockId"  />
+    <result column="stocksCnt" property="stocksCnt"  />
+    <result column="avgPe" property="avgPe"  />
+    <result column="manager" property="manager"  />
+  </resultMap>
+  
+  <resultMap id="sencodMap" type="com.xsbweb.vo.extend.SbhqSencodVO" >
+    <result column="stock_id" property="stockId" />
+    <result column="stock_name" property="stockName" />
+    <result column="exchange_id" property="exchangeId"  />
+    <result column="industry_name" property="industryName"  />
+    <result column="stock_status" property="stockStatus"  />
+    <result column="full_name" property="fullName"  />
+    <result column="english_name" property="englishName" />
+    <result column="area" property="area"  />
+    <result column="registered_address" property="registeredAddress"  />
+    <result column="legal" property="legal"  />
+    <result column="secretary" property="secretary"  />
+    <result column="capital" property="capital"  />
+    <result column="web" property="web"  />
+    <result column="tel" property="tel"  />
+    <result column="fax" property="fax"  />
+    <result column="stock_price" property="stockPrice"  />
+    <result column="trading_amount" property="tradingAmount"  />
+    <result column="trading_volumn" property="tradingVolumn"  />
+    <result column="price_change" property="priceChange"  />
+    <result column="price_change_percent" property="priceChangePercent"  />
+    <result column="list_date" property="listDate"  />
+    <result column="hand_volumn" property="handVolumn" />
+	<result column="total_amount" property="totalAmount" />
+  </resultMap>
+  
+  <resultMap id="klineMap" type="com.xsbweb.vo.extend.KlineVO" >
+    <result column="stock_id" property="stockId" />
+  	<result column="price_date" property="priceDate" />
+  	<result column="high_price" property="highPrice" />
+  	<result column="low_price" property="lowPrice" />
+  	<result column="up_price" property="upPrice" />
+  	<result column="down_price" property="downPrice" />
+  	<result column="color" property="color" />
+  	<result column="stock_price" property="stockPrice" />
+  	<result column="show_month_week" property="showMonthWeek" />
+  	<result column="show_year" property="showYear" />
+  	<result column="show_month" property="showMonth" />
+  	<result column="trading_amount" property="tradingAmount" />
+  	<result column="trading_volumn" property="tradingVolumn" />
+  	<result column="price_time" property="priceTime" />
+  	<result column="rowno" property="rowNo" />
+  </resultMap>
+  
+  <resultMap id="stockPriceMap" type="com.xsbweb.vo.extend.StockPriceVO" >
+  	<result column="stock_id" property="stockId" />
+  	<result column="stock_name" property="stockName" />
+  	<result column="price_change" property="priceChange" />
+  	<result column="price_change_percent" property="priceChangePercent" />
+  	<result column="stock_price" property="stockPrice" />
+  	<result column="trading_amount" property="tradingAmount" />
+  	<result column="trading_volumn" property="tradingVolumn" />
+  	<result column="today_begin_price" property="todayBeginPrice" />
+  	<result column="ysd_end_price" property="ysdEndPrice" />
+	<result column="high_price" property="highPrice" />
+	<result column="low_price" property="lowPrice" />
+	<result column="amplitude" property="amplitude" />
+	<result column="hand_volumn" property="handVolumn" />
+	<result column="total_amount" property="totalAmount" />
+	<result column="max_volumn" property="maxVolumn" />
+	<result column="min_volumn" property="minVolumn" />
+	<result column="offer_time" property="offerTime" />
+	<result column="sale_price_5" property="salePrice5" />
+	<result column="sale_price_4" property="salePrice4" />
+	<result column="sale_price_3" property="salePrice3" />
+	<result column="sale_price_2" property="salePrice2" />
+	<result column="sale_price_1" property="salePrice1" />
+	<result column="buy_price_1" property="buyPrice1" />
+	<result column="buy_price_2" property="buyPrice2" />
+	<result column="buy_price_3" property="buyPrice3" />
+	<result column="buy_price_4" property="buyPrice4" />
+	<result column="buy_price_5" property="buyPrice5" />
+	<result column="sale_cnt_5" property="saleCnt5" />
+	<result column="sale_cnt_4" property="saleCnt4" />
+	<result column="sale_cnt_3" property="saleCnt3" />
+	<result column="sale_cnt_2" property="saleCnt2" />
+	<result column="sale_cnt_1" property="saleCnt1" />
+	<result column="buy_cnt_1" property="buyCnt1" />
+	<result column="buy_cnt_2" property="buyCnt2" />
+	<result column="buy_cnt_3" property="buyCnt3" />
+	<result column="buy_cnt_4" property="buyCnt4" />
+	<result column="buy_cnt_5" property="buyCnt5" />
+  </resultMap>
+  
+  <resultMap id="fundMap" type="com.xsbweb.vo.extend.FundVO" >
+  	<result column="snapshot_day" property="snapshotDay" />
+  	<result column="fund_name" property="fundName" />
+  	<result column="fund_found_date" property="fundFoundDate" />
+  	<result column="fund_manager" property="fundManager" />
+  </resultMap>
+  
+  <resultMap id="preMap" type="com.xsbweb.vo.TrsMedia" >
+  	<result column="media_no" property="mediaNo" />
+  	<result column="media_name" property="mediaName" />
+  	<result column="media_location" property="mediaLocation" />
+  	<result column="media_type" property="mediaType" />
+  	<result column="create_date" property="createDate" />
+  </resultMap>
+  
+  <resultMap id="marketMap" type="com.xsbweb.vo.extend.SbhqMarket" >
+  	 <result column="idx_name" property="idxName" />	
+  	 <result column="idx_cnt" property="idxCnt" />	
+  	 <result column="idx_desc" property="idxDesc" />	
+  	 <result column="idx_grp" property="idxGrp" />	
+  </resultMap>
+  
+  <resultMap id="situationMap" type="com.xsbweb.vo.extend.SbhqSituationVO" >
+  	  <result column="stock_id"             property="stockId" />
+	 <result column="stock_name"             property="stockName" />
+	 <result column="full_name"         property="fullName" />
+	 <result column="english_name"      property="englishName" />
+	 <result column="registered_address" property="registeredAddress" />
+	 <result column="legal"             property="legal" />
+	 <result column="secretary"         property="secretary" />
+	 <result column="capital"           property="capital" />
+	 <result column="industry_name"     property="industryName" />
+	 <result column="list_date"         property="listDate" />
+	 <result column="web"               property="web" />
+	 <result column="exchange_id"       property="exchangeId" />
+	 <result column="protocol_broker"  property="protocolBroker" />
+	 <result column="maker_broker_1"   property="makerBroker1" />
+	 <result column="maker_broker_2"   property="makerBroker2" />
+	 <result column="maker_broker_3"   property="makerBroker3" />
+	 <result column="maker_broker_4"   property="makerBroker4" />
+	 <result column="maker_broker_5"   property="makerBroker5" />
+	 <result column="maker_broker_6"   property="makerBroker6" />
+	 <result column="maker_broker_7"   property="makerBroker7" />
+	 <result column="maker_broker_8"   property="makerBroker8" />
+	 <result column="maker_broker_9"   property="makerBroker9" />
+	 <result column="maker_broker_10"  property="makerBroker10" />
+	 <result column="maker_broker_11"  property="makerBroker11" />
+	 <result column="maker_broker_12"  property="makerBroker12" />
+	 <result column="maker_broker_13"  property="makerBroker13" />
+	 <result column="maker_broker_14"  property="makerBroker14" />
+	 <result column="maker_broker_15"  property="makerBroker15" />
+	 <result column="maker_broker_16"  property="makerBroker16" />
+	 <result column="maker_broker_17"  property="makerBroker17" />
+	 <result column="maker_broker_18"  property="makerBroker18" />
+	 <result column="maker_broker_19"  property="makerBroker19" />
+	 <result column="maker_broker_20"  property="makerBroker20" />
+	 <result column="maker_broker_21"  property="makerBroker21" />
+	 <result column="maker_broker_22"  property="makerBroker22" />
+	 <result column="maker_broker_23"  property="makerBroker23" />
+	 <result column="maker_broker_24"  property="makerBroker24" />
+	 <result column="maker_broker_25"  property="makerBroker25" />
+	 <result column="maker_broker_26"  property="makerBroker26" />
+	 <result column="maker_broker_27"  property="makerBroker27" />
+	 <result column="maker_broker_28"  property="makerBroker28" />
+	 <result column="maker_broker_29"  property="makerBroker29" />
+	 <result column="maker_broker_30"  property="makerBroker30" />
+	 <result column="maker_broker_31"  property="makerBroker31" />
+	 <result column="maker_broker_32"  property="makerBroker32" />
+	 <result column="maker_broker_33"  property="makerBroker33" />
+	 <result column="maker_broker_34"  property="makerBroker34" />
+	 <result column="maker_broker_35"  property="makerBroker35" />
+	 <result column="maker_broker_36"  property="makerBroker36" />
+	 <result column="maker_broker_37"  property="makerBroker37" />
+	 <result column="maker_broker_38"  property="makerBroker38" />
+	 <result column="maker_broker_39"  property="makerBroker39" />
+	 <result column="maker_broker_40"  property="makerBroker40" />
+	 <result column="maker_broker_41"  property="makerBroker41" />
+	 <result column="maker_broker_42"  property="makerBroker42" />
+	 <result column="maker_broker_43"  property="makerBroker43" />
+  </resultMap>
+  
+  <select id="getStockPriceRByStockId" parameterType="java.lang.String" resultMap="resultMap">
+  	select  
+  		stock_id stockId,
+  		stock_price price
+  	from v_stock_price_r where stock_id=#{stockId};
+  </select>
+  
+  <select id="getStockPriceDByStockId" parameterType="java.lang.String" resultMap="stockPriceMap">
+  	select  
+  		*
+  	from v_stock_price_d where stock_id=#{stockId};
+  </select>
+  
+   <select id="getStockPriceList" parameterType="com.xsbweb.vo.extend.StockPriceVO" resultMap="stockPriceMap">
+  		select  
+  			stock_id,
+  			stock_name,
+  			price_change,
+			price_change_percent,
+			stock_price,
+			trading_amount,
+			trading_volumn,
+			hand_volumn,
+			total_amount
+  		from oltp.v_stock_info  
+  		where 1=1 
+  		<if test="order==1">
+  			and price_change_percent is not null
+  			order by price_change_percent desc
+  		</if>
+  		<if test="order==2">
+  			and price_change_percent is not null
+  			order by price_change_percent 
+  		</if>
+  		<if test="order==3">
+  			and price_change_percent is not null 
+  			order by trading_volumn desc
+  		</if>
+  		limit #{currentRecord},#{pageSize};
+  </select>
+   
+  <select id="getFavorListByCustomerId" parameterType="java.util.HashMap" resultMap="sencodMap">
+	  	select 
+	  		td.stock_name,
+	  		td.stock_id,
+	  		td.stock_price,
+	  		td.price_change,
+	  		td.price_change_percent,
+	  		td.trading_volumn,
+	  		td.trading_amount,
+	  		date_format(td.list_date,'%Y-%c-%d') list_date,
+	  		hand_volumn,
+			total_amount
+	 	from oltp.v_stock_info td 
+	  		left join t_rl_snap_customer_favor tf on tf.favor_object=td.stock_id 
+	  	where tf.customer_id=#{customerId} and tf.favor_type=#{favorType} 
+	  		<if test="transMethod=='zs'">
+	  			and td.trans_insttt = 1 
+	  		</if>
+	  		<if test="transMethod=='xy'">
+	  			and td.protocol_insttt = 1 
+	  		</if> 
+	  		order by tf.create_date desc
+	  		limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getSbhqDataSecond" parameterType="com.xsbweb.vo.extend.SbhqSencodVO" resultMap="sencodMap">
+	  	select 
+	  		stock_name,
+	  		stock_id,
+	  		stock_price,
+	  		price_change,
+	  		price_change_percent,
+	  		trading_volumn,
+	  		trading_amount,
+	  		hand_volumn,
+			total_amount
+	 	from v_stock_info  
+		  	where 1=1
+	  		<if test="transMethod=='zs'">
+	  			and trans_insttt = 1 
+	  		</if>
+	  		<if test="transMethod=='xy'">
+	  			and protocol_insttt = 1 
+	  		</if> 
+	  		<if test="area!=null and area!=''">
+	  			<if test="area=='其他'">
+		  			and (area is null or area = '')
+	  			</if>
+	  			<if test="area!='其他'">
+		  			and area = #{area} 
+	  			</if>
+	  		</if>
+	  		<if test="industryName!=null and industryName!=''">
+	  			and industry_name = #{industryName} 
+	  		</if>
+	  		limit #{currentRecord},#{pageSize}; 
+  </select>
+  
+  <!-- 券商二级列表获取 -->
+  <select id="getStockListByBroker" parameterType="com.xsbweb.vo.extend.SbhqSencodVO" resultMap="sencodMap">
+ 	 <if test="transMethod=='zss'">
+ 	 	select 
+			inf.stock_name,
+	  		inf.stock_id,
+	  		inf.stock_price,
+	  		inf.price_change,
+	  		inf.price_change_percent,
+	  		inf.trading_volumn 
+		from t_rl_snap_maker_broker_full idx
+			left join v_stock_info inf on idx.stock_id = inf.stock_id
+		where idx.maker_broker = #{brokerName} 
+ 	 </if>
+ 	 <if test="transMethod=='fdqs'">
+ 	 	select 
+		    inf.stock_name,
+		    inf.stock_id,
+		    inf.stock_price,
+		    inf.price_change,
+		    inf.price_change_percent,
+		    inf.trading_volumn 
+	    from olap.t_orgn_etl_broker idx
+	   	 	left join v_stock_info inf on idx.stock_id = inf.stock_id
+	    where idx.broker_name like concat(#{brokerName},'%') and idx.snapshot_day = date_format(sysdate(),'%Y%m%d')
+ 	 </if>
+	 limit #{currentRecord},#{pageSize}; 
+  </select>
+  
+   <select id="getIndustryList" parameterType="java.util.HashMap" resultMap="resultMap">
+  		<if test="transMethod=='zs'">
+  			select 
+		  		if(industry is null,'其他',industry) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_industry_d 
+		  	where snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)
+		  	and trans_insttt  = 1 
+  		</if>
+  		<if test="transMethod=='xy'">
+  			select 
+		  		if(industry is null,'其他',industry) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_industry_d 
+		  	where snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+		  	and protocol_insttt  = 1
+  		</if>
+  		<if test="transMethod=='all' or transMethod==null">
+	  		select 
+		  		if(industry is null,'其他',industry) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_industry_d 
+		  	where 1=1 
+  			and snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+		  	and (protocol_insttt is null or protocol_insttt='')
+		  	and trans_insttt is null 
+  		</if> 
+  		order by cnt desc 
+  	 	limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getAreaList" parameterType="java.util.HashMap" resultMap="resultMap">
+  		<if test="transMethod=='zs'">
+  			select 
+		  		if(area is null,'其他',area) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_area_d  
+		  	where snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)
+		  	and trans_insttt  = 1 
+  		</if>
+  		<if test="transMethod=='xy'">
+  			select 
+		  		if(area is null,'其他',area) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_area_d  
+		  	where snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+		  	and protocol_insttt  = 1
+  		</if> 
+  		<if test="transMethod=='all' or transMethod==null">
+	  		select 
+		  		if(area is null,'其他',area) name,
+		  		cnt,
+		  		up,
+		  		down,
+		  		amt
+		 	from t_sum_area_d 
+		  	where snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)
+ 			and protocol_insttt is null 
+		  	and trans_insttt is null 
+  		</if> 
+  			order by cnt desc 
+	  		limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getBrokerList" parameterType="java.util.HashMap" resultMap="resultMap">
+	  	select 
+	  		broker name,
+	  		sum(cnt) cnt,
+	  		sum(up) up,
+	  		sum(down) down
+	  		<!-- up_down_percent,  -->
+	  		<!-- avg_pe avgPe -->
+	 	from t_sum_broker_d 
+	  	where 1=1 
+	  		<if test="transMethod=='zss'">
+	  			and snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)
+	  			and trans_insttt  = 1 
+	  		</if>
+	  		<if test="transMethod=='fdqs'">
+	  			and snapshot_day = (case dayofweek(sysdate())
+									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)
+	  			and protocol_insttt  = 1
+	  		</if> 
+	  		group by name order by cnt desc
+	  	 limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getDirectionalAdditionList" parameterType="java.util.HashMap" resultMap="resultMap">
+  		select 
+	  		name,
+	  		cnt,
+	  		up,
+	  		pe
+	 	from t_sum_directionaladdition_d 
+	  	where transMethod = #{transMethod} limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getPreList" parameterType="java.util.HashMap" resultMap="resultMap">
+  		select 
+	  		name,
+	  		cnt,
+	  		up,
+	  		pe
+	 	from t_sum_pre_list_d 
+	  	where transMethod = #{transMethod} limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getStockPriceKlineD" parameterType="java.lang.String" resultMap="klineMap">
+	  	select 
+	  		(@rowNum :=  @rowNum +1) as rowno,
+	  		stock_id,
+	  		date_format(price_date,'%Y%m%d')price_date,
+	  		high_price,
+	  		low_price,
+	  		up_price,
+	  		down_price,
+	  		trading_volumn,
+	  		trading_amount,
+	  		color
+	  	from v_stock_price_d,(select (@rowNum:=0)) numtab where stock_id=#{stockId} 
+	  	order by price_date desc;
+  </select>
+  <select id="getStockPriceKlineM" parameterType="java.lang.String" resultMap="klineMap">
+	  	select 
+	  		stock_id,
+	  		show_month,
+	  		high_price,
+	  		low_price,
+	  		up_price,
+	  		down_price,
+	  		color
+	  	from v_stock_price_m where stock_id=#{stockId};
+  </select>
+  <select id="getStockPriceKlineR" parameterType="java.lang.String" resultMap="klineMap">
+	  	select 
+	  		stock_id,
+	  		stock_price,
+	  		trading_amount,
+	  		trading_volumn,
+	  		price_time
+	  	from v_stock_price_r where stock_id=#{stockId};
+  </select>
+  
+   <select id="getSbzsKlineR" parameterType="java.lang.String" resultMap="klineMap">
+   		select 
+	  		stock_id,
+	  		stock_price,
+	  		trading_amount,
+	  		trading_volumn,
+	  		price_time
+	  	from v_stock_price_single_r where stock_id=#{stockId} order by price_time;
+   </select>
+  <select id="getStockPriceKlineW" parameterType="java.lang.String" resultMap="klineMap">
+	  	select 
+	  		stock_id,
+	  		show_month_week,
+	  		high_price,
+	  		low_price,
+	  		up_price,
+	  		down_price,
+	  		color
+	  	from v_stock_price_w where stock_id=#{stockId};
+  </select>
+  <select id="getStockPriceKlineY" parameterType="java.lang.String" resultMap="klineMap">
+	  	select 
+	  		stock_id,
+	  		show_year,
+	  		high_price,
+	  		low_price,
+	  		up_price,
+	  		down_price,
+	  		color
+	  	from v_stock_price_y where stock_id=#{stockId};
+  </select>
+  
+  <select id="getStockInfo" parameterType="java.lang.String" resultMap="stockPriceMap">
+  		select  
+  			tp.stock_id,
+  			tp.price_change,
+			tp.price_change_percent,
+			tp.stock_price,
+			tp.trading_amount,
+			tp.trading_volumn,
+			tp.offer_time,
+			tp.sale_price_5,
+			tp.sale_price_4,
+			tp.sale_price_3,
+			tp.sale_price_2,
+			tp.sale_price_1,
+			tp.buy_price_1,
+			tp.buy_price_2,
+			tp.buy_price_3,
+			tp.buy_price_4,
+			tp.buy_price_5,
+			tp.sale_cnt_5,
+			tp.sale_cnt_4,
+			tp.sale_cnt_3,
+			tp.sale_cnt_2,
+			tp.sale_cnt_1,
+			tp.buy_cnt_1,
+			tp.buy_cnt_2,
+			tp.buy_cnt_3,
+			tp.buy_cnt_4,
+			tp.buy_cnt_5,
+			td1.begin_price as today_begin_price,
+			td2.end_price as ysd_end_price,
+			max(td3.latest_price) as high_price, 
+			min(td3.latest_price) as low_price,
+			max(td3.trading_volumn) as max_volumn,
+			min(td3.trading_volumn) as min_volumn
+  		from oltp.t_rl_snap_etl_stock_price tp 
+  		left join olap.t_sum_stock_price_d td1 on td1.stock_id=tp.stock_id and td1.snapshot_day = (case dayofweek(sysdate())
+																									  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+																									  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+																									  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+  		left join olap.t_sum_stock_price_d td2 on td2.stock_id=tp.stock_id and td2.snapshot_day = (case dayofweek(sysdate())
+																									  when 1 then date_format(date_add(sysdate(), interval -3 day),'%Y%m%d') 
+																									  when 7 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+																									  else date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') end)
+		left join olap.t_anlssd_stock_dtl td3 on td3.stock_id=tp.stock_id and td3.snapshot_day = (case dayofweek(sysdate())
+																								  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+																								  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+																								  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 	
+  		where tp.stock_id=#{stockId}   
+  			limit 0,1;
+  </select>
+  
+  <select id="getMaxMinPriceByStockId" parameterType="java.lang.String" resultMap="stockPriceMap">
+  		select 
+  			stock_id,
+			max(latest_price) as high_price, 
+			min(latest_price) as low_price,
+			max(trading_volumn) as max_volumn,
+			min(trading_volumn) as min_volumn
+		from olap.t_anlssd_stock_dtl 
+			where snapshot_day = (case dayofweek(sysdate())
+								  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+								  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+								  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+			 and stock_id = #{stockId};
+  </select> 
+  
+  <select id="getMaxMinPriceBy899002" parameterType="java.lang.String" resultMap="stockPriceMap">
+  		select 
+  			stock_id,
+			max(latest_price) as high_price, 
+			min(latest_price) as low_price,
+			max(trading_volumn) as max_volumn,
+			min(trading_volumn) as min_volumn
+		from olap.t_anlssd_stock_dtl 
+			where snapshot_day = (case dayofweek(sysdate())
+								  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+								  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+								  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end) 
+			 and stock_id = #{stockId};
+  </select> 
+  
+  <!-- 三板基金 -->
+  <select id="getFundList" parameterType="com.xsbweb.common.bean.BasePo" resultMap="fundMap">
+  	select 
+	  	<!-- snapshot_day, -->
+		distinct fund_name,
+		CAST(fund_found_date AS UNSIGNED) fund_found_date,
+		fund_manager
+  	from t_orgn_etl_fund where fund_name like '%新三板%' 
+  	order by fund_found_date desc
+  	limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getPreListByMedias" parameterType="com.xsbweb.vo.TrsMedia" resultMap="preMap">
+  	select media_no,
+  		media_desc media_name,
+  		media_location,
+  		media_format media_type,
+  		date_format(create_date,'%Y-%m-%d') create_date
+  	from t_rl_trs_media 
+  		where media_author = #{mediaAuthor} 
+  		<if test="objectId!=null and objectId!=''">
+  			and object_id=#{objectId} 
+  		</if>
+  		order by create_date desc 
+  		 limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getSbhqMarket" resultMap="marketMap">
+  	select  
+  		idx_name,
+  		idx_cnt,
+  		idx_desc,
+  		idx_grp
+  	from oltp.t_rl_snap_sum_index where idx_grp = 'market';
+  </select>
+  
+  <select id="getSbhqBrokerZSByName" parameterType="java.lang.String" resultMap="resultMap">
+  	select 
+  		broker name,
+  		cnt cnt
+	from olap.t_sum_broker_d
+		where trans_insttt = '2' and protocol_insttt = '2' 
+		and broker = #{brokerName};
+  </select>
+  
+  <select id="getSbhqWantApplyRoadList" parameterType="java.util.Map" resultMap="stockPriceMap" >
+  	select 
+		 t1.stock_id,
+		 t1.stock_name,
+		 t1.stock_price,
+		 t2.cnt tradingVolumn
+  	 from v_stock_info t1
+  	left join (select tcp.object_no,count(1) cnt from oltp.t_rl_trs_cust_sign_project tcp group by tcp.object_no)t2 on t1.stock_id = t2.object_no
+  	<if test="stockLabel!=null and stockLabel!=''">
+  		where t1.stock_id = #{stockLabel} or t1.stock_name=#{stockLabel} 
+  	</if>  
+  	<if test="type=='1'">
+	  	order by t1.list_date desc 
+  	</if>
+  	<if test="type=='2'">
+  		order by t2.cnt desc 
+  	</if>
+  	limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getDKlineHighLowData" parameterType="java.util.Map" resultMap="stockPriceMap">
+	  	select 
+		  stock_id,
+		  max(high_price) as high_price, 
+		  min(low_price) as low_price,
+		  max(trading_volumn) as max_volumn,
+		  min(trading_volumn) as min_volumn
+		from (select stock_id,high_price,low_price,trading_volumn from olap.v_stock_price_d 
+					where stock_id = #{stockId} order by price_date desc limit 0,#{days}) sour 
+					limit 0,1;
+  </select>
+  
+  <select id="getSbhqComapnySituationByStockId" parameterType="java.lang.String" resultMap="situationMap">
+  		select
+		max(concat(stock_name,' (',base.stock_id,')')) as stock_name,  
+		max(full_name) as full_name,                                         
+		max(english_name) as english_name,                                       
+		max(registered_address) as registered_address,                               
+		max(legal) as legal,                                                
+		max(secretary) as secretary,                                         
+		max(capital) as capital,                                             
+		max(industry_name) as industry_name,                                       
+		max(list_date) as list_date,                                         
+		max(web) as web,                                                
+		max(exchange_id) as exchange_id,                                        
+		max(protocol_broker) as protocol_broker,                                    
+		max(case when rowno = 1 then maker_broker end) as maker_broker_1,
+		max(case when rowno = 2 then maker_broker end) as maker_broker_2,
+		max(case when rowno = 3 then maker_broker end) as maker_broker_3,
+		max(case when rowno = 4 then maker_broker end) as maker_broker_4,
+		max(case when rowno = 5 then maker_broker end) as maker_broker_5,
+		max(case when rowno = 6 then maker_broker end) as maker_broker_6,
+		max(case when rowno = 7 then maker_broker end) as maker_broker_7,
+		max(case when rowno = 8 then maker_broker end) as maker_broker_8,
+		max(case when rowno = 9 then maker_broker end) as maker_broker_9,
+		max(case when rowno = 10 then maker_broker end) as maker_broker_10,
+		max(case when rowno = 11 then maker_broker end) as maker_broker_11,
+		max(case when rowno = 12 then maker_broker end) as maker_broker_12,
+		max(case when rowno = 13 then maker_broker end) as maker_broker_13,
+		max(case when rowno = 14 then maker_broker end) as maker_broker_14,
+		max(case when rowno = 15 then maker_broker end) as maker_broker_15,
+		max(case when rowno = 16 then maker_broker end) as maker_broker_16,
+		max(case when rowno = 17 then maker_broker end) as maker_broker_17,
+		max(case when rowno = 18 then maker_broker end) as maker_broker_18,
+		max(case when rowno = 19 then maker_broker end) as maker_broker_19,
+		max(case when rowno = 20 then maker_broker end) as maker_broker_20,
+		max(case when rowno = 21 then maker_broker end) as maker_broker_21,
+		max(case when rowno = 22 then maker_broker end) as maker_broker_22,
+		max(case when rowno = 23 then maker_broker end) as maker_broker_23,
+		max(case when rowno = 24 then maker_broker end) as maker_broker_24,
+		max(case when rowno = 25 then maker_broker end) as maker_broker_25,
+		max(case when rowno = 26 then maker_broker end) as maker_broker_26,
+		max(case when rowno = 27 then maker_broker end) as maker_broker_27,
+		max(case when rowno = 28 then maker_broker end) as maker_broker_28,
+		max(case when rowno = 29 then maker_broker end) as maker_broker_29,
+		max(case when rowno = 30 then maker_broker end) as maker_broker_30,
+		max(case when rowno = 31 then maker_broker end) as maker_broker_31,
+		max(case when rowno = 32 then maker_broker end) as maker_broker_32,
+		max(case when rowno = 33 then maker_broker end) as maker_broker_33,
+		max(case when rowno = 34 then maker_broker end) as maker_broker_34,
+		max(case when rowno = 35 then maker_broker end) as maker_broker_35,
+		max(case when rowno = 36 then maker_broker end) as maker_broker_36,
+		max(case when rowno = 37 then maker_broker end) as maker_broker_37,
+		max(case when rowno = 38 then maker_broker end) as maker_broker_38,
+		max(case when rowno = 39 then maker_broker end) as maker_broker_39,
+		max(case when rowno = 40 then maker_broker end) as maker_broker_40,
+		max(case when rowno = 41 then maker_broker end) as maker_broker_41,
+		max(case when rowno = 42 then maker_broker end) as maker_broker_42,
+		max(case when rowno = 43 then maker_broker end) as maker_broker_43
+		from oltp.v_stock_info base
+		left join (select stock_id,maker_broker,(@rowNum :=  @rowNum +1) as rowno from oltp.t_rl_snap_maker_broker_full,(select (@rowNum:=0)) numtab where stock_id = #{stockId}) m_broker
+		on base.stock_id = m_broker.stock_id
+		where base.stock_id = #{stockId}
+		group by base.stock_id
+  </select>
+</mapper>

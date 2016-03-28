@@ -1,0 +1,829 @@
+package com.xsbweb.controller.app;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.service.LoginRegisterService;
+import com.xsbweb.service.SbhqService;
+import com.xsbweb.service.TrsProjectService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MD5;
+import com.xsbweb.util.SmsUtil;
+import com.xsbweb.vo.CompanyDrctr;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.CustomerVO;
+import com.xsbweb.vo.extend.FundVO;
+import com.xsbweb.vo.extend.KlineVO;
+import com.xsbweb.vo.extend.SbhqMarket;
+import com.xsbweb.vo.extend.SbhqSencodVO;
+import com.xsbweb.vo.extend.SbhqSituationVO;
+import com.xsbweb.vo.extend.SbhqTotalVO;
+import com.xsbweb.vo.extend.SbhqVO;
+import com.xsbweb.vo.extend.StockPriceVO;
+
+@Controller
+public class SbhqController {
+
+	private Logger log = Logger.getLogger(SbhqController.class);
+	
+	@Autowired
+	private SbhqService sbhqService;
+	
+	@Autowired
+	private LoginRegisterService loginRegisterService;
+	
+	@Autowired
+	private TrsProjectService trsProjectService;
+	
+	@RequestMapping(value="/app/sbhq/getStockPriceRByStockId.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCompanyDrctrByStockId(
+			HttpServletRequest request,
+			@RequestParam("stockId") String stockId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<SbhqVO> sbhqVOList = null;
+		try {
+			sbhqVOList = sbhqService.getStockPriceRByStockId(stockId);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("sbhqVOList", sbhqVOList);
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	/**
+	 * 三板行情一级列表
+	 * @param pageType
+	 * @param transMethod
+	 * @param customerId
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/frist",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqDataFirst(
+			HttpServletRequest request,
+			@RequestParam("pageType") String pageType,
+			@RequestParam("transMethod") String transMethod,
+			@RequestParam(value="customerId",required=false) String customerId,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(pageType)||CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(transMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			//其他地方调用时,都是通过集合对象.getgetSbhqDataFirst类里面的put数据;
+			map = sbhqService.getSbhqDataFirst(pageType,transMethod,customerId,pageNo,pageSize);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		return map;
+	}
+	
+	/**
+	 * 三板行情二级列表
+	 * @param pageType
+	 * @param transMethod
+	 * @param stockId
+	 * @param industry
+	 * @param area
+	 * @param broker
+	 * @param month
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/second",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqDataSecond(
+			HttpServletRequest request,
+			@RequestParam("transMethod") String transMethod,
+			@RequestParam(value="industry",required=false) String industry,
+			@RequestParam(value="area",required=false) String area,
+			@RequestParam(value="broker",required=false) String broker,
+			@RequestParam(value="month",required=false) String month,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(transMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		if(CommonUtils.isBlank(industry)&&CommonUtils.isBlank(area)&&CommonUtils.isBlank(broker)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		//不将全部数据展示出去
+		List<Map<String,String>> sencodVOList = new ArrayList<Map<String,String>>();
+		try {
+			SbhqSencodVO sbhqSencodVO = new SbhqSencodVO();
+			sbhqSencodVO.setTransMethod(transMethod);
+			if(CommonUtils.isNotBlank(industry)){
+				sbhqSencodVO.setIndustryName(industry);
+			}
+			if(CommonUtils.isNotBlank(area)){
+				sbhqSencodVO.setArea(area);		
+			}
+			if(CommonUtils.isNotBlank(broker)){
+				sbhqSencodVO.setBrokerName(broker);
+			}
+			if(pageNo!=null){
+				pageNo = pageNo==0?1:pageNo;
+				sbhqSencodVO.setPageNo(pageNo);
+			}
+			if(pageSize!=null){
+				pageSize = pageSize==0?10:pageSize;
+				sbhqSencodVO.setPageSize(pageSize);
+			}
+			List<SbhqSencodVO> sencodList = sbhqService.getSbhqDataSecond(sbhqSencodVO);
+			if(sencodList!=null && !sencodList.isEmpty()){
+				Map<String,String> m = null; 
+				for (SbhqSencodVO sbhqSencodVO2 : sencodList) {
+					m = new HashMap<String,String>();
+					m.put("stockId", sbhqSencodVO2.getStockId());
+					m.put("stockName", sbhqSencodVO2.getStockName());
+					m.put("stockPrice", sbhqSencodVO2.getStockPrice());
+					m.put("priceChange", sbhqSencodVO2.getPriceChange());
+					m.put("priceChangePercent", sbhqSencodVO2.getPriceChangePercent());
+					m.put("tradingVolumn", sbhqSencodVO2.getTradingVolumn());
+					m.put("tradingAmount", sbhqSencodVO2.getTradingAmount());
+					sencodVOList.add(m);
+				}
+			}
+			//如果是券商
+			if(CommonUtils.isNotBlank(broker)){
+				//获取券商主办同时做市的数量
+				SbhqVO sbhqVO = sbhqService.getSbhqBrokerZSByName(broker);
+				String zcnt = "";
+				if(sbhqVO!=null){
+					zcnt = sbhqVO.getCnt();
+				}
+				map.put("zcnt", zcnt);
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("sencodVOList", sencodVOList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 三板指数
+	 * @param stockId
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/exp/{stockId}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqExp(
+			HttpServletRequest request,
+			@PathVariable("stockId") String stockId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			sbhqService.getSbhqExpData(stockId,map);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		return map;
+	}
+	
+	/**
+	 * 获取K线信息
+	 * @param stockId
+	 * @param loginMethod
+	 * @param type
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/kline/{stockId}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqKlineBystockId(
+			HttpServletRequest request,
+			@PathVariable("stockId") String stockId,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("type") String type,
+			@RequestParam(value="common",required=false) String common //公共参数
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(type)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			sbhqService.getSbhqKlineByStockId(stockId, type,map,common);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		return map;
+	}
+	
+	/**
+	 * 获取三板行情股票的信息
+	 * @param stockId
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/{stockId}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqStockInfo(
+			HttpServletRequest request,
+			@PathVariable("stockId") String stockId,
+			@RequestParam(value="customerId",required=false) String customerId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			map = sbhqService.getSbhqStockInfo(stockId,map,customerId);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 三板基金
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/fund",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqFundList(
+			HttpServletRequest request,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<FundVO> fundList = null;
+		try {
+			fundList = sbhqService.getFundList(pageNo,pageSize);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("fundList", fundList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取ppt、pdf文件信息
+	 * @param request
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/pre",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getPreListByMedias(
+			HttpServletRequest request,
+			@RequestParam("type") String type,
+			@RequestParam(value="stockId",required=false) String stockId,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(type)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<Map<String,String>> preList = new ArrayList<Map<String,String>>();
+		try {
+			TrsMedia trsMedia = new TrsMedia();
+			trsMedia.setPageNo((pageNo==null||pageNo==0)?1:pageNo);
+			trsMedia.setPageSize((pageSize==null||pageSize==0)?10:pageSize);
+			trsMedia.setMediaAuthor(type);
+			trsMedia.setObjectId(stockId);;
+			List<TrsMedia> mediaList = sbhqService.getPreListByMedias(trsMedia);
+			if(mediaList!=null && !mediaList.isEmpty()){
+				Map<String,String> tm = null; 
+				for (TrsMedia tMedia : mediaList) {
+					tm = new HashMap<String,String>();
+					tm.put("name", tMedia.getMediaName());
+					tm.put("path", tMedia.getMediaLocation());
+					tm.put("date", tMedia.getCreateDate());
+					tm.put("mediaType", tMedia.getMediaType());
+					preList.add(tm);
+				}
+			}
+			map.put("preList",preList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 三板指数分时k线数据
+	 * @param request
+	 * @param stockId
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/exp/rk",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbzsKlineR(
+			HttpServletRequest request,
+			@RequestParam(value="stockId") String stockId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(stockId)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<KlineVO> klist = null;
+		try {
+			klist = sbhqService.getSbzsKlineR(stockId);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("klist", klist);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据排行类型获取股票排行榜（三板指数排行榜中“更多”按钮需要用到）
+	 * @param request
+	 * @param type
+	 * @param loginMethod
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/rank",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqRankList(
+			HttpServletRequest request,
+			@RequestParam(value="type") String type,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)||CommonUtils.isBlank(type)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<StockPriceVO> ranklist = null;
+		try {
+			StockPriceVO stockPriceVO = new StockPriceVO();
+			if("up".equals(type)){
+				stockPriceVO.setOrder("1");
+			}else if("down".equals(type)){
+				stockPriceVO.setOrder("2");
+			}else{
+				stockPriceVO.setOrder("3");
+			}
+			stockPriceVO.setPageNo((pageNo==null||pageNo==0)?1:pageNo);
+			stockPriceVO.setPageSize((pageSize==null||pageSize==0)?10:pageSize);
+			ranklist = sbhqService.getSbhqRankList(stockPriceVO);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("ranklist", ranklist);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 三板行情首页信息
+	 * @param request
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/market",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqMarket(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<SbhqMarket> sbhqMarketList = null;
+		try {
+			sbhqMarketList = sbhqService.getSbhqMarket();
+			SbhqTotalVO sbhqTotalVO = new SbhqTotalVO(); 
+			if(sbhqMarketList!=null && !sbhqMarketList.isEmpty()){
+				for (SbhqMarket sbhqMarket : sbhqMarketList) {
+					if("total_list".equals(sbhqMarket.getIdxName())){
+						//总挂牌
+						sbhqTotalVO.setTotStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}else if("protocal_list".equals(sbhqMarket.getIdxName())){
+						//协议转让
+						sbhqTotalVO.setXyStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}else if("make_broker_list".equals(sbhqMarket.getIdxName())){
+						//做市转让
+						sbhqTotalVO.setZsStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}else if("new_list".equals(sbhqMarket.getIdxName())){
+						//当日挂牌
+						sbhqTotalVO.setCurStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}else if("pre_list_amend".equals(sbhqMarket.getIdxName())){
+						//做市提示
+						sbhqTotalVO.setRemindZsStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}else if("protocal_to_mak".equals(sbhqMarket.getIdxName())){
+						//当日协议转做市
+						sbhqTotalVO.setCurXyTransZsCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					}
+					//sbhqTotalVO.setRemindZfStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+					//sbhqTotalVO.setTotStocksCnt(Integer.valueOf(sbhqMarket.getIdxCnt()));
+				}
+			}
+			map.put("sbhqTotalVO", sbhqTotalVO);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 我要看路演列表接口
+	 * 逻辑：stockLabel为查询条件，
+	 * 		当stockLabel为空时会返回2个集合参数newStockList、cntStockList
+	 * 		当stockLabel不为空时返回searchStockList（是否模糊查询待定）
+	 * @param request
+	 * @param stockLabel
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/sbhq/wantRoadList",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqWantApplyRoadList(
+			HttpServletRequest request,
+			@RequestParam(value="stockLabel",required=false) String stockLabel,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String, Object>();
+		//请求参数有误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			if(CommonUtils.isBlank(stockLabel)){
+				//查最新挂牌
+				Map<String,Object> param1 = new HashMap<String,Object>();
+				param1.put("type", "1");
+				param1.put("stockLabel", stockLabel);
+				param1.put("currentRecord", 0);
+				param1.put("pageSize", 4);
+				List<StockPriceVO> stockPriceVOs1 = sbhqService.getSbhqWantApplyRoadList(param1);
+				List<Map<String,String>> newStockList = new ArrayList<Map<String,String>>();
+				if(stockPriceVOs1!=null && !stockPriceVOs1.isEmpty()){
+					Map<String,String> map1 = null;
+					for (StockPriceVO stockPriceVO : stockPriceVOs1) {
+						map1 = new HashMap<String,String>();
+						map1.put("stockId", stockPriceVO.getStockId());
+						map1.put("stockName", stockPriceVO.getStockName());
+						map1.put("stockPrice", stockPriceVO.getStockPrice());
+						map1.put("cnt",CommonUtils.isBlank(stockPriceVO.getTradingVolumn())?"0":stockPriceVO.getTradingVolumn());
+						newStockList.add(map1);
+					}
+				}
+				//查近期最热
+				Map<String,Object> param2 = new HashMap<String,Object>();
+				param2.put("type", "1");
+				param2.put("stockLabel", stockLabel);
+				param2.put("currentRecord", 0);
+				param2.put("pageSize", 4);
+				List<StockPriceVO> stockPriceVOs2 = sbhqService.getSbhqWantApplyRoadList(param2);
+				List<Map<String,String>> cntStockList = new ArrayList<Map<String,String>>();
+				if(stockPriceVOs2!=null && !stockPriceVOs2.isEmpty()){
+					Map<String,String> map2 = null;
+					for (StockPriceVO stockPriceVO : stockPriceVOs2) {
+						map2 = new HashMap<String,String>();
+						map2.put("stockId", stockPriceVO.getStockId());
+						map2.put("stockName", stockPriceVO.getStockName());
+						map2.put("stockPrice", stockPriceVO.getStockPrice());
+						map2.put("cnt", CommonUtils.isBlank(stockPriceVO.getTradingVolumn())?"0":stockPriceVO.getTradingVolumn());
+						cntStockList.add(map2);
+					}
+				}
+				map.put("newStockList",newStockList);
+				map.put("cntStockList",cntStockList);
+			}else{
+				//单股搜索
+				Map<String,Object> param = new HashMap<String,Object>();
+				param.put("type", "1");
+				param.put("stockLabel", stockLabel);
+				param.put("currentRecord", 0);
+				param.put("pageSize", 10);
+				List<StockPriceVO> stockPriceVOs = sbhqService.getSbhqWantApplyRoadList(param);
+				List<Map<String,String>> searchStockList = new ArrayList<Map<String,String>>();
+				if(stockPriceVOs!=null && !stockPriceVOs.isEmpty()){
+					Map<String,String> stockmap = null;
+					for (StockPriceVO stockPriceVO : stockPriceVOs) {
+						stockmap = new HashMap<String,String>();
+						stockmap.put("stockId", stockPriceVO.getStockId());
+						stockmap.put("stockName", stockPriceVO.getStockName());
+						stockmap.put("stockPrice", stockPriceVO.getStockPrice());
+						stockmap.put("cnt", CommonUtils.isBlank(stockPriceVO.getTradingVolumn())?"0":stockPriceVO.getTradingVolumn());
+						searchStockList.add(stockmap);
+					}
+				}
+				map.put("searchStockList",searchStockList);
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 我要看路演报名
+	 * @param request
+	 * @param loginMethod
+	 * @param stockId
+	 * @param customerPhoneNo
+	 * @param customerId
+	 * @param tmpToken
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/sbhq/roadApply",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> applyWantRoad(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("stockId") String stockId,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("tmpToken") String tmpToken
+			) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(customerPhoneNo)
+				||CommonUtils.isBlank(customerId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		int counts=0;
+		try {
+			//根据用户id获取用户信息
+			Customer customer = loginRegisterService.getCustomerById(customerId);
+			if(customer==null){
+				//用户不存在
+				map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_ID_NULL);
+				return map;
+			}
+			//判断用户信息是否齐全
+			if(CommonUtils.isBlank(String.valueOf(customer.getGzIndustry()))
+					||CommonUtils.isBlank(customer.getCustomerName())
+					||CommonUtils.isBlank(customer.getCustomerPosition())
+					||CommonUtils.isBlank(customer.getCustomerCompany())
+					||CommonUtils.isBlank(customer.getCapitalScale())
+					||CommonUtils.isBlank(customer.getCustomerEmail())){
+				//用户信息不完善
+				map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_INFO_COMPLETE);
+				return map;
+			}
+			counts = trsProjectService.applyJoinRoadById(customerId, stockId);
+			if(counts==3){
+				//用户已报名
+				map.put(ResultCode.RESULT_CODE, ResultCode.PROJECT_IS_APPLY);
+			}else if(counts<0){
+				//报名失败
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}else{
+				//报名失败
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 取消我要看路演报名
+	 * @param request
+	 * @param loginMethod
+	 * @param stockId
+	 * @param customerPhoneNo
+	 * @param customerId
+	 * @param tmpToken
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/sbhq/roadCancel",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> cancelWantRoad(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("stockId") String stockId,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("tmpToken") String tmpToken
+			) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(customerPhoneNo)
+				||CommonUtils.isBlank(customerId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		int counts=0;
+		try {
+			//根据用户id获取用户信息
+			Customer customer = loginRegisterService.getCustomerById(customerId);
+			if(customer==null){
+				//用户不存在
+				map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_ID_NULL);
+				return map;
+			}
+			//cancelApplyJoinRoad
+			Customer cust = new Customer();
+			cust.setObjectNo(stockId);
+			cust.setCustomerId(customerId);
+			counts = trsProjectService.cancelApplyJoinRoad(cust);
+			if(counts>0){
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			}else{
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 三板行情公司概况
+	 * @param request
+	 * @param loginMethod
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/sbhq/situation",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getSbhqComapnySituationByStockId(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("stockId") String stockId
+			) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			SbhqSituationVO sbhqSituationVO = sbhqService.getSbhqComapnySituationByStockId(stockId);
+			Map<String,Object> resultMap = new HashMap<String,Object>();
+			if(sbhqSituationVO!=null){
+				resultMap.put("capital", sbhqSituationVO.getCapital());
+				resultMap.put("englishName", sbhqSituationVO.getEnglishName());
+				resultMap.put("exchangeId", sbhqSituationVO.getExchangeId());
+				resultMap.put("fullName", sbhqSituationVO.getFullName());
+				resultMap.put("industryName", sbhqSituationVO.getIndustryName());
+				resultMap.put("legal", sbhqSituationVO.getLegal());
+				resultMap.put("listDate", sbhqSituationVO.getListDate());
+				resultMap.put("protocolBroker", sbhqSituationVO.getProtocolBroker());
+				resultMap.put("registeredAddress", sbhqSituationVO.getRegisteredAddress());
+				resultMap.put("secretary", sbhqSituationVO.getSecretary());
+				resultMap.put("stockId", sbhqSituationVO.getStockId());
+				resultMap.put("stockName", sbhqSituationVO.getStockName());
+				resultMap.put("web", sbhqSituationVO.getWeb());
+				resultMap.put("makerBrokers", sbhqSituationVO.intMakerBrokers());
+			}
+			map.put("sbhqSituation", resultMap);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+}

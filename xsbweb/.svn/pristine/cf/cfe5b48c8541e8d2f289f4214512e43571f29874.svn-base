@@ -1,0 +1,292 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    <title>我要敲钟列表</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <link href="<%=path%>/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<%=request.getContextPath()%>/css/shade.css">
+    <style>
+        .mt10{margin-top:10px;}
+    </style>
+</head>
+<body>
+<!--<form action="meet/toMeetRoomList.do" name="confForm" method="post">-->
+${error }
+<div class="container-full">
+    <div class="row">
+          <form class="form-inline" action="admin/project" method="get"  name="confForm">
+              <div class="col-md-12 mt10">
+              	<span onclick="batchDeleteProject();"class="btn btn-danger" >删除</span>
+                <div class="input-group">
+                	<span class="input-group-addon">项目编号</span>
+                	<input type="text" class="form-control" id="projectNo" name="projectNo" placeholder="请输入查询内容" value="${(trsProject.projectNo == '')?'':trsProject.projectNo}" >
+                </div>
+                <div class="input-group">
+                	<span class="input-group-addon">项目名称</span>
+                	<input type="text" class="form-control" id="projName" name="projName" placeholder="请输入查询内容" value="${(trsProject.projName == '')?'':trsProject.projName}" >
+                </div>
+                <div class="input-group">
+                	<span class="input-group-addon">关联股票代码</span>
+                	<input type="text" class="form-control" id="projCpCode" name="projCpCode" placeholder="请输入查询内容" value="${(trsProject.projCpCode == '')?'':trsProject.projCpCode}" >
+                </div>
+                
+                <input type="hidden"name="projRole" value="16777216">
+                <input type="hidden" name="_method" value="get" /> 
+                <input type="hidden" name="pageSize" id="pageSize" value="${trsProject.pageSize}" /> 
+                <button class="btn btn-warning" type="submit">查询</button><!-- type="submit"  onclick="serach();-->
+                <a href="admin/project/toAddForieProject.do?projRole='16777216'" role="button" class="btn btn-success">新建</a>
+            </div>
+            <div class="shade" id="shade" style="display:none;">
+		     <div class="prompt" style="width:500px;margin-top:300px;">
+		      	   编号：<input type="text" class="input-i" name="projectNo" disabled="disabled"/><br/>
+		                           名称：<input type="text" class="input-i" name="projName" disabled="disabled"/><br/>
+	         	   地址：<input type="text" placeHolder="请输入直播播放地址" name="projCpUrl" class="input-i"/><br/>
+		         <input type="button"  value="确认" class="btn-s" onclick="addBaseUrl();"/>
+		         <input type="button"  value="取消" class="btn-c" onclick="closeShade();"/>
+		     </div>
+		</div>
+       </form>
+    </div>
+    <div class="row">
+        <div class="col-md-12 mt10">
+        	<aa:zone name="confListZone">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                    	<th><input type="checkbox" name="allCheckBox"  id="allCheckBox" onclick="checkProjectAll(this);" >全选</th>
+                    	<th>项目编号</th>
+                    	<th>关联股票代码</th>
+                        <th>项目名称</th>
+                        <th>上线时间</th>
+                        <th>最后编辑时间</th>
+                        <th>前台显示</th>
+                        <th>敲钟状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                	<c:if test="${trsProjectVOList!=null}">
+	                	<c:forEach items="${trsProjectVOList}" var="project" varStatus="index">
+	                		<tr>
+	                			<td><input type="checkbox" name="projectNoCheckBox" value="${index.index}"></td>
+	                			<td id="project_${index.index}">${project.projectNo}</td>
+	                			<td>${project.projCpCode}</td>
+		                        <td>${project.projName}</td>
+		                        <td>${project.projOnlineDate}</td>
+		                        <td>${project.lastEditDate}</td>
+		                        <td>
+		                        <c:choose>
+		                        	<c:when test="${project.isShow eq '1'}">
+		                        		显示
+		                        	</c:when>
+		                        	<c:when test="${project.isShow eq '2'}">
+		                        		隐藏
+		                        	</c:when>
+		                        	<c:otherwise>
+		                        		无数据
+		                        	</c:otherwise>
+		                        </c:choose>
+		                        </td>
+		                       <td>
+		                        	<c:if test="${project.projShowStatus=='1'}">
+		                        		直播中
+		                        	</c:if>
+		                        	<c:if test="${project.projShowStatus=='2'}">
+		                        		直播预告
+		                        	</c:if>
+		                        	<c:if test="${project.projShowStatus=='3'}">
+		                        		回放
+		                        	</c:if>
+		                        </td>
+		                        <td>	
+		                        	<c:if test="${project.projectNo ne ''}">
+		                         		<%-- <a href="javascript:void(0);" onclick="lastEditDate('${project.projectNo}')">置顶</a> --%>
+		                         		<a href="admin/project/lastEditDate.do?projectNo=${project.projectNo}&projRole=16777216">置顶</a> |
+		                         		<a href="<%=path%>/admin/project/${project.projectNo}" <%-- onclick="updateForeProject('${project.projectNo}')" --%>>编辑</a> | 
+		                        	</c:if>	
+		                        	<c:if test="${ project.projShowStatus=='2' }">
+		                         		<a href="javascript:void(0);" onclick="toAddBaseUrl('${project.projectNo}','${project.projName}')">开始直播</a> | 
+		                        	</c:if>
+		                        	<c:if test="${ project.projShowStatus=='1' }">
+		                         		<a href="javascript:void(0);" onclick="tocloseBaseUrl('${project.projectNo}','${project.projShowStatus}')">结束直播</a> | 
+		                        	</c:if>
+		                        	<c:if test="${project.projectNo ne ''}">
+		                         		<a href="javascript:void(0);" onclick="getitems('${project.projectNo}')">查看item</a>
+		                         		<%--   | <a href="javascript:void(0);" onclick="deleteForeProject('${project.projectNo}')">删除</a> --%>
+		                        	</c:if>
+		                        	<c:if test="${project.projCpCode < '40000' }">
+		                        		 | <a href="admin/project?prmtParentNo=${project.projCpCode}">查看集体详情</a>
+		                        	</c:if>                        	
+		                    </tr>
+	                	</c:forEach>
+                	</c:if>
+                </tbody>
+            </table>
+            </aa:zone>
+            <%-- <page:pager pageSize="${trsProject.pageSize}" pageNo="${trsProject.pageNo}" url="${serachInformation == ''?\"admin/project\":\"admin/project/serach\"}"
+            recordCount="${trsProject.totalRecord}"/> --%>
+            <page:pager pageSize="${trsProject.pageSize eq '0' ?1:trsProject.pageSize}" pageNo="${trsProject.pageNo}" url="admin/project"  recordCount="${trsProject.totalRecord}"/>
+        </div>
+    </div>
+</div>
+<!--</form>-->
+</body>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/aa.js"></script>
+ <script type="text/javascript" language="javascript">
+ 	ajaxAnywhere.formName="confForm";
+	ajaxAnywhere.getZonesToReload = function(){
+		return "confListZone";
+	}
+	function deleteForeProject(projectNo){
+		if(!confirm("确定要删除该数据吗？")){
+			return;
+		}
+		$.ajax({
+			url:"admin/project/"+projectNo+"/delete",
+			type:"POST",
+			contentType : 'application/json',
+			async: false,
+			dataType:"json",
+			success:function(data){
+				if(data.resultCode=='0'){
+					alert("操作失败");
+				}else if(data.resultCode=='1'){
+					alert("操作成功");
+					document.location.reload();
+				}else{
+					alert("操作失败");
+				}
+			},
+			error:function(){
+				alert("操作失败");
+			}
+		});
+	}
+	
+	function updateForeProject(projectNo){
+		$.ajax({
+			url:"admin/project/"+projectNo,
+			type:"GET"
+		});
+	}
+	
+	function queryApplyList(projectNo){
+		window.location="admin/queryApplyList.do?projectNo="+projectNo;		  
+	}
+	/* function lastEditDate(projectNo){
+		if(!confirm("确定置顶？")){
+			return;
+		}
+		window.location="admin/queryApplyList.do?projectNo="+projectNo;		  
+	} */
+	//弹出baseUrl输入框
+	function toAddBaseUrl(projectNo,projName){
+		//console.log(projectNo+";"+projName);
+		$("#shade").css("display","block");
+		$("[name='projectNo']").val(projectNo);
+		$("[name='projName']").val(projName);
+	}
+	//新增baseUrl
+	function addBaseUrl(){
+		var projCpUrl = $("[name='projCpUrl']").val();
+		//console.log(projCpUrl);
+		if(projCpUrl==null || $.trim(projCpUrl)==""){
+			alert("url地址不能为空");
+		}
+		var projectNo = $("[name='projectNo']").val();
+		$.ajax({
+			url : "admin/project/updateUrlOrStatus?projectNo="+projectNo+"&projShowStatus=1&projCpUrl="+projCpUrl,
+			success:function(data){
+				if(data.resultCode=='1'){
+					closeShade();
+					document.location.reload();
+				}
+			}
+		});
+		/* document.forms[0].action="admin/project/updateUrlOrStatus?projectNo="+projectNo+"&projShowStatus=2&projCpUrl="+projCpUrl;
+		ajaxAnywhere.submitAJAX(); */
+		
+	}
+	//关闭baseUrl输入框
+	function closeShade(){
+		$("#shade").css("display","none");
+		$("[name='projectNo']").val("");
+		$("[name='projName']").val("");
+		$("[name='projCpUrl']").val("");
+	};
+	function tocloseBaseUrl(projectNo){
+		$.ajax({
+			url : "admin/project/updateUrlOrStatus?projectNo="+projectNo+"&projShowStatus=3",
+			success:function(data){
+				if(data.resultCode=='1'){
+					document.location.reload();
+				}
+			}
+		});
+		/* document.forms[0].action="admin/project/updateUrlOrStatus"+
+		"?projectNo="+projectNo+"&projShowStatus=3&projCpUrl=''"; */
+		//console.log("admin/project/updateUrlOrStatus"+
+				//"?projectNo="+projectNo+"&projShowStatus=3&projCpUrl=''");
+		document.location.reload();
+	}
+	function getitems(projectNo){
+		window.location="admin/item?projectNo="+projectNo;		  
+	}
+	//全选
+	function checkProjectAll(k){
+  		if($(k).is(':checked')){
+  			$("input[name='projectNoCheckBox']").each(function(){	
+				$(this).prop("checked",true);
+			});
+  		}else{
+  			$("input[name='projectNoCheckBox']").each(function(){	
+  				$(this).prop("checked",false);
+			});
+  		}	
+  	}
+	function batchDeleteProject(){
+		if(!confirm("确定要删除该数据吗？")){
+			return;
+		}
+  		var projectNoArrs = "";
+  		$("input[name='projectNoCheckBox']:checked").each(function(){ 
+  			projectNoArrs += $("#project_"+$(this).val()).html()+",";
+  		});
+  		projectNoArrs=projectNoArrs.toString().substring(0, projectNoArrs.toString().length-1);
+  		//console.log(projectNoArrs);
+  		$.ajax({
+  			url : "admin/project/"+projectNoArrs+"/del",
+  			//contentType : 'application/json',JSON.stringify(
+			type : 'POST',
+			data : {
+				'_method' : 'delete'
+			},
+			async: false,
+			success : function(data) {
+				if (data.resultCode == '1') {
+					window.location.reload();
+				} else {
+					alert("删除失败");
+				};
+			},
+			error : function() {
+				alert("删除失败");
+			}
+		});
+	}
+ </script>
+</html>

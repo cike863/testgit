@@ -1,0 +1,179 @@
+package com.xsbweb.util;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketException;
+import java.util.ResourceBundle;
+import net.coobird.thumbnailator.Thumbnails;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.log4j.Logger;
+
+import com.xsbweb.common.bean.UploadFilePo;
+
+public class UploadUtil {
+	private static Logger log = Logger.getLogger(UploadUtil.class);
+	public static String FTPupload(InputStream inputStream/*输入流*/,
+			String FileName/*文件名*/,
+			String type/*文件类型*/,
+			boolean isImpage
+			) throws Exception {
+		//获取资源文件 
+		ResourceBundle bundle = ResourceBundle.getBundle("config");  
+		String	hostName = bundle.getString("ftp_url_pro");  //IP地址
+		String	hostPort = bundle.getString("ftp_port");  //端口
+		String	userName = bundle.getString("ftp_login_name"); //登录名 
+		String	password = bundle.getString("ftp_login_pass");  //密码
+		//日期目录
+		String folder = CommonUtils.getNowDateStringOf8();
+		//根目录
+		String genFolder = "";
+		if("image".equals(type)){
+			if(isImpage){
+				genFolder = "/upfile/phoneimage/";
+			}else{
+				genFolder = "/upfile/newimage/";
+			}
+		}else if("media".equals(type)){
+			genFolder = "/yvd/";
+		}else if("authent".equals(type)){
+			genFolder = "/upfile/important/";
+		}else if("voice".equals(type)){
+			genFolder = "/upfile/voice/";
+		}else{
+			genFolder = "/File/";
+		}
+		
+		FTPClient ftpClient = new FTPClient();
+		BufferedInputStream  bis = null;
+		try {
+			log.info("########开始连接ftp服务器################hostName："+hostName+";hostPort："+hostPort);
+			ftpClient.connect(hostName, Integer.parseInt(hostPort));
+			ftpClient.setControlEncoding("UTF-8");
+			log.info("########ftp开始登录################");
+			ftpClient.login(userName, password);
+			log.info("########ftpuserName, password"+userName+","+ password+"################");
+			ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
+			//ftpClient.connect(ftpInfo[0],BcConfigDataModel.ftpPort());
+			ftpClient.setDataTimeout(18000);
+			//ftpClient.setControlEncoding("GBK");
+			/*if(genFolder.contains("phoneimage")){
+				bis = new BufferedInputStream(inputStream);
+				ByteArrayOutputStream swapStream = new ByteArrayOutputStream();  
+				byte[] buff = new byte[100];  
+		        int rc = 0;  
+		        while ((rc = inputStream.read(buff, 0, 100)) > 0) {  
+		        	swapStream.write(buff, 0, rc);  
+		        }  
+		        byte[] in2b = swapStream.toByteArray();  
+				bis=new ByteArrayInputStream(in2b);
+			}else{
+				
+			}*/
+			bis = new BufferedInputStream(inputStream);
+			//第一参数是保存到FTP跟目录，也可以设置跟目录下的目录，把输入流保存到目录下
+			//ftpClient.completePendingCommand();
+			if (!ftpClient.changeWorkingDirectory(genFolder+folder)) {// 如果不能进入dir下，说明此目录不存在！
+				log.info("########不能进入dir下----目录不存在！，"+!ftpClient.changeWorkingDirectory(genFolder+folder)+"################");
+				if (ftpClient.makeDirectory(genFolder+folder)) {  //创建文件夹
+					log.info("########文件名，"+genFolder+folder+"/"+FileName+"################");
+					ftpClient.storeFile(genFolder+folder+"/"+FileName, bis);
+				}else{
+					log.info("########创建文件夹"+genFolder+folder+"失败！################");
+				}  
+			} else{
+				log.info("########可以进入dir下################");
+				ftpClient.storeFile(genFolder+folder+"/"+FileName, bis);
+				
+				/*log.info("########11111111111111111111111111111111################");
+				ftpClient.storeFile(genFolder+folder+"/"+"ppp"+FileName, bis);
+				log.info("########2222222222222222222222222222222222################");
+				ftpClient.storeFile("/upfile/phoneimage/"+FileName, bis);*/
+				log.info("########文件名，"+genFolder+folder+"/"+FileName+"################");
+			}
+			/*inputStream=UploadUtil.toSmallImage(inputStream,".jpg");
+			bis = new BufferedInputStream(inputStream);
+			if(genFolder.contains("newimage")){
+				genFolder = "/upfile/phoneimage/";
+				if (!ftpClient.changeWorkingDirectory(genFolder+folder)) {// 如果不能进入dir下，说明此目录不存在！
+					log.info("########不能进入dir下----目录不存在！，"+!ftpClient.changeWorkingDirectory(genFolder+folder)+"################");
+					if (ftpClient.makeDirectory(genFolder+folder)) {  //创建文件夹
+						log.info("########文件名，"+genFolder+folder+"/"+FileName+"################");
+						ftpClient.storeFile(genFolder+folder+"/"+FileName, bis);
+					}else{
+						log.info("########创建文件夹"+genFolder+folder+"失败！################");
+					}  
+				} else{
+					log.info("########可以进入dir下################");
+					ftpClient.storeFile(genFolder+folder+"/"+FileName, bis);
+					log.info("########文件名，"+genFolder+folder+"/"+FileName+"################");
+				}
+			}*/
+			return genFolder+folder+"/"+FileName;
+		} catch (SocketException e) {
+			e.printStackTrace();
+			log.info("########SocketException异常################"+e);
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			log.info("########IOException异常################"+e);
+			return null;
+		}finally{
+			//关闭流
+			bis.close();
+			//ftpClient.completePendingCommand();
+		}
+	}
+	public static UploadFilePo uploadFilePo(){
+		
+		UploadFilePo uploadFilePo=new UploadFilePo();
+		
+		FTPClient ftpClient = new FTPClient();
+		//获取资源文件 
+		ResourceBundle bundle = ResourceBundle.getBundle("config");  
+		String	hostName = bundle.getString("ftp_url_pro");  //IP地址
+		String	hostPort = bundle.getString("ftp_port");  //端口
+		String	userName = bundle.getString("ftp_login_name"); //登录名 
+		String	password = bundle.getString("ftp_login_pass");  //密码
+		uploadFilePo.setHostName(hostName);
+		uploadFilePo.setHostPort(hostPort);
+		uploadFilePo.setPassword(password);
+		uploadFilePo.setUserName(userName);
+    	try {
+	    	ftpClient.connect(hostName, Integer.parseInt(hostPort));
+	    	ftpClient.setControlEncoding("UTF-8");
+	    	ftpClient.login(userName, password);
+			ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	uploadFilePo.setFtpClient(ftpClient);
+    	
+    	return uploadFilePo;
+	}
+	public static  InputStream toSmallImage(InputStream inputStream,String fileExt,long mediaSize) throws IOException{
+		InputStream inputStream1=null;
+    	File f=null;
+    	try{
+    		f = File.createTempFile("tmp",fileExt);
+    		log.info("File path: "+f.getAbsolutePath());
+    		log.info("原mediaSize: "+mediaSize/1024+"kb");
+    		if(mediaSize>50*1204){
+    			Thumbnails.of(inputStream).scale(0.5f).toFile(f);
+    		}else{
+    			Thumbnails.of(inputStream).scale(1f).toFile(f);
+    		}
+    		log.info("压缩后mediaSize: "+f.length()/1024+"kb");
+    		inputStream1= new FileInputStream(f);
+    	}catch(Exception e ){
+    		e.printStackTrace();
+    	}finally{
+    		inputStream.close();
+    		f.deleteOnExit();
+    	}
+    	return inputStream1;
+    }
+}

@@ -1,0 +1,95 @@
+package com.xsbweb.vo;
+
+public class ProjectItem {
+
+	private String objectNo;
+	private String itemKey;
+	private String itemValue; 
+	private String itemType;
+	private String itemLocationOrder;
+	private String createDate;
+	private String lastUpdateDate;
+	private String oldItemKey;
+	private String itemMediaNo="";
+	private String itemMediaPath="";
+	
+	//gk:公司概况，qz:敲钟
+	private String objectType;
+
+	public String getObjectType() {
+		return objectType;
+	}
+	public void setObjectType(String objectType) {
+		this.objectType = objectType;
+	}
+	public String getItemMediaNo() {
+		return itemMediaNo;
+	}
+	public void setItemMediaNo(String itemMediaNo) {
+		this.itemMediaNo = itemMediaNo;
+	}
+	public String getItemMediaPath() {
+		return itemMediaPath;
+	}
+	public void setItemMediaPath(String itemMediaPath) {
+		this.itemMediaPath = itemMediaPath;
+	}
+	public String getOldItemKey() {
+		return oldItemKey;
+	}
+	public void setOldItemKey(String oldItemKey) {
+		this.oldItemKey = oldItemKey;
+	}
+	private String itemPicPath;
+	
+	public String getItemPicPath() {
+		return itemPicPath;
+	}
+	public void setItemPicPath(String itemPicPath) {
+		this.itemPicPath = itemPicPath;
+	}
+	public String getObjectNo() {
+		return objectNo;
+	}
+	public void setObjectNo(String objectNo) {
+		this.objectNo = objectNo;
+	}
+	public String getItemKey() {
+		return itemKey;
+	}
+	public void setItemKey(String itemKey) {
+		this.itemKey = itemKey;
+	}
+	public String getItemValue() {
+		return itemValue;
+	}
+	public void setItemValue(String itemValue) {
+		this.itemValue = itemValue;
+	}
+	public String getItemType() {
+		return itemType;
+	}
+	public void setItemType(String itemType) {
+		this.itemType = itemType;
+	}
+	public String getItemLocationOrder() {
+		return itemLocationOrder;
+	}
+	public void setItemLocationOrder(String itemLocationOrder) {
+		this.itemLocationOrder = itemLocationOrder;
+	}
+	public String getCreateDate() {
+		return createDate;
+	}
+	public void setCreateDate(String createDate) {
+		this.createDate = createDate;
+	}
+	public String getLastUpdateDate() {
+		return lastUpdateDate;
+	}
+	public void setLastUpdateDate(String lastUpdateDate) {
+		this.lastUpdateDate = lastUpdateDate;
+	}
+	
+	
+}

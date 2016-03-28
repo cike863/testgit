@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.SnapPrcScheduleMapper" >
+  <resultMap id="BaseResultMap" type="com.xsbweb.vo.SnapPrcSchedule" >
+    <id column="task_prc" property="taskPrc" jdbcType="VARCHAR" />
+    <result column="task_period" property="taskPeriod" jdbcType="INTEGER" />
+    <result column="effective_date" property="effectiveDate" jdbcType="TIMESTAMP" />
+    <result column="extire_date" property="extireDate" jdbcType="TIMESTAMP" />
+    <result column="last_exec_time" property="lastExecTime" jdbcType="TIMESTAMP" />
+    <result column="next_exec_time" property="nextExecTime" jdbcType="TIMESTAMP" />
+    <result column="exec_status" property="execStatus" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    task_prc, task_period, effective_date, extire_date, last_exec_time, next_exec_time, 
+    exec_status, create_date, last_update_date
+  </sql>
+  <select id="getPrcScheduleList" resultMap="BaseResultMap" parameterType="com.xsbweb.mapper.SnapPrcScheduleMapper" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_prc_schedule
+    where 1=1 
+    <if test="taskPrc!=null">
+   		and task_prc= = #{taskPrc}
+    </if>
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="com.xsbweb.mapper.SnapPrcScheduleMapper" >
+    select 
+    <include refid="Base_Column_List" />
+    from t_rl_snap_prc_schedule
+    where task_prc = #{taskPrc}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from t_rl_snap_prc_schedule
+    where task_prc = #{taskPrc,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.xsbweb.vo.SnapPrcSchedule" >
+    insert into t_rl_snap_prc_schedule (task_prc, task_period, effective_date, 
+      extire_date, last_exec_time, next_exec_time, 
+      exec_status, create_date, last_update_date
+      )
+    values (#{taskPrc,jdbcType=VARCHAR}, #{taskPeriod,jdbcType=INTEGER}, #{effectiveDate,jdbcType=TIMESTAMP}, 
+      #{extireDate,jdbcType=TIMESTAMP}, #{lastExecTime,jdbcType=TIMESTAMP}, #{nextExecTime,jdbcType=TIMESTAMP}, 
+      #{execStatus,jdbcType=VARCHAR}, #{createDate,jdbcType=TIMESTAMP}, #{lastUpdateDate,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.xsbweb.vo.SnapPrcSchedule" >
+    insert into t_rl_snap_prc_schedule
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="taskPrc != null" >
+        task_prc,
+      </if>
+      <if test="taskPeriod != null" >
+        task_period,
+      </if>
+      <if test="effectiveDate != null" >
+        effective_date,
+      </if>
+      <if test="extireDate != null" >
+        extire_date,
+      </if>
+      <if test="lastExecTime != null" >
+        last_exec_time,
+      </if>
+      <if test="nextExecTime != null" >
+        next_exec_time,
+      </if>
+      <if test="execStatus != null" >
+        exec_status,
+      </if>
+      <if test="createDate != null" >
+        create_date,
+      </if>
+      <if test="lastUpdateDate != null" >
+        last_update_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="taskPrc != null" >
+        #{taskPrc,jdbcType=VARCHAR},
+      </if>
+      <if test="taskPeriod != null" >
+        #{taskPeriod,jdbcType=INTEGER},
+      </if>
+      <if test="effectiveDate != null" >
+        #{effectiveDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="extireDate != null" >
+        #{extireDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastExecTime != null" >
+        #{lastExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="nextExecTime != null" >
+        #{nextExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="execStatus != null" >
+        #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  
+  <update id="updateByPrimaryKeySelective" parameterType="com.xsbweb.vo.SnapPrcSchedule" >
+    update t_rl_snap_prc_schedule
+    <set >
+      <if test="taskPeriod != null" >
+        task_period = #{taskPeriod,jdbcType=INTEGER},
+      </if>
+      <if test="effectiveDate != null" >
+        effective_date = #{effectiveDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="extireDate != null" >
+        extire_date = #{extireDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastExecTime != null" >
+        last_exec_time = #{lastExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="nextExecTime != null" >
+        next_exec_time = #{nextExecTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="execStatus != null" >
+        exec_status = #{execStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="lastUpdateDate != null" >
+        last_update_date = #{lastUpdateDate,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where task_prc = #{taskPrc,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.xsbweb.vo.SnapPrcSchedule" >
+    update t_rl_snap_prc_schedule
+    set task_period = #{taskPeriod,jdbcType=INTEGER},
+      effective_date = #{effectiveDate,jdbcType=TIMESTAMP},
+      extire_date = #{extireDate,jdbcType=TIMESTAMP},
+      last_exec_time = #{lastExecTime,jdbcType=TIMESTAMP},
+      next_exec_time = #{nextExecTime,jdbcType=TIMESTAMP},
+      exec_status = #{execStatus,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      last_update_date = #{lastUpdateDate,jdbcType=TIMESTAMP}
+    where task_prc = #{taskPrc,jdbcType=VARCHAR}
+  </update>
+</mapper>

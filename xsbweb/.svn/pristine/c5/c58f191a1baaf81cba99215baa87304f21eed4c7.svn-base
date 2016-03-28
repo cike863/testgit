@@ -1,0 +1,66 @@
+package com.xsbweb.vo;
+
+import com.xsbweb.common.bean.BasePo;
+
+public class IndustryBaike extends BasePo{
+	
+    private Integer baikeId;
+
+    private String baikeTitle;
+
+    private Integer baikeOrder;
+
+    private String baikeType;
+
+    private String createdDate;
+
+    private String baikeContent;
+
+    public Integer getBaikeId() {
+        return baikeId;
+    }
+
+    public void setBaikeId(Integer baikeId) {
+        this.baikeId = baikeId;
+    }
+
+    public String getBaikeTitle() {
+        return baikeTitle;
+    }
+
+    public void setBaikeTitle(String baikeTitle) {
+        this.baikeTitle = baikeTitle == null ? null : baikeTitle.trim().replaceAll("　","");
+    }
+
+    public Integer getBaikeOrder() {
+        return baikeOrder;
+    }
+
+    public void setBaikeOrder(Integer baikeOrder) {
+        this.baikeOrder = baikeOrder;
+    }
+
+    public String getBaikeType() {
+        return baikeType;
+    }
+
+    public void setBaikeType(String baikeType) {
+        this.baikeType = baikeType == null ? null : baikeType.trim();
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getBaikeContent() {
+        return baikeContent;
+    }
+
+    public void setBaikeContent(String baikeContent) {
+        this.baikeContent = baikeContent == null ? null : baikeContent.trim();
+    }
+}

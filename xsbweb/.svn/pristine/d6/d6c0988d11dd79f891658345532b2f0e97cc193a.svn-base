@@ -1,0 +1,105 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <title>新增枚举</title>
+    
+	<meta http-equiv="pragma" content="no-cache">
+	<meta http-equiv="cache-control" content="no-cache">
+	<meta http-equiv="expires" content="0">    
+	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+	<meta http-equiv="description" content="This is my page">
+
+	<!--
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	-->
+	<link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js" ></script>
+ 	<script>
+		
+		
+	</script>
+  </head>
+  
+  <body>
+
+	<!-- 显示错误信息 -->
+	<c:if test="${allErrors!=null }">
+		<c:forEach items="${allErrors }" var="error">
+			${ error.defaultMessage}<br/>
+		</c:forEach>
+	</c:if>
+	<div class="container-full">
+	<div class="row">
+        <div class="col-md-12 mt20">
+            <form class="form-inline"  action="admin/etl" method="post"  >
+           	<input type="hidden" name="_method" value="put" /> 
+            <table class="table table-bordered table-hover table-responsive">
+                <tbody>
+                  <tr>
+                    <td class="col-md-2">服务器ip</td>
+                    <td class="col-md-10"><input type="text" class="form-control" style=" width:900px;" name="threadHost" value="${etlThread.threadHost}"></td>
+                </tr>  
+                <tr>
+                    <td class="col-md-2">端口号</td>
+                    <td colspan="2"><input type="text" class="form-control" style=" width:900px;" name="threadPort" value="${etlThread.threadPort}"></td>
+                </tr>  
+                <tr>
+                    <td class="col-md-2">线程名称</td>
+                    <td colspan="2"><input type="text" class="form-control" style=" width:900px;" name="threadName" value="${etlThread.threadName}"></td>
+                </tr> 
+                <tr>
+                	<td>上一次启动时间</td>
+                	<td colspan="2">
+                	<input placeholder="请输入日期" class="laydate-icon" value="${etlThread.lastStartTime}" name="lastStartTime" id="t1" onClick="laydate({elem: '#t1',istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                	</td>
+                </tr>
+                <tr>
+                	<td>上一次停止时间</td>
+                	<td colspan="2">
+                	<input placeholder="请输入日期" class="laydate-icon" value="${etlThread.lastStopTime}" name="lastStopTime" id="t2" onClick="laydate({elem: '#t2',istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                	</td>
+                </tr>
+                <tr>
+                	<td>最后更新时间</td>
+                	<td colspan="2">
+                	<input placeholder="请输入日期" class="laydate-icon" value="${etlThread.lastUpdateDate}" name="lastUpdateDate" id="t3" onClick="laydate({elem: '#t3',istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                	</td>
+                </tr>
+                <tr>
+                	<td>创建时间</td>
+                	<td colspan="2">
+                	<input placeholder="请输入日期" class="laydate-icon" value="${etlThread.createdDate}" name="createdDate" id="t4" onClick="laydate({elem: '#t4',istime: true, format: 'YYYY-MM-DD hh:mm:ss'})">
+                	</td>
+                </tr>
+                <tr>
+                	<td>描述</td>
+                	<td><textarea  rows="6" cols="100%" name="description" >${etlThread.description}</textarea>
+                	<input type="hidden" value=' 0' name="threadStatus" />
+                	</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-center">
+                        <button type="submit" class="btn btn-success">提交</button>
+                        <button type="button" class="btn btn-danger" onclick="history.go(-1)">返回</button>
+                    </td>
+                </tr>
+               </tbody>
+              </table>
+            </form>
+        </div>
+	</div>
+</div>
+
+  </body>
+</html>

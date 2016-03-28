@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.TrsCommentMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.TrsComment" >
+    <id column="comment_no" property="commentNo" jdbcType="VARCHAR" />
+    <result column="comment_time" property="commentTime" jdbcType="TIMESTAMP" />
+    <result column="commenter" property="commenter" jdbcType="VARCHAR" />
+    <result column="comment_address" property="commentAddress" jdbcType="VARCHAR" />
+    <result column="comment_platform" property="commentPlatform" jdbcType="VARCHAR" />
+    <result column="comment_status" property="commentStatus" jdbcType="VARCHAR" />
+    <result column="comment_target" property="commentTarget" jdbcType="VARCHAR" />
+    <result column="comment_content" property="commentContent" jdbcType="VARCHAR" />
+    <result column="comment_praise" property="commentPraise" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List">
+  	comment_no,comment_time,commenter,comment_praise,comment_address,comment_platform,comment_status,comment_target,comment_content,create_date,last_update_date
+  </sql>
+  
+  <insert id="insertTrsComment" parameterType="com.xsbweb.vo.TrsComment">
+  	
+  </insert>
+  
+  <select id="getTrsCommentByObjectId" parameterType="java.lang.String" resultMap="resultMap">
+  	select <include refid="Base_Column_List" />
+  	from t_rl_trs_comment where comment_platform=#{objectId}
+  </select>
+  
+  <select id="deleteTrsComment" parameterType="com.xsbweb.vo.TrsComment">
+  	
+  </select>
+  
+  <select id="getCommentList" parameterType="com.xsbweb.vo.TrsComment" resultMap="resultMap">
+  	select 
+  	<include refid="Base_Column_List" />
+  	from  t_rl_trs_comment where  commenter  is not null 
+  	<if test="commentAddress !=null and commentAddress !=''">
+  		and comment_address=#{commentAddress}  
+  	</if>
+  	<if test="commenter !=null and commenter !=''">
+  		and (commenter=#{commenter} 
+  		or comment_target =#{commenter} )
+  	</if>
+  	<if test="commentPlatform !=null and commentPlatform !=''">
+  		and comment_platform =#{commentPlatform} 
+  	</if>
+  	<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and comment_time >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and comment_time <=DATE_ADD(#{endQueryDate},INTERVAL '23:59:59' hour_second)]]>
+		</if>
+		order by comment_time desc  limit #{currentRecord},#{pageSize} ;
+  </select>
+  
+  <select id="getCommentListCount" parameterType="com.xsbweb.vo.TrsComment" resultType="java.lang.Integer">
+  	select 
+  	count(1)
+  	from  t_rl_trs_comment where  commenter  is not null 
+  	<if test="commentAddress !=null and commentAddress !=''">
+  		and comment_address=#{commentAddress}  
+  	</if>
+  	<if test="commenter !=null and commenter !=''">
+  		and (commenter=#{commenter} 
+  		or comment_target =#{commenter} )
+  	</if>
+  	<if test="commentPlatform !=null and commentPlatform !=''">
+  		and comment_platform =#{commentPlatform} 
+  	</if>
+  	<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and comment_time >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and comment_time <=DATE_ADD(#{endQueryDate},INTERVAL '23:59:59' hour_second)]]>
+		</if>
+  </select>
+  
+  
+  <update id="updatePraiseComment" parameterType="java.lang.String" >
+  		update t_rl_trs_comment set comment_praise=comment_praise+1 where comment_no=#{commentNo};
+  </update>
+  <delete id="bathDeleteProject"  parameterType="java.lang.String" >
+  	delete from t_rl_trs_comment where comment_no  in 
+		  <foreach collection="array" index="index" item="commentNo" open="(" separator="," close=")">  
+	           #{commentNo}   
+	      </foreach>  
+  
+  </delete>
+</mapper>

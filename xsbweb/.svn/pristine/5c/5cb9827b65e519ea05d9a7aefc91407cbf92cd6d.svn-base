@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.NewsMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.News" >
+    <result column="news_no" property="newsNo"   jdbcType="VARCHAR" />
+    <result column="news_date" property="newsDate"    jdbcType="VARCHAR" />
+    <result column="news_type" property="newsType"    jdbcType="VARCHAR" />
+    <result column="news_source" property="newsSource"   jdbcType="VARCHAR" />
+    <result column="news_title" property="newsTitle"   jdbcType="VARCHAR" />
+    <result column="news_ex_title" property="newsExTitle"  jdbcType="VARCHAR" />
+    <result column="news_role" property="newsRole"   jdbcType="INTEGER"/>
+    <result column="news_content" property="newsContent"   jdbcType="VARCHAR" />
+    <result column="fake_counts" property="fakeCounts"  jdbcType="VARCHAR" />
+    <result column="real_counts" property="realCounts"   jdbcType="VARCHAR" />
+    <!-- <result column="is_top" property="isTop"   jdbcType="VARCHAR"   /> -->
+    <result column="news_media_no" property="newsMediaNo"   jdbcType="VARCHAR" />
+    <result column="share_media_no" property="shareMediaNo"   jdbcType="VARCHAR" />
+    <result column="big_pic_no" property="bigMediaNo"   jdbcType="VARCHAR" />
+    <result column="news_pic_path" property="newsPicPath"   jdbcType="VARCHAR"  />
+    <result column="share_pic_path" property="sharePicPath"   jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigPicParh"   jdbcType="VARCHAR" />
+    <result column="counts" property="commentCounts"   jdbcType="VARCHAR" />
+    <result column="is_show" property="isShow"  jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy"  jdbcType="VARCHAR" />
+    <result column="last_update_by" property="lastUpdateBy"  jdbcType="VARCHAR" />
+    <result column="pv" property="pv"  jdbcType="VARCHAR" />
+  </resultMap>
+    <resultMap id="BaseResultMap" type="com.xsbweb.vo.SearchWord" >
+    <result column="word" property="word" jdbcType="VARCHAR" />
+    <result column="object" property="object" jdbcType="VARCHAR" />
+    <result column="link" property="link" jdbcType="VARCHAR" />
+    <result column="lab_order" property="labOrder" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+   <sql id="Base_Column_List" >
+     news_no,fake_counts,real_counts, news_date, news_type, news_source, news_title,news_ex_title,news_role,news_content
+  </sql>
+  
+  
+  
+  <select id="getNewsContentByNewsNo" parameterType="java.lang.String" resultMap="resultMap">
+  	select 
+  	distinct 
+  	t.news_no,
+  	ct.news_content,
+<!--   	if(str_to_date(concat(substring(t.snapshot_day,1,4),news_month,news_date),'%Y%c%d')  &lt; curdate(),
+	concat(substring(t.snapshot_day,1,4),'-',news_month,'-',news_date),
+    date_add(str_to_date(concat(substring(t.snapshot_day,1,4),news_month,news_date),'%Y%c%d'), interval -1 year))  -->
+    date_format(news_date,'%Y-%m-%d %H:%i:%s') as news_date,
+	t.news_type,
+  	t.news_source,
+  	t.news_title,
+  	t.news_ex_title,
+  	t.news_role,
+  	if(t.fake_counts is null or t.fake_counts='',0,t.fake_counts) + 
+        if(t.real_counts is null or t.real_counts='',0,t.real_counts) as fake_counts,
+  	t.real_counts,
+  	t.is_show,
+  	t.news_media_no,
+  	t.share_media_no,
+  	t.big_pic_no,
+  	tm1.media_location news_pic_path,
+  	tm2.media_location share_pic_path,
+  	tm3.media_location big_pic_path
+  	from t_rl_trs_news_dtl ct 
+  	left join oltp.t_rl_trs_news_idx t on ct.news_no=t.news_no 
+  	left join oltp.t_rl_trs_media tm1 on tm1.media_no=t.news_media_no 
+  	left join oltp.t_rl_trs_media tm2 on tm2.media_no=t.share_media_no
+  	left join oltp.t_rl_trs_media tm3 on tm3.media_no=t.big_pic_no
+  	 where t.news_no=#{newsNo}
+  </select>
+  
+  <select id="getNewsIndexListByPrc" parameterType="java.util.Map" resultMap="resultMap">
+		call get_etl_cur_news_idx(#{newsConfig,mode=IN,jdbcType=VARCHAR},
+								  #{prcFlag,mode=OUT,jdbcType=INTEGER});  
+  </select>
+  <select id="getAllNewsList" parameterType="com.xsbweb.vo.News" resultMap="resultMap">
+  		select 
+	  		news_no,
+	  		<!-- if(str_to_date(concat(substring(snapshot_day,1,4),news_month,news_date),'%Y%c%d')  &lt; curdate(),
+			concat(substring(snapshot_day,1,4),'-',news_month,'-',news_date),
+	        date_add(str_to_date(concat(substring(snapshot_day,1,4),news_month,news_date),'%Y%c%d'), interval -1 year)) --> news_date,
+	  		
+	  		news_source,
+	  		news_title,
+	  		news_ex_title,
+	  		news_role,
+	  		s.staff_name last_update_by,
+	  		real_counts,
+	  		fake_counts
+	  		<!-- if(n.news_role='0','',GROUP_CONCAT(dim.enum_desc_cn SEPARATOR '；') ) AS news_type -->
+  		from oltp.t_rl_trs_news_idx  n
+  		left join  oltp.t_rl_snap_staff s on s.staff_id=n.last_update_by
+  		<if test="(projectNo !=null and projectNo !='') or (word !=null and word !='')">
+  			left join oltp.t_rl_trs_search_word sw on sw.object= n.news_no
+  		</if>
+  		<!-- INNER JOIN
+    	meta.t_mt_column_enum dim ON ( dim.enum_code &amp; n.news_role > 0 or n.news_role='0' )
+  		where dim.enum_full_name = 'role' -->
+  		where 1=1 
+  		<if test="newsTitle !=null and newsTitle !='' ">
+  			and news_title like CONCAT('%',#{newsTitle},'%' ) 
+  					<!-- or news_ex_title like CONCAT('%',#{newsTitle},'%' )  -->
+  		</if>
+  		<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and news_date >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and news_date <=DATE_ADD(#{endQueryDate},INTERVAL '23:59:59' hour_second)]]>
+		</if>
+  		<choose> 
+			<when test="projectNo !=null and projectNo !='' and word !=null and word !=''"> 
+				and (sw.word= #{projectNo} or sw.word = #{word})
+			</when> 
+			<when test="projectNo !=null and projectNo !='' and (word ==null or word =='')"> 
+				and (sw.word= #{projectNo})
+			</when>
+		</choose> 
+  		order by n.news_date desc  limit #{currentRecord},#{pageSize} ;
+  </select>
+  
+  <select id="getNewsCounts" parameterType="com.xsbweb.vo.News" resultType="java.lang.Integer">
+  		select 
+	  		count(distinct news_no )
+  		from oltp.t_rl_trs_news_idx  n
+  		<if test="(projectNo !=null and projectNo !='') or (word !=null and word !='')">
+  			left join oltp.t_rl_trs_search_word sw on sw.object= n.news_no
+  		</if>
+  		<!-- INNER JOIN
+    	meta.t_mt_column_enum dim ON ( dim.enum_code &amp; n.news_role > 0 or n.news_role='0' )
+  		where dim.enum_full_name = 'role' --> 
+  		where 1=1 
+  		<if test="newsTitle !=null and newsTitle !='' ">
+  			and news_title like CONCAT('%',#{newsTitle},'%' ) 
+  					<!-- or news_ex_title like CONCAT('%',#{newsTitle},'%' )  -->
+  		</if>
+  		<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and news_date >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and news_date <=DATE_ADD(#{endQueryDate},INTERVAL '23:59:59' hour_second)]]>
+		</if>
+  		<choose> 
+			<when test="projectNo !=null and projectNo !='' and word !=null and word !=''"> 
+				and (sw.word= #{projectNo} or sw.word = #{word})
+			</when> 
+			<when test="projectNo !=null and projectNo !='' and (word ==null or word =='')"> 
+				and (sw.word= #{projectNo})
+			</when>
+		</choose> 
+  </select>
+  
+  <insert id="insertNewsDtl" parameterType="com.xsbweb.vo.News">
+  		insert into oltp.t_rl_trs_news_dtl (
+  			news_no,
+  			created_date,
+  			news_content
+  		)values(
+  			#{newsNo},
+  			sysdate(),
+  			#{newsContent}
+  		);
+  </insert>
+  <update id="updateNewsDtl" parameterType="com.xsbweb.vo.News">
+  		update t_rl_trs_news_dtl t set t.news_content = #{newsContent} 
+  			where t.news_no = (select ti.news_no from oltp.t_rl_trs_news_idx ti where ti.news_no=#{newsNo} limit 0,1);
+  </update>
+  <insert id="insertNewsIdx" parameterType="com.xsbweb.vo.News">
+  		insert into oltp.t_rl_trs_news_idx (
+  			news_no,
+  			news_date,
+  			news_type,
+  			news_source,
+  			news_title,
+  			news_ex_title,
+  			news_role,
+	  		fake_counts,
+  			is_show,
+  			news_media_no,
+  			share_media_no,
+  			big_pic_no,
+  			is_top,
+  			created_date,
+  			last_edit_date,
+  			create_by,
+  			last_update_by
+  		)values(
+  			#{newsNo},
+  			#{newsDate},
+  			#{newsType},
+  			#{newsSource},
+  			#{newsTitle},
+  			#{newsExTitle},
+  			#{newsRole},
+  			#{fakeCounts},
+  			#{isShow},
+  			#{newsMediaNo},
+  			#{shareMediaNo},
+  			#{bigMediaNo},
+  			'0',
+  			sysdate(),
+  			sysdate(),
+  			#{createBy},
+  			#{createBy}
+  		);
+  		
+  </insert>
+  <update id="updateNewsIdx" parameterType="com.xsbweb.vo.News">
+  	update oltp.t_rl_trs_news_idx 
+	<set>
+		<if test="newsDate !=null and newsDate !=''">
+			news_date = #{newsDate},
+		</if>
+		<if test="newsType !=null and newsType !=''">
+			news_type = #{newsType},
+		</if>
+		<if test="newsSource !=null and newsSource !=''">
+			news_source = #{newsSource},
+		</if>
+		<if test="newsTitle !=null and newsTitle !=''">
+			news_title = #{newsTitle},
+		</if>
+		<if test="newsExTitle !=null and newsExTitle !=''">
+			news_ex_title = #{newsExTitle},
+		</if>
+		<if test="newsRole !=null and newsRole !=''" >
+			news_role = #{newsRole},
+		</if>
+		<if test="fakeCounts !=null and fakeCounts !=''">
+			fake_counts = #{fakeCounts},
+		</if>
+		<if test="lastUpdateBy !=null and lastUpdateBy !=''">
+			last_update_by = #{lastUpdateBy},
+		</if>
+		<if test="newsMediaNo !=null and newsMediaNo !=''">
+			news_media_no = #{newsMediaNo},
+		</if>
+		<if test="shareMediaNo !=null and shareMediaNo !=''">
+			share_media_no = #{shareMediaNo},
+		</if>
+		<if test="bigMediaNo !=null and bigMediaNo !=''">
+			big_pic_no = #{bigPicParh},
+		</if>
+		<if test="lastUpdateBy !=null and lastUpdateBy !=''">
+			last_update_by = #{lastUpdateBy},
+		</if>
+		<if test="isShow !=null and isShow !=''">
+			is_show = #{isShow},
+		</if>
+		last_update_date = sysdate(),
+	</set>
+		where news_no = #{newsNo};
+  </update>
+  <delete id="deleteNewsIdx" parameterType="java.lang.String">
+  	delete from oltp.t_rl_trs_news_idx where news_no = #{newsNo};
+  </delete>	
+  <delete id="deleteNewsDtl" parameterType="java.lang.String">
+  	delete from t_rl_trs_news_dtl where news_no = (select ti.news_no from oltp.t_rl_trs_news_idx ti where ti.news_no = #{newsNo});
+  </delete>	
+  
+  <update id="newsToTop" parameterType="java.lang.String">
+  		update oltp.t_rl_trs_news_idx set last_edit_date=sysdate() where news_no = #{newsNo};
+  </update>
+  <update id="newsCancelTop"  parameterType="java.lang.String">
+  		update oltp.t_rl_trs_news_idx set is_top='0' where news_no = #{newsNo};
+  </update>
+  
+  <select id="getRelatedReadList" parameterType="com.xsbweb.vo.News" resultMap="resultMap">
+  		<![CDATA[select 
+	  		ti.news_no,
+	  		date_format(ti.news_date,'%Y-%m-%d %H:%i:%s') as news_date,
+	  		ti.news_type,
+	  		ti.news_source,
+	  		ti.news_title,
+	  		ti.news_ex_title,
+	  		ti.news_role,
+	  		if(ti.fake_counts is null or ti.fake_counts='',0,ti.fake_counts) + 
+	        if(ti.real_counts is null or ti.real_counts='',0,ti.real_counts) as pv,
+	  		ti.real_counts,
+	  		ti.fake_counts,
+	  		tm.media_location news_pic_path,
+	  		m.counts
+  		from oltp.t_rl_trs_news_idx ti
+  		left join oltp.t_rl_trs_media tm on tm.media_no=ti.news_media_no 
+  		left join (select count(1)counts,tcm.comment_address comment_address from oltp.t_rl_trs_comment tcm where tcm.comment_address=#{newsNo})m on m.comment_address = ti.news_no 
+  		where ti.news_no != #{newsNo} and ti.news_role > #{newsRole}/2 and ti.news_role < #{newsRole}*2 
+  		ORDER BY ti.news_date DESC 
+  		limit 0,3; ]]>
+  </select>
+  
+  <!-- 新闻关键词增删改查 -->
+
+  <select id="getWordListByNewsNo" parameterType="java.lang.String" resultMap="BaseResultMap">
+  	select word,object,link,lab_order,create_date from t_rl_trs_search_word where object=#{newsNo}
+  </select>
+  
+  <insert id="batchAddWord" parameterType="java.util.List">
+  	insert into t_rl_trs_search_word (
+  		word,object,link,lab_order,create_date,last_update_date
+  	)values 
+ 	 <foreach collection="list" item="item" index="index"  
+        separator=",">  
+        ( #{item.word}, #{item.object}, #{item.link},#{item.labOrder},sysdate(),sysdate())
+    </foreach>  
+  </insert>
+  
+ <!--  <update id="batchUpdateWord"  parameterType="com.xsbweb.vo.SearchWord">
+		update t_rl_trs_search_word
+        	<set>
+             	word=#{word}, 
+             	lab_order=#{labOrder}, 
+                last_update_date=sysdate() 
+			</set>
+                where object = #{object}
+                and word=#{oldWord}
+    </update> -->
+  
+  <update id="batchUpdateWord"  parameterType="java.util.List">
+          <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+                update t_rl_trs_search_word
+                <set>
+                	<if test="item.word != null  and item.word !=''">
+                		word=#{item.word}, 
+                	</if>
+                	<if test="item.labOrder != null  and item.labOrder !=''">
+                		lab_order=#{item.labOrder}, 
+                	</if>
+                	last_update_date=sysdate() 
+                </set>
+                where object = #{item.object} and word=#{item.oldWord}
+         </foreach>
+    </update>
+    
+    <delete id="deleteWordByObjectAndWord" parameterType="com.xsbweb.vo.SearchWord">
+    	delete from t_rl_trs_search_word where object = #{object} and word=#{word} 
+    </delete>
+    
+    <delete id="deleteWordByObject" parameterType="java.lang.String">
+		delete from t_rl_trs_search_word where object =#{newsNo} 
+	</delete>
+  
+	<delete id="deleteWordByObjects" parameterType="java.lang.String" >
+		delete from t_rl_trs_search_word where object in 
+		<foreach collection="array" index="index" item="object" open="(" separator="," close=")">  
+	           #{object}   
+	      </foreach> 
+	</delete>
+  
+	<delete id="deleteNewsDtlByNewsNos" parameterType="java.lang.String" >
+		delete from oltp.t_rl_trs_news_dtl where news_no in 
+		<foreach collection="array" index="index" item="newsNo" open="(" separator="," close=")">  
+	           #{newsNo}   
+	      </foreach> 
+	</delete>
+	<delete id="deleteNewsIdxByNewsNos" parameterType="java.lang.String" >
+		delete from oltp.t_rl_trs_news_idx where news_no in 
+		<foreach collection="array" index="index" item="newsNo" open="(" separator="," close=")">  
+	           #{newsNo}   
+	      </foreach> 
+	</delete>
+	<select id="insertNews" statementType="CALLABLE" parameterType="com.xsbweb.vo.News">
+		call upd_news(#{newsNo,mode=IN,jdbcType=VARCHAR},
+	  							#{newsDate,mode=IN,jdbcType=VARCHAR},
+	  							#{newsType,mode=IN,jdbcType=VARCHAR},
+	  							#{newsSource,mode=IN,jdbcType=VARCHAR},
+	  							#{newsTitle,mode=IN,jdbcType=VARCHAR},
+								#{newsExTitle,mode=IN,jdbcType=VARCHAR},					  							
+	  							#{newsRole,mode=IN,jdbcType=VARCHAR}, 
+	  							#{fakeCounts,mode=IN,jdbcType=VARCHAR},  
+	  							#{isShow,mode=IN,jdbcType=VARCHAR}, 
+	  							#{newsMediaNo,mode=IN,jdbcType=VARCHAR},
+	  							#{shareMediaNo,mode=IN,jdbcType=INTEGER}, 
+	  							#{bigMediaNo,mode=IN,jdbcType=INTEGER},
+	  							#{createBy,mode=IN,jdbcType=VARCHAR}, 
+	  							#{newsContent,mode=IN,jdbcType=VARCHAR}, 
+	  							#{newsNo,mode=OUT,jdbcType=VARCHAR},
+	  							#{prcFlag,mode=OUT,jdbcType=INTEGER});
+	</select>
+</mapper>

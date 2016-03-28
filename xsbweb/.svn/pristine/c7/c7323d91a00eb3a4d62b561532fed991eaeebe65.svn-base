@@ -1,0 +1,5 @@
+customer.name.isNULL=\u7528\u6237\u540D\u4E0D\u80FD\u4E3A\u7A7A
+schedule.etl.tasktable.notnull=tasktable\u4E0D\u80FD\u4E3A\u7A7A
+schedule.etl.regex.notnull=\u6B63\u5219\u8868\u8FBE\u5F0F\u4E0D\u80FD\u4E3A\u7A7A
+schedel.etl.tasktable.size=task\u957F\u5EA61-10
+

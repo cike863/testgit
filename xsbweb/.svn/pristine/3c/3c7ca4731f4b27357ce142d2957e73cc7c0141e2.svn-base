@@ -1,0 +1,60 @@
+package com.xsbweb.service;
+
+import java.util.List;
+
+import com.xsbweb.vo.SnapEtlSchedule;
+import com.xsbweb.vo.SnapPrcSchedule;
+import com.xsbweb.vo.TrsExeLog;
+import com.xsbweb.vo.TrsMedia;
+
+public interface ConfigService {
+
+	public List<SnapEtlSchedule> getEtlScheduleList(SnapEtlSchedule etlScheduleVO)throws Exception;
+	
+	public SnapEtlSchedule getEtlScheduleByTaskTable(String taskTable)throws Exception;
+	
+	public List<SnapPrcSchedule> getPrcScheduleList(SnapPrcSchedule prcScheduleVO)throws Exception;
+	
+	public SnapPrcSchedule getPrcScheduleByTaskPrc(String taskPrc)throws Exception;
+	
+	public List<TrsExeLog> getTrsExeLogList(TrsExeLog trsExeLogVO)throws Exception;
+	
+	public TrsExeLog getTrsExeLogByTaskId(String taskId)throws Exception;
+	
+	public List<TrsMedia> getTrsMediaList(TrsMedia trsMediaVO)throws Exception;
+	
+	public TrsMedia getTrsMediaByMediaNo(String mediaNo)throws Exception;
+	
+	public int addEtlSchedule(SnapEtlSchedule etlScheduleVO)throws Exception;
+	
+	public int addPrcSchedule(SnapPrcSchedule prcScheduleVO)throws Exception;
+	
+	public int addTrsExeLog(TrsExeLog trsExeLogVO)throws Exception;
+	
+	public String addTrsMedia(TrsMedia trsMediaVO)throws Exception;
+	
+	public int updateEtlSchedule(SnapEtlSchedule etlScheduleVO)throws Exception;
+	
+	public int updatePrcSchedule(SnapPrcSchedule prcScheduleVO)throws Exception;
+	
+	public int updateTrsExeLog(TrsExeLog trsExeLogVO)throws Exception;
+	
+	public int updateTrsMedia(TrsMedia trsMediaVO)throws Exception;
+	
+	public int deleteEtlSchedule(SnapEtlSchedule etlScheduleVO)throws Exception;
+	
+	public int deletePrcSchedule(SnapPrcSchedule prcScheduleVO)throws Exception;
+	
+	public int deleteTrsExeLog(TrsExeLog trsExeLogVO)throws Exception;
+	
+	public int deleteTrsMedia(TrsMedia trsMediaVO)throws Exception;
+	
+	public int getTrsMediaCounts(TrsMedia trsMedia)throws Exception;
+	/**
+	 * 批量删除资源
+	 * @param mediaNoArrs
+	 * @return
+	 * @throws Exception
+	 */
+	public int batchDeleteTrsMedia(String[] mediaNoArrs)throws Exception;
+}

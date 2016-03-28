@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.IndustryBaikeMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.IndustryBaike" >
+    <id column="baike_id" property="baikeId"/>
+    <result column="baike_title" property="baikeTitle"/>
+    <result column="baike_content" property="baikeContent"/>
+    <result column="baike_order" property="baikeOrder"/>
+    <result column="baike_type" property="baikeType"/>
+    <result column="created_date" property="createdDate"/>
+  </resultMap>
+  
+  	<select id="getIndustryBaikeById"  parameterType="java.lang.String" resultMap="resultMap">  
+		select * from t_rl_industry_baike where baike_id = #{baikeId};  
+	</select>  
+
+    <!--  <update id="delIndustryBaike" parameterType="java.lang.String">
+        update t_rl_industry_baike set customer_status=0 where customer_id = #{customerId};  
+    </update>-->
+    <delete id="delIndustryBaike" parameterType="java.lang.String">
+  	    delete from t_rl_industry_baike where baike_id = #{baikeId};  
+    </delete>
+	<select id="getIndustryBaikeCounts" parameterType="com.xsbweb.vo.IndustryBaike" resultType="java.lang.Integer">
+  		select count(1) from t_rl_industry_baike 
+  		<where>
+  		1=1 
+  		<if test="baikeTitle !=null and baikeTitle !=''">
+			and baike_title like CONCAT('%',#{baikeTitle},'%') 	
+		</if>
+		<if test="baikeType !=null and baikeType !=''">
+			and baike_type like CONCAT('%',#{baikeType},'%') 	
+		</if>
+  		</where>
+   </select>
+   
+   <select id="getMaxId"  resultType="java.lang.Integer">
+   		select  baike_id+1 as id  from oltp.t_rl_industry_baike order by baike_id desc limit 0,1;
+   </select>
+   
+   <select id="getAllIndustryBaikeList" parameterType="com.xsbweb.vo.IndustryBaike" resultMap="resultMap">
+  		select 
+	  		baike_id,baike_title,baike_content,baike_order,baike_type,date_format(created_date,'%Y-%c-%d') created_date
+  		from t_rl_industry_baike 
+  		<where>
+  		1=1 
+  		<if test="baikeTitle !=null and baikeTitle !=''">
+			and baike_title like CONCAT('%',#{baikeTitle},'%') 	
+		</if>
+		<if test="baikeType !=null and baikeType !=''">
+			and baike_type like CONCAT('%',#{baikeType},'%') 	
+		</if>
+  		</where>
+  		order by baike_order desc limit #{currentRecord},#{pageSize};
+  </select>
+  <insert id="insertBaike" parameterType="com.xsbweb.vo.IndustryBaike">
+  		insert into t_rl_industry_baike (
+  			baike_id,
+  			baike_title,
+  			baike_content,
+  			baike_order,
+  			baike_type,
+  			created_date
+  		)values(
+  			#{baikeId},
+  			#{baikeTitle},
+  			#{baikeContent},
+  			#{baikeOrder},
+  			<!--  #{baikeType},-->
+  			'行业百科',
+  			#{createdDate}
+  		);
+  		
+  </insert>
+  <update id="updateBaike" parameterType="com.xsbweb.vo.IndustryBaike">
+  	update t_rl_industry_baike 
+	<set>
+		<if test="baikeTitle !=null and baikeTitle!=''">
+			baike_title = #{baikeTitle},
+		</if>
+		<if test="baikeContent !=null and baikeContent !=''">
+			baike_content = #{baikeContent},
+		</if>
+		<if test="baikeOrder !=null and baikeOrder !=''">
+			baike_order = #{baikeOrder},
+		</if>
+		<if test="baikeType !=null and baikeType !=''">
+			baike_type = #{baikeType},
+		</if>
+	</set>
+		where baike_id = #{baikeId};
+  </update>
+  
+  <delete id="batchDeleteIndustryBaike" parameterType="java.lang.String" >
+		delete from t_rl_industry_baike where baike_id in 
+		<foreach collection="array" index="index" item="baikeId" open="(" separator="," close=")">  
+	           #{baikeId}   
+	      </foreach> 
+	</delete>
+
+</mapper>

@@ -1,0 +1,823 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.CompanyMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.Company" >
+    <id column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <id column="snapshot_day" property="snapshotDay" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="company_full_name" property="companyFullName" jdbcType="VARCHAR" />
+    <result column="company_eng_name" property="companyEngName" jdbcType="VARCHAR" />
+    <result column="company_address" property="companyAddress" jdbcType="VARCHAR" />
+    <result column="legal_person" property="legalPerson" jdbcType="VARCHAR" />
+    <result column="company_capital" property="companyCapital" jdbcType="DOUBLE" />
+    <result column="industry_id" property="industryId" jdbcType="VARCHAR" />
+    <result column="industry_group_id" property="industryGroupId" jdbcType="VARCHAR" />
+    <result column="industry_grand_group_id" property="industryGrandGroupId" jdbcType="VARCHAR" />
+    
+    <result column="ch_secretary" property="chSecretary" jdbcType="VARCHAR" />
+    <result column="company_capital" property="companyCapital" jdbcType="VARCHAR" />
+    <result column="industry_type" property="industryType" jdbcType="VARCHAR" />
+    <result column="shingle_date" property="shingleDate" jdbcType="VARCHAR" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+    <result column="assi_may" property="assiMay" jdbcType="VARCHAR" />
+    <result column="zb_trader" property="zbTrader" jdbcType="VARCHAR" />
+    <result column="zs_trader" property="zsTrader" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="drctrResultMap" type="com.xsbweb.vo.CompanyDrctr" >
+  	<result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="dsm_name" property="dsmName" jdbcType="VARCHAR" />
+    <result column="dsm_title" property="dsmTitle" jdbcType="VARCHAR" />
+    <result column="hold_amount" property="holdAmount" jdbcType="VARCHAR" />
+    <result column="loc" property="loc" jdbcType="VARCHAR" />
+    <result column="dsm_type" property="dsmType" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="equityResultMap" type="com.xsbweb.vo.CompanyEquity" >
+    <result column="snapshot_day" property="snapshotDay" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="report_date" property="reportDate" jdbcType="VARCHAR" />
+    <result column="total_equity" property="totalEquity" jdbcType="VARCHAR" />
+    <result column="exchng_a_total_equity" property="exchngATotalEquity" jdbcType="VARCHAR" />
+    <result column="exchng_a_circu_equity" property="exchngACircuEquity" jdbcType="VARCHAR" />
+    <result column="exchng_a_limit_equity" property="exchngALimitEquity" jdbcType="VARCHAR" />
+    <result column="equity_change_reason" property="equityChangeReason" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="financeResultMap" type="com.xsbweb.vo.CompanyFinance" >
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="attr_name" property="attrName" jdbcType="VARCHAR" />
+    <result column="attr_value" property="attrValue" jdbcType="VARCHAR" />
+    <result column="report_date" property="reportDate" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="holderResultMap" type="com.xsbweb.vo.CompanyHolder" >
+    <result column="snapshot_day" property="snapshotDay" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="holder_name" property="holderName" jdbcType="VARCHAR" />
+    <result column="hold_type" property="holdType" jdbcType="VARCHAR" />
+    <result column="hold_amount" property="holdAmount" jdbcType="VARCHAR" />
+    <result column="hold_percent" property="holdPercent" jdbcType="VARCHAR" />
+    <result column="chng_hold_amount" property="chngHoldAmount" jdbcType="VARCHAR" />
+    <result column="chng_hold_percent" property="chngHoldPercent" jdbcType="VARCHAR" />
+    <result column="loc" property="loc" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="historyResultMap" type="com.xsbweb.vo.CompanyInfoHistory" >
+    <result column="snapshot_day" property="snapshotDay" jdbcType="VARCHAR" />
+    <result column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="full_name" property="fullName" jdbcType="VARCHAR" />
+    <result column="english_name" property="englishName" jdbcType="VARCHAR" />
+    <result column="area" property="area" jdbcType="VARCHAR" />
+    <result column="registered_address" property="registeredAddress" jdbcType="VARCHAR" />
+    <result column="legal" property="legal" jdbcType="VARCHAR" />
+    <result column="secretary" property="secretary" jdbcType="VARCHAR" />
+    <result column="capital" property="capital" jdbcType="VARCHAR" />
+    <result column="web" property="web" jdbcType="VARCHAR" />
+    <result column="tel" property="tel" jdbcType="VARCHAR" />
+    <result column="fax" property="fax" jdbcType="VARCHAR" />
+    <result column="history_short" property="history" jdbcType="VARCHAR" />
+    <result column="zip_code" property="zipCode" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="situationMap" type="com.xsbweb.vo.extend.SbhqSencodVO" >
+    <result column="stock_id" property="stockId" />
+    <result column="stock_name" property="stockName" />
+    <result column="exchange_id" property="exchangeId"  />
+    <result column="industry_name" property="industryName"  />
+    <result column="stock_status" property="stockStatus"  />
+    <result column="full_name" property="fullName"  />
+    <result column="english_name" property="englishName" />
+    <result column="area" property="area"  />
+    <result column="registered_address" property="registeredAddress"  />
+    <result column="legal" property="legal"  />
+    <result column="secretary" property="secretary"  />
+    <result column="capital" property="capital"  />
+    <result column="web" property="web"  />
+    <result column="tel" property="tel"  />
+    <result column="fax" property="fax"  />
+    <result column="stock_price" property="stockPrice"  />
+    <result column="trading_amount" property="tradingAmount"  />
+    <result column="trading_volumn" property="tradingVolumn"  />
+    <result column="price_change" property="priceChange"  />
+    <result column="price_change_percent" property="priceChangePercent"  />
+    <result column="list_date" property="listDate"  />
+    <result column="hand_volumn" property="handVolumn" />
+	<result column="total_amount" property="totalAmount" />
+	<result column="protocol_broker" property="brokerName" />
+	<result column="trans_insttt" property="transInsttt" />
+  </resultMap>
+  
+  <resultMap id="companyResultMap" type="com.xsbweb.vo.Company" >
+    <id column="stock_id" property="stockId" jdbcType="VARCHAR" />
+    <result column="stock_name" property="stockName" jdbcType="VARCHAR" />
+    <result column="exchange_id" property="assiMay" jdbcType="VARCHAR" />
+    <result column="industry_name" property="industryType" jdbcType="VARCHAR" />
+    <result column="stock_status" property="stockStatus" jdbcType="VARCHAR" />
+    <result column="full_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="english_name" property="companyEngName" jdbcType="VARCHAR" />
+    <result column="area" property="area" jdbcType="VARCHAR" />
+    <!-- <result column="industry" property="industry" jdbcType="VARCHAR" /> -->
+    <result column="registered_address" property="companyAddress" jdbcType="VARCHAR" />
+    <result column="legal" property="legalPerson" jdbcType="VARCHAR" />
+    <result column="secretary" property="chSecretary" jdbcType="VARCHAR" />
+    <result column="capital" property="companyCapital" jdbcType="VARCHAR" />
+    <result column="web" property="url" jdbcType="VARCHAR" />
+    <result column="tel" property="tel" jdbcType="VARCHAR" />
+    <result column="fax" property="fax" jdbcType="VARCHAR" />
+    <result column="history_short" property="historyShort" jdbcType="VARCHAR" />
+    <result column="zip_code" property="zipCode" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="trans_insttt" property="zsTrader" jdbcType="VARCHAR" />
+    <result column="protocol_insttt" property="protocolInsttt" jdbcType="VARCHAR" />
+	<result column="protocol_broker" property="protocolBroker" jdbcType="VARCHAR" />
+    <result column="list_date" property="listDate" jdbcType="TIMESTAMP" />
+    <result column="total_equity" property="totalEquity" jdbcType="DOUBLE"  javaType="double" />
+  </resultMap>
+  
+  <sql id="company" >
+  		stock_name,exchange_id,industry_name,stock_status,full_name,english_name,area,
+  		registered_address,legal,secretary,capital,web,tel,fax,history_short,zip_code,create_date,
+  		last_update_date,trans_insttt,protocol_insttt,protocol_broker,list_date,total_equity  
+  </sql>
+  <sql id="companyDrctr">
+  		 snapshot_day,stock_id,dsm_name,dsm_title,hold_amount,loc,dsm_type  
+  </sql>
+  <sql id="companyEquity">
+  		snapshot_day,stock_id,total_equity,exchng_a_total_equity,exchng_a_circu_equity,exchng_a_limit_equity,
+  		country_capital,legal_person_capital,staff_capital,transfer_capital,report_date,equity_change_reason 
+  </sql>
+  <sql id="companyFinance">
+  		snapshot_day,stock_id,report_date,attr_name,attr_value  
+  </sql>
+  <sql id="companyHolder">
+  		snapshot_day,stock_id,holder_name,hold_type,hold_amount,chng_hold_amount,hold_percent,chng_hold_percent,loc
+  </sql>
+  
+  
+  <select id="getProjCompanyByPrc" statementType="CALLABLE" parameterType="java.util.HashMap" resultMap="resultMap">
+  	call get_proj_company(#{stockId,mode=IN,jdbcType=VARCHAR},
+								#{prcFlag,mode=OUT,jdbcType=VARCHAR});
+  </select>
+  <!-- 公司高管开始 -->
+  <select id="getCompanyDrctrByStockId" parameterType="java.lang.String" resultMap="drctrResultMap">
+  		select 
+			dsm_name,     
+			dsm_title,    
+			hold_amount,  
+			loc,
+			dsm_type  
+		from olap.t_anlssd_company_dsm
+		where stock_id = #{stockId};
+  </select>
+  <select id="getCompanyDrctrByDsmName" parameterType="java.util.HashMap" resultMap="drctrResultMap">
+  		select 
+			<include refid="companyDrctr"/>
+		from olap.t_anlssd_company_dsm
+		where stock_id = #{stockId} and dsm_name =#{dsmName} limit 0,1;
+  </select>
+  
+  <update id="updateCompanyDrctrByDsmName" parameterType="com.xsbweb.vo.CompanyDrctr" >
+  	update olap.t_anlssd_company_dsm 
+  	<set>
+  		<if test="dsmTitle !=null and dsmTitle !='' ">
+  			dsm_title =#{dsmTitle},
+  		</if>
+  		<if test="holdAmount !=null and holdAmount !='' ">
+  			hold_amount =#{holdAmount},
+  		</if>
+  		<if test="loc !=null and loc !='' ">
+  			loc =#{loc},
+  		</if>
+  		<if test="dsmType !=null and dsmType !='' ">
+  			dsm_type =#{dsmType},
+  		</if>
+  		<if test="snapshotDay !=null and snapshotDay !='' ">
+  			snapshot_day =#{snapshotDay}
+  		</if>
+  	</set>
+  	where stock_id = #{stockId} and dsm_name =#{dsmName};
+  </update>
+  
+  <insert id="addCompanyDrctr" parameterType="com.xsbweb.vo.CompanyDrctr" >
+  		insert into olap.t_anlssd_company_dsm(
+  				stock_id
+  			<if test="dsmName !=null and dsmName !='' ">
+  				,dsm_name
+  			</if>
+  			<if test="dsmTitle !=null and dsmTitle !='' ">
+  				,dsm_title
+  			</if>
+  			<if test="holdAmount !=null and holdAmount !='' ">
+  				,hold_amount
+  			</if>
+  			<if test="loc !=null and loc !='' ">
+  				,loc
+  			</if>
+  			<if test="dsmType !=null and dsmType !='' ">
+  				,dsm_type
+  			</if>
+  			<if test="snapshotDay !=null and snapshotDay !='' ">
+  				,snapshot_day
+  			</if>
+  		)values(
+  			#{stockId}
+  			<if test="dsmName !=null and dsmName !='' ">
+  				,#{dsmName}
+  			</if>
+  			<if test="dsmTitle !=null and dsmTitle !='' ">
+  				,#{dsmTitle}
+  			</if>
+  			<if test="holdAmount !=null and holdAmount !='' ">
+  				,#{holdAmount}
+  			</if>
+  			<if test="loc !=null and loc !='' ">
+  				,#{loc}
+  			</if>
+  			<if test="dsmType !=null and dsmType !='' ">
+  				,#{dsmType}
+  			</if>
+  			<if test="snapshotDay !=null and snapshotDay !='' ">
+  				,#{snapshotDay}
+  			</if>
+  		)
+  </insert>
+  
+  <delete id="batchDeleteDrctr" parameterType="com.xsbweb.vo.CompanyDrctr" >
+  	delete from olap.t_anlssd_company_dsm where stock_id = #{stockId} and dsm_name  in 
+		  <foreach collection="dsmNames" index="index" item="dsmName" open="(" separator="," close=")">  
+	           #{dsmName}   
+	      </foreach>  
+  </delete>
+  <!-- 公司高管结束 -->
+  
+  
+  <!-- 股本状况开始 -->
+  <select id="getCompanyEquityByStockId" parameterType="java.lang.String" resultMap="equityResultMap">
+ 		 select 
+ 		 <include refid="companyEquity"/> 
+ 		 from olap.t_orgn_etl_company_equity
+ 		  where snapshot_day = date_format(sysdate(),'%Y%m%d') 
+ 		   and stock_id = #{stockId};
+  </select>
+  <select id="getCompanyEquity" parameterType="java.util.HashMap" resultMap="equityResultMap">
+  		select 
+			<include refid="companyEquity"/>
+		from olap.t_orgn_etl_company_equity
+		where stock_id = #{stockId} and report_date =#{reportDate} limit 0,1;
+  </select>
+  <update id="updateCompanyEquity" parameterType="com.xsbweb.vo.CompanyEquity" >
+  	update olap.t_orgn_etl_company_equity
+  	<set>
+  		<if test="totalEquity !=null and totalEquity !='' ">
+  			total_equity =#{totalEquity},
+  		</if>
+  		<if test="exchngATotalEquity !=null and exchngATotalEquity !='' ">
+  			exchng_a_total_equity =#{exchngATotalEquity},
+  		</if>
+  		<if test="exchngACircuEquity !=null and exchngACircuEquity !='' ">
+  			exchng_a_circu_equity =#{exchngACircuEquity},
+  		</if>
+  		<if test="exchngALimitEquity !=null and exchngALimitEquity !='' ">
+  			exchng_a_limit_equity =#{exchngALimitEquity},
+  		</if>
+  		<if test="equityChangeReason !=null and equityChangeReason !='' ">
+  			equity_change_reason =#{equityChangeReason}
+  		</if>
+  	</set>
+  	where stock_id = #{stockId} and report_date =#{reportDate};
+  </update>
+  
+  <insert id="addCompanyEquity" parameterType="com.xsbweb.vo.CompanyEquity" >
+  		insert into olap.t_orgn_etl_company_equity(
+  				stock_id
+  				<if test="totalEquity !=null and totalEquity !='' ">
+  					,total_equity
+  				</if>
+  				<if test="exchngATotalEquity !=null and exchngATotalEquity !='' ">
+  					,exchng_a_total_equity
+  				</if>
+  				<if test="exchngACircuEquity !=null and exchngACircuEquity !='' ">
+  					,exchng_a_circu_equity
+  				</if>
+  				<if test="exchngALimitEquity !=null and exchngALimitEquity !='' ">
+  					,exchng_a_limit_equity
+  				</if>
+  				<if test="equityChangeReason !=null and equityChangeReason !='' ">
+  					,equity_change_reason
+  				</if>
+  				<if test="reportDate !=null and reportDate !='' ">
+  					,report_date
+  				</if>
+  				<if test="snapshotDay !=null and snapshotDay !='' ">
+  					,snapshot_day
+  				</if>
+  			
+  		)values(
+  			#{stockId}
+  			<if test="totalEquity !=null and totalEquity !='' ">
+  					,#{totalEquity}
+  				</if>
+  				<if test="exchngATotalEquity !=null and exchngATotalEquity !='' ">
+  					,#{exchngATotalEquity}
+  				</if>
+  				<if test="exchngACircuEquity !=null and exchngACircuEquity !='' ">
+  					,#{exchngACircuEquity}
+  				</if>
+  				<if test="exchngALimitEquity !=null and exchngALimitEquity !='' ">
+  					,#{exchngALimitEquity}
+  				</if>
+  				<if test="equityChangeReason !=null and equityChangeReason !='' ">
+  					,#{equityChangeReason}
+  				</if>
+  				<if test="reportDate !=null and reportDate !='' ">
+  					,#{reportDate}
+  				</if>
+  				<if test="snapshotDay !=null and snapshotDay !='' ">
+  					,#{snapshotDay}
+  				</if>
+  		)
+  </insert>
+  
+  <delete id="batchDeleteEquity" parameterType="com.xsbweb.vo.CompanyEquity" >
+  	delete from olap.t_orgn_etl_company_equity where stock_id = #{stockId} and report_date  in 
+		  <foreach collection="reportDates" index="index" item="reportDate" open="(" separator="," close=")">  
+	           #{reportDate}   
+	      </foreach>  
+  </delete>
+   <!-- 股本状况结束 -->
+  <!-- 财务分析开始 -->
+  <select id="getCompanyFinanceByStockId" parameterType="java.lang.String" resultMap="financeResultMap">
+  		select stock_id,report_date,attr_name,attr_value from olap.t_anlssd_company_finance_d where stock_id = #{stockId};
+  </select>
+  
+  <select id="getCompanyFinance" parameterType="java.util.HashMap" resultMap="financeResultMap">
+  		select 
+  			<include refid="companyFinance"/>
+		from olap.t_anlssd_company_finance_d
+		where stock_id = #{stockId} and attr_name =#{attrName} limit 0,1;
+  </select>
+  
+  <update id="updateCompanyFinance" parameterType="com.xsbweb.vo.CompanyFinance" >
+  	update olap.t_anlssd_company_finance_d
+  	<set>
+  		<if test="attrValue !=null and attrValue !='' ">
+  			attr_value =#{attrValue},
+  		</if>
+  		<if test="reportDate !=null and reportDate !='' ">
+  			report_date =#{reportDate},
+  		</if>
+  	</set>
+  	where stock_id = #{stockId} and attr_name =#{attrName};
+  </update>
+  
+  <insert id="addCompanyFinance" parameterType="com.xsbweb.vo.CompanyFinance" >
+  		insert into olap.t_anlssd_company_finance_d(
+  				stock_id
+  				<if test="attrValue !=null and attrValue !='' ">
+  					,attr_value
+  				</if>
+  				<if test="reportDate !=null and reportDate !='' ">
+  					,report_date
+  				</if>
+  				<if test="attrName !=null and attrName !='' ">
+  					,attr_name
+  				</if>
+  		)values(
+  			#{stockId}
+  				<if test="attrValue !=null and attrValue !='' ">
+  					,#{attrValue}
+  				</if>
+  				<if test="reportDate !=null and reportDate !='' ">
+  					,#{reportDate}
+  				</if>
+  				<if test="attrName !=null and attrName !='' ">
+  					,#{attrName}
+  				</if>
+  		)
+  </insert>
+  
+  <delete id="batchDeleteFinance" parameterType="com.xsbweb.vo.CompanyFinance" >
+  	delete from olap.t_anlssd_company_finance_d where stock_id = #{stockId} and attr_name  in 
+		  <foreach collection="attrNames" index="index" item="attrName" open="(" separator="," close=")">  
+	           #{attrName}   
+	      </foreach>  
+  </delete>
+  <!-- 财务分析结束 -->
+  
+  <!-- 十大股东开始 -->
+  <select id="getCompanyHolderByStockId" parameterType="java.lang.String" resultMap="holderResultMap">
+  		select stock_id,holder_name,hold_type,hold_amount,hold_percent from olap.t_anlssd_stock_holder where stock_id = #{stockId};
+  </select>
+  
+  <select id="getCompanyHolder" parameterType="java.util.HashMap" resultMap="holderResultMap">
+  		select
+			<include refid="companyHolder"/>
+		from olap.t_anlssd_stock_holder
+		where stock_id = #{stockId} and holder_name =#{holderName} limit 0,1;
+  </select>
+  
+  <update id="updateCompanyHolder" parameterType="com.xsbweb.vo.CompanyHolder" >
+  	update olap.t_anlssd_stock_holder
+  	<set>
+  		<if test="holdType !=null and holdType !='' ">
+  			hold_type =#{holdType},
+  		</if>
+  		<if test="holdAmount !=null and holdAmount !='' ">
+  			hold_amount =#{holdAmount},
+  		</if>
+  		<if test="chngHoldAmount !=null and chngHoldAmount !='' ">
+  			chng_hold_amount =#{chngHoldAmount},
+  		</if>
+  		<if test="holdPercent !=null and holdPercent !='' ">
+  			hold_percent =#{holdPercent},
+  		</if>
+  		<if test="chngHoldPercent !=null and chngHoldPercent !='' ">
+  			chng_hold_percent =#{chngHoldPercent},
+  		</if>
+  		<if test="loc !=null and loc !='' ">
+  			loc =#{loc}
+  		</if>
+  	</set>
+  	where stock_id = #{stockId} and holder_name =#{holderName};
+  </update>
+  
+  <insert id="addCompanyHolder" parameterType="com.xsbweb.vo.CompanyHolder" >
+  		insert into olap.t_anlssd_stock_holder(
+  				stock_id
+  				<if test="holderName !=null and holderName !='' ">
+  					,holder_name
+  				</if>
+  				<if test="holdType !=null and holdType !='' ">
+  					,hold_type
+  				</if>
+  				<if test="holdAmount !=null and holdAmount !='' ">
+  					,hold_amount
+  				</if>
+  				<if test="chngHoldAmount !=null and chngHoldAmount !='' ">
+  					,chng_hold_amount
+  				</if>
+  				<if test="holdPercent !=null and holdPercent !='' ">
+  					,hold_percent
+  				</if>
+  				<if test="chngHoldPercent !=null and chngHoldPercent !='' ">
+  					,chng_hold_percent
+  				</if>
+  				<if test="loc !=null and loc !='' ">
+  					,loc
+  				</if>
+  				<if test="snapshotDay !=null and snapshotDay !='' ">
+  					,snapshot_day
+  				</if>
+  		)values(
+  			#{stockId}
+  				<if test="holderName !=null and holderName !='' ">
+  					,#{holderName}
+  				</if>
+  				<if test="holdType !=null and holdType !='' ">
+  					,#{holdType}
+  				</if>
+  				<if test="holdAmount !=null and holdAmount !='' ">
+  					,#{holdAmount}
+  				</if>
+  				<if test="chngHoldAmount !=null and chngHoldAmount !='' ">
+  					,#{chngHoldAmount}
+  				</if>
+  				<if test="holdPercent !=null and holdPercent !='' ">
+  					,#{holdPercent}
+  				</if>
+  				<if test="chngHoldPercent !=null and chngHoldPercent !='' ">
+  					,#{chngHoldPercent}
+  				</if>
+  				<if test="loc !=null and loc !='' ">
+  					,#{loc}
+  				</if>
+  				<if test="snapshotDay !=null and snapshotDay !='' ">
+  					,#{snapshotDay}
+  				</if>
+  		)
+  </insert>
+  
+  <delete id="batchDeleteHolder" parameterType="com.xsbweb.vo.CompanyHolder" >
+  	delete from olap.t_anlssd_stock_holder where stock_id = #{stockId} and holder_name  in 
+		  <foreach collection="holderNames" index="index" item="holderName" open="(" separator="," close=")">  
+	           #{holderName}   
+	      </foreach>  
+  </delete>
+   <!-- 十大股东结束 -->
+   
+   
+  <select id="getCompanyHistoryByStockId" parameterType="java.lang.String" resultMap="historyResultMap">
+  		select 
+			stock_id,
+			full_name,
+			english_name,
+			area,
+			registered_address,
+			legal,
+			secretary,
+			capital,
+			web,
+			tel,
+			fax,
+			ifnull(history_full,history_short) history_short,
+			zip_code
+	 from olap.t_orgn_etl_companyinfo where 
+	 <!-- snapshot_day = (case dayofweek(sysdate())
+								  when 1 then date_format(date_add(sysdate(), interval -2 day),'%Y%m%d') 
+								  when 7 then date_format(date_add(sysdate(), interval -1 day),'%Y%m%d') 
+								  else date_format(date_add(sysdate(), interval 0 day),'%Y%m%d') end)  -->
+			  stock_id = #{stockId} order by snapshot_day desc limit 0,1;
+  </select>
+  
+  <select id="getCompanySituationByStockId" parameterType="java.lang.String" resultMap="situationMap">
+  	select 
+		stock_id,
+		stock_name,
+		full_name,
+		english_name,
+		 case when trans_insttt = '1' then '做市' else '协议' end trans_insttt,
+		area,
+		registered_address,
+		legal,
+		secretary,
+		capital,
+		web,
+		tel,
+		fax,
+		protocol_broker 
+	 from oltp.v_stock_info where stock_id = #{stockId} limit 0,1;
+  </select>
+  
+  <select id="getCompanyList" parameterType="com.xsbweb.vo.Company"  resultMap="companyResultMap">
+  	select 
+  		stock_id,
+  		stock_name,
+  		exchange_id,
+  		industry_name,
+  		area,
+  		legal,
+  		web,
+  		date_format(create_date,'%Y-%m-%d %H:%i:%s') create_date	
+  	from t_rl_snap_etl_stock_info 
+  	where 1=1
+  	<if test="stockName !=null and  stockName !=''">
+ 			and stock_name like CONCAT('%',#{stockName},'%' ) 
+ 		</if>
+ 		<if test="assiMay !=null and  assiMay !=''">
+ 			and exchange_id like CONCAT('%',#{assiMay},'%' ) 
+ 		</if>
+ 		<if test="industryType !=null and  industryType !=''">
+ 			and industry_name like CONCAT('%',#{industryType},'%' ) 
+ 		</if>
+  	order by last_update_date desc limit #{currentRecord},#{pageSize};
+  </select>
+  <select id="getCompanyCount" parameterType="com.xsbweb.vo.Company"  resultType="java.lang.Integer">
+  	select 
+  		count(1)
+  	from t_rl_snap_etl_stock_info 
+  	where 1=1
+  	<if test="stockName !=null and  stockName !=''">
+ 			and stock_name like CONCAT('%',#{stockName},'%' ) 
+ 		</if>
+ 		<if test="assiMay !=null and  assiMay !=''">
+ 			and exchange_id like CONCAT('%',#{assiMay},'%' ) 
+ 		</if>
+ 		<if test="industryType !=null and  industryType !=''">
+ 			and industry_name like CONCAT('%',#{industryType},'%' ) 
+ 		</if>
+  </select>
+  <insert id="addCompany"  parameterType="com.xsbweb.vo.Company" >
+  			insert into  t_rl_snap_etl_stock_info (
+  				<if test="stockId !=null and stockId !=''">
+  					stock_id,
+  				</if>
+  				<if test="stockName !=null and stockName !=''">
+  					stock_name,
+  				</if>
+  				<if test="assiMay !=null and assiMay !=''">
+  					exchange_id,
+  				</if>
+  				<if test="industryType !=null and industryType !=''">
+  					industry_name,
+  				</if>
+  				<if test="stockStatus !=null and stockStatus !=''">
+  					stock_status,
+  				</if>
+  				<if test="companyName !=null and companyName !=''">
+  					full_name,
+  				</if>
+  				<if test="companyEngName !=null and companyEngName !=''">
+  					english_name,
+  				</if>
+  				<if test="area !=null and area !=''">
+  					area,
+  				</if>
+  				<!-- <if test="industry !=null and industry !=''">
+  					,industry
+  				</if> -->
+  				<if test="companyAddress !=null and companyAddress !=''">
+  					registered_address,
+  				</if>
+  				<if test="legalPerson !=null and legalPerson !=''">
+  					legal,
+  				</if>
+  				<if test="chSecretary !=null and chSecretary !=''">
+  					secretary,
+  				</if>
+  				<if test="companyCapital !=null and companyCapital !=''">
+  					capital,
+  				</if>
+  				<if test="url !=null and url !=''">
+  					web,
+  				</if>
+  				<if test="tel !=null and tel !=''">
+  					tel,
+  				</if>
+  				<if test="fax !=null and fax !=''">
+  					fax,
+  				</if>
+  				<if test="historyShort !=null and historyShort !=''">
+  					history_short,
+  				</if>
+  				<if test="zipCode !=null and zipCode !=''">
+  					zip_code,
+  				</if>
+  				<if test="zsTrader !=null and zsTrader !=''">
+  					trans_insttt,
+  				</if>
+  				<if test="protocolInsttt !=null and protocolInsttt !=''">
+  					protocol_insttt,
+  				</if>
+  				<if test="protocolBroker !=null and protocolBroker !=''">
+  					protocol_broker,
+  				</if>
+  				<if test="listDate !=null and listDate !=''">
+  					list_date,
+  				</if>
+  				<if test="totalEquity !=null and totalEquity !=''">
+  					total_equity,
+  				</if>
+  					create_date,
+  					last_update_date
+  			)values(	
+  				<if test="stockId !=null and stockId !=''">
+  					#{stockId},
+  				</if>
+  				<if test="stockName !=null and stockName !=''">
+  					#{stockName},
+  				</if>
+  				<if test="assiMay !=null and assiMay !=''">
+  					#{assiMay},
+  				</if>
+  				<if test="industryType !=null and industryType !=''">
+  					#{industryType},
+  				</if>
+  				<if test="stockStatus !=null and stockStatus !=''">
+  					#{stockStatus},
+  				</if>
+  				<if test="companyName !=null and companyName !=''">
+  					#{companyName},
+  				</if>
+  				<if test="companyEngName !=null and companyEngName !=''">
+  					#{companyEngName},
+  				</if>
+  				<if test="area !=null and area !=''">
+  					#{area},
+  				</if>
+  				<!-- <if test="industry !=null and industry !=''">
+  					,#{industry}
+  				</if> -->
+  				<if test="companyAddress !=null and companyAddress !=''">
+  					#{companyAddress},
+  				</if>
+  				<if test="legalPerson !=null and legalPerson !=''">
+  					#{legalPerson},
+  				</if>
+  				<if test="chSecretary !=null and chSecretary !=''">
+  					#{chSecretary},
+  				</if>
+  				<if test="companyCapital !=null and companyCapital !=''">
+  					#{companyCapital},
+  				</if>
+  				<if test="url !=null and url !=''">
+  					#{url},
+  				</if>
+  				<if test="tel !=null and tel !=''">
+  					#{tel},
+  				</if>
+  				<if test="fax !=null and fax !=''">
+  					#{fax},
+  				</if>
+  				<if test="historyShort !=null and historyShort !=''">
+  					#{historyShort},
+  				</if>
+  				<if test="zipCode !=null and zipCode !=''">
+  					#{zipCode},
+  				</if>
+  				<if test="zsTrader !=null and zsTrader !=''">
+  					#{zsTrader},
+  				</if>
+  				<if test="protocolInsttt !=null and protocolInsttt !=''">
+  					#{protocolInsttt},
+  				</if>
+  				<if test="protocolBroker !=null and protocolBroker !=''">
+  					#{protocolBroker},
+  				</if>
+  				<if test="listDate !=null and listDate !=''">
+  					#{listDate},
+  				</if>
+  				<if test="totalEquity !=null and totalEquity !=''">
+  					#{totalEquity},
+  				</if>
+  					sysdate(),
+  					sysdate()
+  			)
+  </insert>
+  <update id="updateCompanyBySockId"  parameterType="com.xsbweb.vo.Company" >
+  	update t_rl_snap_etl_stock_info 
+  		<set>
+  			<if test="stockName !=null and stockName !=''">
+  					stock_name = #{stockName},
+  				</if>
+  				<if test="assiMay !=null and assiMay !=''">
+  					exchange_id = #{assiMay},
+  				</if>
+  				<if test="industryType !=null and industryType !=''">
+  					industry_name = #{industryType},
+  				</if>
+  				<if test="stockStatus !=null and stockStatus !=''">
+  					stock_status = #{stockStatus},
+  				</if>
+  				<if test="companyName !=null and companyName !=''">
+  					full_name = #{companyName},
+  				</if>
+  				<if test="companyEngName !=null and companyEngName !=''">
+  					english_name = #{companyEngName},
+  				</if>
+  				<if test="area !=null and area !=''">
+  					area = #{area},
+  				</if>
+  				<!-- <if test="industry !=null and industry !=''">
+  					industry = #{industry},
+  				</if> -->
+  				<if test="companyAddress !=null and companyAddress !=''">
+  					registered_address = #{companyAddress},
+  				</if>
+  				<if test="legalPerson !=null and legalPerson !=''">
+  					legal = #{legalPerson},
+  				</if>
+  				<if test="chSecretary !=null and chSecretary !=''">
+  					secretary = #{chSecretary},
+  				</if>
+  				<if test="companyCapital !=null and companyCapital !=''">
+  					capital = #{companyCapital},
+  				</if>
+  				<if test="url !=null and url !=''">
+  					web = #{url},
+  				</if>
+  				<if test="tel !=null and tel !=''">
+  					tel = #{tel},
+  				</if>
+  				<if test="fax !=null and fax !=''">
+  					fax = #{fax},
+  				</if>
+  				<if test="historyShort !=null and historyShort !=''">
+  					history_short = #{historyShort},
+  				</if>
+  				<if test="zipCode !=null and zipCode !=''">
+  					zip_code = #{zipCode},
+  				</if>
+  				<if test="zsTrader !=null and zsTrader !=''">
+  					trans_insttt = #{zsTrader},
+  				</if>
+  				<if test="protocolInsttt !=null and protocolInsttt !=''">
+  					protocol_insttt = #{protocolInsttt},
+  				</if>
+  				<if test="protocolBroker !=null and protocolBroker !=''">
+  					protocol_broker = #{protocolBroker},
+  				</if>
+  				<if test="listDate !=null and listDate !=''">
+  					list_date = #{listDate},
+  				</if>
+  				<if test="totalEquity !=null and totalEquity !=''">
+  					total_equity = #{totalEquity},
+  				</if>
+  					last_update_date =sysdate()
+  			</set>
+  			where stock_id = #{stockId}
+  </update>
+  <delete id="batchDeleteCompanyBySockIds" parameterType="java.lang.String">
+  	delete from t_rl_snap_etl_stock_info where stock_id  in 
+		  <foreach collection="array" index="index" item="stockId" open="(" separator="," close=")">  
+	           #{stockId}   
+	      </foreach>  
+  </delete> 
+  <select id="getCompanyByStockId" parameterType="java.lang.String" resultMap="companyResultMap">
+  		select 
+  			<include refid="company"/>
+		from t_rl_snap_etl_stock_info where stock_id = #{stockId}
+  </select>
+</mapper>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.CommonMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.IndustryBaike" >
+    <result column="baike_id" property="baikeId" jdbcType="INTEGER" />
+    <result column="baike_title" property="baikeTitle" jdbcType="VARCHAR" />
+    <result column="baike_order" property="baikeOrder" jdbcType="INTEGER" />
+    <result column="baike_type" property="baikeType" jdbcType="VARCHAR" />
+    <result column="created_date" property="createdDate" jdbcType="TIMESTAMP" />
+    <result column="baike_content" property="baikeContent" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  
+  <resultMap id="commentResultMap" type="com.xsbweb.vo.Comment" >
+    <id column="comment_no" property="commentNo" jdbcType="VARCHAR" />
+    <result column="comment_time" property="commentTime" jdbcType="VARCHAR" />
+    <result column="commenter" property="commenter" jdbcType="VARCHAR" />
+    <result column="comment_address" property="commentAddress" jdbcType="VARCHAR" />
+    <result column="comment_platform" property="commentPlatform" jdbcType="VARCHAR" />
+    <result column="comment_status" property="commentStatus" jdbcType="VARCHAR" />
+    <result column="comment_target" property="commentTarget" jdbcType="VARCHAR" />
+    <result column="comment_content" property="commentContent" jdbcType="VARCHAR" />
+    <result column="commenter_name" property="commenterName" jdbcType="VARCHAR" />
+    <result column="comment_praise" property="commentPraise" jdbcType="VARCHAR" />
+    <result column="pic_path" property="picPath" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="roadMap" type="com.xsbweb.vo.ApplyRoad" >
+    <result column="company" property="company" jdbcType="VARCHAR" />
+    <result column="step" property="step" jdbcType="VARCHAR" />
+    <result column="is_venture" property="isVenture" jdbcType="VARCHAR" />
+    <result column="financing_type" property="financingType" jdbcType="VARCHAR" />
+    <result column="turnover_scale" property="turnoverScale" jdbcType="VARCHAR" />
+    <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="talkMap" type="com.xsbweb.vo.RObject" >
+    <result column="object_id" property="objectId" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="obj_name" property="objName" jdbcType="VARCHAR" />
+    <result column="object_pic_path" property="objectPicPath" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="projectNosMap" type="java.lang.String" >
+    <result column="object_id" property="objectId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <select id="getIndustryBaikeList" parameterType="com.xsbweb.vo.IndustryBaike" resultMap="resultMap">
+  	select 
+  		baike_id,
+  		baike_title,
+  		baike_order,
+  		baike_type
+	 from t_rl_industry_baike where 1=1 
+  	<if test="baikeType!=null">
+	  and baike_type = #{baikeType} 
+  	</if>
+  	limit #{currentRecord},#{pageSize};
+  </select>
+  <select id="getIndustryBaikeById" parameterType="java.lang.String" resultMap="resultMap">
+  	select * from t_rl_industry_baike where baike_id = #{baikeId};
+  </select>
+  
+  <insert id="addComment" parameterType="com.xsbweb.vo.Comment">
+  	insert into t_rl_trs_comment(
+  		comment_time,
+  		commenter,
+  		comment_address,
+  		comment_platform,
+  		comment_status,
+  		comment_target,
+  		comment_content,
+  		create_date
+  	)values(
+  		sysdate(),
+  		#{commenter},
+  		#{commentAddress},
+  		#{commentPlatform},
+  		#{commentStatus},
+  		#{commentTarget},
+  		#{commentContent},
+  		sysdate()
+  	);
+  </insert>
+  
+  <select id="getCommentByAddress" parameterType="com.xsbweb.vo.Comment" resultMap="commentResultMap">
+  	select 
+  		date_format(t.comment_time,'%Y-%c-%d %H:%i:%s') comment_time,
+  		t.commenter,
+  		t.comment_no,
+  		t.comment_address,
+  		t.comment_platform,
+  		t.comment_status,
+  		t.comment_target,
+  		t.comment_content,
+  		t.comment_praise,
+  		ifnull(vc.customer_Nickname,vc.customer_name) commenter_name,
+  		mt.media_location pic_path
+	 from t_rl_trs_comment t
+	 	left join v_rl_snap_customer vc on vc.customer_id=t.commenter 
+	 	left join t_rl_trs_media mt on mt.media_no=vc.customer_media_no 
+  		where t.comment_address = #{commentAddress} 
+  			<if test="commentPlatform!=null and commentPlatform!=''">
+  				and comment_platform = #{commentPlatform} 
+  			</if>
+  			order by t.comment_time desc limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <insert id="addItemsBatch" parameterType="java.util.List">
+  	insert into t_rl_trs_object_item (
+  		object_no,item_key,item_value,item_type,item_location_order,create_date
+  	)values 
+ 	 <foreach collection="list" item="item" index="index"  
+        separator=",">  
+        ( #{item.objectNo}, #{item.itemKey}, #{item.itemValue},  
+        #{item.itemType}, #{item.itemLocationOrder}, sysdate())
+    </foreach>  
+  </insert>
+  
+  <select id="getCommentByTalk" parameterType="com.xsbweb.vo.Comment" resultMap="commentResultMap">
+ 	select * from (
+ 		select 
+	  		date_format(t.comment_time,'%Y-%c-%d %H:%i:%s') comment_time,
+	  		t.commenter commenter,
+	  		t.comment_address comment_address,
+	  		t.comment_platform comment_platform,
+	  		t.comment_status comment_status,
+	  		t.comment_target comment_target,
+	  		t.comment_content comment_content,
+	  		vc.customer_name customer_name,
+	  		mt.media_location pic_path
+		 from t_rl_trs_comment t
+		 	left join v_rl_snap_customer vc on vc.customer_id=t.commenter 
+		 	left join t_rl_trs_media mt on mt.media_no=vc.customer_media_no 
+	  		where t.comment_address = #{commentAddress} 
+	  			and (t.commenter=#{commenter} or t.comment_target=#{commenter})
+	  			<if test="commentTime!=null and commentTime!=''">
+	  				<![CDATA[and t.comment_time>=date_add(sysdate(), interval -0.5 minute) and t.comment_time <= sysdate()]]>     
+	  			</if>
+	  	 <!-- union all		
+	  	 select 
+	  		date_format(t1.comment_time,'%Y-%c-%d %H:%i:%s') comment_time,
+	  		t1.commenter commenter,
+	  		t1.comment_address comment_address,
+	  		t1.comment_platform comment_platform,
+	  		t1.comment_status comment_status,
+	  		t1.comment_target comment_target,
+	  		t1.comment_content comment_content,
+	  		tc.staff_name commenter_name,
+	  		mt1.media_location pic_path
+		 from t_rl_trs_comment t1
+		 	left join t_rl_snap_staff tc on tc.staff_id=t1.commenter 
+		 	left join t_rl_trs_media mt1 on mt1.object_id=tc.staff_id 
+	  		where t1.comment_address = #{commentAddress} 
+	  			and t1.commenter=#{commentTarget} and t1.comment_target=#{commenter}	 -->
+	 	)tpc
+ 	order by tpc.comment_time desc limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getCustomerTalkList" parameterType="java.lang.String" resultMap="talkMap">
+    	select t.*,tm.media_location object_pic_path from
+  		(select
+  			tp.proj_online_date show_date,
+  			tp.proj_name obj_name,
+  			tp.project_no object_id,
+  			tp.project_media_no object_pic_no
+  		from (select tt1.comment_address,tt1.commenter from t_rl_trs_comment tt1 where tt1.comment_platform='project' group by tt1.comment_address,tt1.commenter) t1 
+  			left join t_rl_trs_project tp on tp.project_no = t1.comment_address 
+  		where t1.commenter = #{customerId} 
+  		union all
+  		select
+  			tvm.show_date show_date,
+  			tvm.conf_name obj_name,
+  			tvm.meet_no object_id,
+  			tvm.meet_media_no object_pic_no
+  		from (select tt2.comment_address,tt2.commenter from t_rl_trs_comment tt2 where tt2.comment_platform='voice' group by tt2.comment_address,tt2.commenter) t2 
+  			left join t_rl_trs_meet_room tvm on tvm.meet_no = t2.comment_address 
+  		where t2.commenter = #{customerId}   
+  		union all
+  		select
+  			tv.show_date show_date,
+  			tv.conf_name obj_name,
+  			tv.meet_no object_id,
+  			tv.meet_media_no object_pic_no
+  		from (select tt3.comment_address,tt3.commenter from t_rl_trs_comment tt3 where tt3.comment_platform='video' group by tt3.comment_address,tt3.commenter) t3 
+  			left join t_rl_trs_meet_room_video tv on tv.meet_no = t3.comment_address 
+  		where t3.commenter = #{customerId}  )t
+  		left join t_rl_trs_media tm on t.object_pic_no=tm.media_no 
+  </select> 
+  
+  <select id="getObjectListByWord" parameterType="java.util.Map" resultType="String">
+  	select distinct dim.object from oltp.t_rl_trs_search_word dim 
+			where dim.object like concat('%',#{object},'%') and dim.word in 
+			<foreach collection="industrys" index="index" item="industry" open="(" separator="," close=")">
+			      #{industry}   
+		    </foreach>
+  </select>
+</mapper>

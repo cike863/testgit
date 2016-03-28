@@ -1,0 +1,216 @@
+package com.xsbweb.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.mapper.SnapEtlScheduleMapper;
+import com.xsbweb.mapper.SnapPrcScheduleMapper;
+import com.xsbweb.mapper.TrsExeLogMapper;
+import com.xsbweb.mapper.TrsMediaMapper;
+import com.xsbweb.service.ConfigService;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.vo.SnapEtlSchedule;
+import com.xsbweb.vo.SnapPrcSchedule;
+import com.xsbweb.vo.TrsExeLog;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.RoadShowVO;
+
+public class ConfigServiceImpl implements ConfigService {
+
+	@Autowired
+	private SnapEtlScheduleMapper etlScheduleMapper;
+	
+	@Autowired
+	private SnapPrcScheduleMapper prcScheduleMapper;
+	
+	@Autowired
+	private TrsExeLogMapper exeLogMapper;
+	
+	@Autowired
+	private TrsMediaMapper mediaMapper;
+	
+	@Override
+	public List<SnapEtlSchedule> getEtlScheduleList(
+			SnapEtlSchedule etlScheduleVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SnapEtlSchedule> snapEtlSchedules = etlScheduleMapper.getEtlScheduleList(etlScheduleVO);
+		return snapEtlSchedules;
+	}
+	
+	/**  
+	  	@Override
+	public List<SnapEtlSchedule> getEtlScheduleList(
+			SnapEtlSchedule etlScheduleVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return etlScheduleMapper.getEtlScheduleList(etlScheduleVO);
+	}
+	  
+	 */
+
+	@Override
+	public List<SnapPrcSchedule> getPrcScheduleList(
+			SnapPrcSchedule prcScheduleVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return prcScheduleMapper.getPrcScheduleList(prcScheduleVO);
+	}
+
+	@Override
+	public List<TrsExeLog> getTrsExeLogList(TrsExeLog trsExeLogVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return exeLogMapper.getTrsExeLogList(trsExeLogVO);
+	}
+
+	@Override
+	public List<TrsMedia> getTrsMediaList(TrsMedia trsMediaVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return mediaMapper.getTrsMediaList(trsMediaVO);
+	}
+
+	@Override
+	public int addEtlSchedule(SnapEtlSchedule etlScheduleVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return etlScheduleMapper.insert(etlScheduleVO);
+	}
+
+	@Override
+	public int addPrcSchedule(SnapPrcSchedule prcScheduleVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return prcScheduleMapper.insert(prcScheduleVO);
+	}
+
+	@Override
+	public int addTrsExeLog(TrsExeLog trsExeLogVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return exeLogMapper.insert(trsExeLogVO);
+	}
+
+	@Override
+	public String addTrsMedia(TrsMedia trsMediaVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		mediaMapper.insert(trsMediaVO);
+		return trsMediaVO.getMediaNo();	
+	}
+
+	@Override
+	public int updateEtlSchedule(SnapEtlSchedule etlScheduleVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		// TODO Auto-generated method stub
+		return etlScheduleMapper.updateByPrimaryKey(etlScheduleVO);
+	}
+
+	@Override
+	public int updatePrcSchedule(SnapPrcSchedule prcScheduleVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		// TODO Auto-generated method stub
+		return prcScheduleMapper.updateByPrimaryKey(prcScheduleVO);
+	}
+
+	@Override
+	public int updateTrsExeLog(TrsExeLog trsExeLogVO) throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return exeLogMapper.updateByPrimaryKey(trsExeLogVO);
+	}
+
+	@Override
+	public int updateTrsMedia(TrsMedia trsMediaVO) throws Exception {
+		return mediaMapper.updateByPrimaryKey(trsMediaVO);
+	}
+
+	@Override
+	public int deleteEtlSchedule(SnapEtlSchedule etlScheduleVO)
+			throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return etlScheduleMapper.deleteByPrimaryKey(etlScheduleVO);
+	}
+
+	@Override
+	public int deletePrcSchedule(SnapPrcSchedule prcScheduleVO)
+			throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return prcScheduleMapper.deleteByPrimaryKey(prcScheduleVO);
+	}
+
+	@Override
+	public int deleteTrsExeLog(TrsExeLog trsExeLogVO) throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return exeLogMapper.deleteByPrimaryKey(trsExeLogVO);
+	}
+
+	@Override
+	public int deleteTrsMedia(TrsMedia trsMediaVO) throws Exception {
+		// TODO Auto-generated method stub
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return mediaMapper.deleteByPrimaryKey(trsMediaVO);
+	}
+
+	@Override
+	public SnapEtlSchedule getEtlScheduleByTaskTable(String taskTable)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return etlScheduleMapper.selectByPrimaryKey(taskTable);
+	}
+
+	@Override
+	public SnapPrcSchedule getPrcScheduleByTaskPrc(String taskPrc)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return prcScheduleMapper.selectByPrimaryKey(taskPrc);
+	}
+
+	@Override
+	public TrsExeLog getTrsExeLogByTaskId(String taskId) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return exeLogMapper.selectByPrimaryKey(taskId);
+	}
+
+	@Override
+	public TrsMedia getTrsMediaByMediaNo(String mediaNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<TrsMedia> trsMediaList=  mediaMapper.selectByPrimaryKey(mediaNo);
+		for(TrsMedia trsMedia : trsMediaList ){
+			if(trsMedia.getObjectId()!=null &&!"".equals(trsMedia.getObjectId())){
+				return trsMedia;
+			}
+		}
+		return trsMediaList.get(0);
+	}
+
+	@Override
+	public int getTrsMediaCounts(TrsMedia trsMedia) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return mediaMapper.getTrsMediaCounts(trsMedia);
+	}
+
+	@Override
+	public int batchDeleteTrsMedia(String[] mediaNoArrs) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag = 0;
+		try{
+			mediaMapper.batchDeleteTrsMedia(mediaNoArrs);
+			flag = 1;
+		}catch(Exception e){
+			e.printStackTrace();
+			flag =0;
+		}
+		return flag;
+	}
+
+	@Override
+	public int getEtlScheduleCount(SnapEtlSchedule snapEtlSchedule)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return etlScheduleMapper.getEtlScheduleCount(snapEtlSchedule);
+	}
+
+}

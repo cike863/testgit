@@ -1,0 +1,408 @@
+package com.xsbweb.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.mapper.APPCommonMapper;
+import com.xsbweb.mapper.SbhqMapper;
+import com.xsbweb.mapper.TrsProjectMapper;
+import com.xsbweb.service.SbhqService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.XsbBusinessUtil;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.CustomerFavor;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.FundVO;
+import com.xsbweb.vo.extend.KlineVO;
+import com.xsbweb.vo.extend.SbhqMarket;
+import com.xsbweb.vo.extend.SbhqSencodVO;
+import com.xsbweb.vo.extend.SbhqSituationVO;
+import com.xsbweb.vo.extend.SbhqVO;
+import com.xsbweb.vo.extend.StockPriceVO;
+
+public class SbhqServiceImpl implements SbhqService {
+
+	private static Logger log = Logger.getLogger(SbhqServiceImpl.class);
+	@Autowired
+	private SbhqMapper sbhqMapper;
+	
+	@Autowired
+	private TrsProjectMapper trsProjectMapper;
+	
+	@Autowired
+	private APPCommonMapper appCommonMapper;
+	
+	@Override
+	public List<SbhqVO> getStockPriceRByStockId(String stockId)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		return sbhqMapper.getStockPriceRByStockId(stockId);
+	}
+
+	@Override
+	public Map<String, Object> getSbhqDataFirst(String pageType,
+			String transMethod, String customerId,
+			Integer pageNo, Integer pageSize) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		Map<String,Object> map = new HashMap<String,Object>();
+		//组装请求参数
+		Map<String,Object> param = new HashMap<String,Object>(); 
+		//初始化分页参数
+		XsbBusinessUtil.initSbhqPageParam(param, pageNo, pageSize);
+		if("favor".equals(pageType)){//自选股
+			if(CommonUtils.isBlank(customerId)){
+				map.put("resultCode", ResultCode.CUSTOMER_ID_NULL);
+				map.put("message", "用户ID不能为空");
+				return map;
+			}
+			param.put("customerId", customerId);
+			param.put("favorType", "stock");
+			//如果transMethod为空则默认查询全部自选股
+			param.put("transMethod", CommonUtils.isBlank(transMethod)?"all":transMethod);
+			MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+			List<SbhqVO> resultList = sbhqMapper.getFavorListByCustomerId(param);
+			//如果resultList为空，除了没有自选股以外还有可能就是customerId是无效的
+			map.put("resultList", resultList);
+			
+		}else if("industry".equals(pageType)){//行业板块
+			param.put("transMethod", CommonUtils.isBlank(transMethod)?"all":transMethod);
+			List<SbhqVO> resultList = sbhqMapper.getIndustryList(param);
+			map.put("resultList", resultList);
+		}else if("area".equals(pageType)){//地区板块
+			param.put("transMethod", CommonUtils.isBlank(transMethod)?"all":transMethod);
+			List<SbhqVO> resultList = sbhqMapper.getAreaList(param);
+			map.put("resultList", resultList);
+		}else if("broker".equals(pageType)){//券商排行
+			param.put("transMethod", CommonUtils.isBlank(transMethod)?"zss":transMethod);
+			List<SbhqVO> resultList = sbhqMapper.getBrokerList(param);
+			map.put("resultList", resultList);
+		}else if("directionalAddition".equals(pageType)){//定向增发
+			List<SbhqVO> resultList = sbhqMapper.getDirectionalAdditionList(param);
+			map.put("resultList", resultList);
+		}else if("preList".equals(pageType)){//拟挂牌信息
+			param.put("transMethod", CommonUtils.isBlank(transMethod)?"all":transMethod);
+			List<SbhqVO> resultList = sbhqMapper.getPreList(param);
+			map.put("resultList", resultList);
+		}
+		return map;
+	}
+
+	@Override
+	public void getSbhqExpData(String stockId, Map<String, Object> map) throws Exception {
+		//获取k线数据
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		List<KlineVO> kData = sbhqMapper.getSbzsKlineR(stockId);
+		//获取成指、做市信息
+		StockPriceVO stockPriceVO = sbhqMapper.getStockInfo(stockId);
+		//计算股价振幅
+		if(stockPriceVO!=null){
+			if(CommonUtils.isNotBlank(stockPriceVO.getHighPrice())&&CommonUtils.isNotBlank(stockPriceVO.getLowPrice())
+					&&CommonUtils.isNotBlank(stockPriceVO.getYsdEndPrice()) && !"0".equals(stockPriceVO.getYsdEndPrice())){
+				double amplitude = (Double.valueOf(stockPriceVO.getHighPrice())
+						-Double.valueOf(stockPriceVO.getLowPrice()))*100/Double.valueOf(stockPriceVO.getYsdEndPrice());
+				stockPriceVO.setAmplitude(String.valueOf(amplitude));		
+			}else{
+				stockPriceVO.setAmplitude("0");
+			}
+			/*//获取股票信息的最高和最低价格
+			StockPriceVO stockPriceVO2 = null;
+			if("899002".equals(stockId)){
+				stockPriceVO2 = sbhqMapper.getMaxMinPriceBy899002(stockId);
+			}else{
+				stockPriceVO2 = sbhqMapper.getMaxMinPriceByStockId(stockId);
+			}
+			if(stockPriceVO2!=null){
+				stockPriceVO.setHighPrice(stockPriceVO2.getHighPrice());
+				stockPriceVO.setLowPrice(stockPriceVO2.getLowPrice());
+				stockPriceVO.setMaxVolumn(stockPriceVO2.getMaxVolumn());
+				stockPriceVO.setMinVolumn(stockPriceVO2.getMinVolumn());
+			}*/
+		}
+		//获取涨幅榜
+		StockPriceVO upVO = new StockPriceVO();
+		upVO.setCurrentRecord(0);
+		upVO.setPageSize(10);
+		upVO.setOrder("1");
+		List<StockPriceVO> upList = sbhqMapper.getStockPriceList(upVO);
+		//跌幅榜
+		StockPriceVO downVO = new StockPriceVO();
+		downVO.setCurrentRecord(0);
+		downVO.setPageSize(10);
+		downVO.setOrder("2");
+		List<StockPriceVO> downList = sbhqMapper.getStockPriceList(downVO);
+		//成交量榜
+		StockPriceVO cntVO = new StockPriceVO();
+		cntVO.setCurrentRecord(0);
+		cntVO.setPageSize(10);
+		cntVO.setOrder("3");
+		List<StockPriceVO> cntList = sbhqMapper.getStockPriceList(cntVO);
+		map.put("stockPriceVO", stockPriceVO);
+		map.put("kData", kData);
+		map.put("upList", upList);
+		map.put("downList", downList);
+		map.put("cntList", cntList);
+	}
+
+	@Override
+	public void getSbhqKlineByStockId(String stockId, String type,Map<String,Object> map,String common) {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		List<KlineVO> list = null;
+		try {
+			if(CommonUtils.isBlank(type)){
+				return;
+			}else if(XsbBusinessConstant.SBHQ_K_R.equals(type)){
+				//时分k线数据
+				list = sbhqMapper.getStockPriceKlineR(stockId);
+				//获取股票信息的最高和最低价格
+				StockPriceVO stockPriceVO = sbhqMapper.getStockInfo(stockId);
+				map.put("stockPriceVO", stockPriceVO);
+			}else if(XsbBusinessConstant.SBHQ_K_D.equals(type)){
+				//日k线数据
+				list = sbhqMapper.getStockPriceKlineD(stockId);
+				//获取最高最低值
+				Map<String,Object> param = new HashMap<String,Object>();
+				param.put("stockId", stockId);
+				if(CommonUtils.isBlank(common)){
+					param.put("days", 20);
+				}else{
+					param.put("days", Integer.valueOf(common));
+				}
+				//获取最大最小值
+				StockPriceVO stockPriceVO = sbhqMapper.getDKlineHighLowData(param);
+				if(stockPriceVO!=null){
+					//获取取昨收今开
+					StockPriceVO stockPriceVO2 = sbhqMapper.getStockInfo(stockId);
+					Map<String,Object> stockPriceVOMap = new HashMap<String,Object>();
+					stockPriceVOMap.put("stockId", stockPriceVO.getStockId());
+					stockPriceVOMap.put("highPrice", stockPriceVO.getHighPrice());
+					stockPriceVOMap.put("lowPrice", stockPriceVO.getLowPrice());
+					stockPriceVOMap.put("maxVolumn", stockPriceVO.getMaxVolumn());
+					stockPriceVOMap.put("minVolumn", stockPriceVO.getMinVolumn());
+					stockPriceVOMap.put("todayBeginPrice", stockPriceVO2==null?"":stockPriceVO2.getTodayBeginPrice());
+					stockPriceVOMap.put("ysdEndPrice", stockPriceVO2==null?"":stockPriceVO2.getYsdEndPrice());
+					map.put("stockPriceVO", stockPriceVOMap);
+				}
+			}else if(XsbBusinessConstant.SBHQ_K_W.equals(type)){
+				//周k线数据
+				list = sbhqMapper.getStockPriceKlineW(stockId);
+			}else if(XsbBusinessConstant.SBHQ_K_M.equals(type)){
+				//月k线数据
+				list = sbhqMapper.getStockPriceKlineM(stockId);
+			}else if(XsbBusinessConstant.SBHQ_K_Y.equals(type)){
+				//年k线数据
+				list = sbhqMapper.getStockPriceKlineY(stockId);
+			}
+			map.put("kList", list);
+		} catch (Exception e) {
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			log.info("###################stockId:"+stockId+",type="+type+"K线数据获取失败！");
+		}
+	}
+
+	/**
+	 * 获取三板行情股票的信息
+	 * @param stockId
+	 * @param map
+	 * @return
+	 */
+	@Override
+	public Map<String, Object> getSbhqStockInfo(String stockId,
+			Map<String, Object> map,String customerId) {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		try {
+			//获取股票信息
+			StockPriceVO stockPriceVO = sbhqMapper.getStockInfo(stockId);
+			//计算股价振幅
+			if(stockPriceVO!=null){
+				if(CommonUtils.isNotBlank(stockPriceVO.getHighPrice())&&CommonUtils.isNotBlank(stockPriceVO.getLowPrice())
+						&&CommonUtils.isNotBlank(stockPriceVO.getYsdEndPrice()) && !"0".equals(stockPriceVO.getYsdEndPrice())){
+					double amplitude = (Double.valueOf(stockPriceVO.getHighPrice())
+							-Double.valueOf(stockPriceVO.getLowPrice()))*100/Double.valueOf(stockPriceVO.getYsdEndPrice());
+					stockPriceVO.setAmplitude(String.valueOf(amplitude));		
+				}else{
+					stockPriceVO.setAmplitude("0");
+				}
+			}
+			/*//获取股票信息的最高和最低价格
+			StockPriceVO stockPriceVO2 = null;
+			if("899002".equals(stockId)){
+				stockPriceVO2 = sbhqMapper.getMaxMinPriceBy899002(stockId);
+			}else{
+				stockPriceVO2 = sbhqMapper.getMaxMinPriceByStockId(stockId);
+			}
+			if(stockPriceVO2!=null){
+				stockPriceVO.setHighPrice(stockPriceVO2.getHighPrice());
+				stockPriceVO.setLowPrice(stockPriceVO2.getLowPrice());
+				stockPriceVO.setMaxVolumn(stockPriceVO2.getMaxVolumn());
+				stockPriceVO.setMinVolumn(stockPriceVO2.getMinVolumn());
+			}*/
+			
+			//时分k线
+			List<KlineVO> kList = sbhqMapper.getStockPriceKlineR(stockId);
+			map.put("kList", kList);
+			//获取我要看路演列表
+			List<Map<String,String>> customerList = new ArrayList<Map<String,String>>();
+			MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+			List<Customer> custList = trsProjectMapper.getApplyProjectCustomerList(stockId);
+			if(custList!=null && !custList.isEmpty()){
+				for (Customer customer : custList) {
+					Map<String,String> obj = new HashMap<String,String>();
+					obj.put("customerId", customer.getCustomerId());
+					obj.put("customerName", customer.getCustomerName());
+					obj.put("customerPhoneNo", customer.getCustomerPhoneNo());
+					obj.put("headPicPath", customer.getHeadPicPath());
+					customerList.add(obj);
+				}
+			}
+			//是否已自选
+			if(CommonUtils.isNotBlank(customerId)){
+				CustomerFavor customerFavor = new CustomerFavor();
+				customerFavor.setCustomerId(customerId);
+				customerFavor.setFavorObject(stockId);
+				int favorFlag = appCommonMapper.isFavored(customerFavor);
+				if(favorFlag>0){
+					stockPriceVO.setIsFavored("1");
+				}
+			}
+			map.put("stockPriceVO", stockPriceVO);
+			map.put("customerList", customerList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+		}
+		return map;
+	}
+
+	@Override
+	public List<FundVO> getFundList(Integer pageNo, Integer pageSize) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		BasePo basePo = new BasePo();
+		if(pageNo!=null){
+			basePo.setPageNo(pageNo);
+		}
+		if(pageSize!=null){
+			basePo.setPageSize(pageSize);
+		}
+		return sbhqMapper.getFundList(basePo);
+	}
+
+	/**
+	 * 三板行情二级列表接口
+	 * @param sbhqSencodVO
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<SbhqSencodVO> getSbhqDataSecond(SbhqSencodVO sbhqSencodVO){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SbhqSencodVO> list = new ArrayList<SbhqSencodVO>();
+		try {
+			//普通二级列表
+			if(CommonUtils.isBlank(sbhqSencodVO.getBrokerName())){
+				list = sbhqMapper.getSbhqDataSecond(sbhqSencodVO);
+			}else{
+				//券商二级列表换单独的查询方法
+				String transMethod = sbhqSencodVO.getTransMethod();
+				//如果传过来的不是fdqs和zss，默认为fdqs
+				if(!"fdqs".equals(transMethod)&&!"zss".equals(transMethod)){
+					transMethod = "fdqs";
+					sbhqSencodVO.setTransMethod(transMethod);
+				}
+				list = sbhqMapper.getStockListByBroker(sbhqSencodVO);
+			}
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return list;
+		}
+		return list;
+	}
+
+	/**
+	 * 获取拟挂牌信息，从media里面获取，object_id固定为pre
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<TrsMedia> getPreListByMedias(TrsMedia trsMedia) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return sbhqMapper.getPreListByMedias(trsMedia);
+	}
+
+	@Override
+	public List<KlineVO> getSbzsKlineR(String stockId) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		return sbhqMapper.getSbzsKlineR(stockId);
+	}
+
+	@Override
+	public List<StockPriceVO> getSbhqRankList(StockPriceVO stockPriceVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		List<StockPriceVO> list = sbhqMapper.getStockPriceList(stockPriceVO);
+		return list;
+	}
+
+	/**
+	 * 三板行情首页信息
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<SbhqMarket> getSbhqMarket() throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return sbhqMapper.getSbhqMarket();
+	}
+
+	/**
+	 * 主办同时做市的信息
+	 * @param brokerName
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public SbhqVO getSbhqBrokerZSByName(String brokerName)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return sbhqMapper.getSbhqBrokerZSByName(brokerName);
+	}
+
+	/**
+	 * 获取三板行情中我要看路演中的stock列表
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public List<StockPriceVO> getSbhqWantApplyRoadList(Map<String, Object> param)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return sbhqMapper.getSbhqWantApplyRoadList(param);
+	}
+
+	/**
+	 * 获取三板行情公司概况
+	 * @param stockId
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public SbhqSituationVO getSbhqComapnySituationByStockId(String stockId)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return sbhqMapper.getSbhqComapnySituationByStockId(stockId);
+	}
+}

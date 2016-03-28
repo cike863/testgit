@@ -1,0 +1,264 @@
+package com.xsbweb.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.xsbweb.common.bean.BasePo;
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.mapper.APPCommonMapper;
+import com.xsbweb.mapper.CustomerMapper;
+import com.xsbweb.mapper.TrsProjectMapper;
+import com.xsbweb.service.CustomerService;
+import com.xsbweb.util.ExcelUtil;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.XsbBusinessUtil;
+import com.xsbweb.vo.*;
+import com.xsbweb.vo.extend.CustomerVO;;
+
+public class CustomerServiceImpl implements CustomerService {
+	private Logger log = Logger.getLogger(CustomerServiceImpl.class);
+	@Autowired
+	private CustomerMapper customerMapper;
+	
+	@Autowired APPCommonMapper appCommonMapper;
+	@Autowired 
+	TrsProjectMapper trsProjectMapper;
+	
+	@Override
+	public CustomerVO getCustomerById(String customerId) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<CustomerVO> customerList =  customerMapper.getCustomerById(customerId);
+		customerList.get(0).setCustomerCases(ExcelUtil.getGzIndustrys(customerList.get(0).getGzIndustry()+""));
+		customerList.get(0).setCustomerType(ExcelUtil.getType(customerList.get(0).getCustomerType()));
+		return customerList.get(0);
+	}
+
+	@Override
+	public List<Customer> getAllCustomerList(Customer user) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return customerMapper.getAllCustomerList(user);
+	}
+
+	@Override
+	public int addCustomer(CustomerVO user) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag;
+		try {
+			log.info(MultipleDataSource.getDataSourceKey()+"----------");
+			Map<String, Object> param = XsbBusinessUtil.initCustomerParam(user);
+			customerMapper.addCustomer(param);
+			flag = (Integer)param.get("prcFlag");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public int editCustomer(CustomerVO customer){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag;
+		try {
+			log.info(MultipleDataSource.getDataSourceKey()+"----------");
+			if("2".equals(customer.getAuthentStatus())||"3".equals(customer.getAuthentStatus())){
+				flag = customerMapper.editCustomer(customer);
+			}else{
+				Map<String, Object> param = XsbBusinessUtil.initCustomerParam(customer);
+				customerMapper.addCustomer(param);
+				flag = (Integer)param.get("prcFlag");
+			}
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public int deleteCustomer(Customer user){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag;
+		try {
+			int a = customerMapper.deleteCustomer(user);
+			//int b = customerMapper.deleteNewsIdx(newsNo);
+			flag = a;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	
+	
+	@Override
+	public int delCustomer(String customerId){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag;
+		try {
+			int a = customerMapper.delCustomer(customerId);
+			//int b = customerMapper.deleteNewsIdx(newsNo);
+			flag = a;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	
+
+	/**
+	 * 获取用户总数
+	 * @param news
+	 * @return
+	 * @throws Exception
+	 */
+	public int getCustomerCounts(Customer user) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return customerMapper.getCustomerCounts(user);
+	}
+	
+	@Override
+	public List<Customer> getCustomerListByIds(List<TrsComment> comments,
+			CustomerVO customerVO) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//除去重复的用户id
+		Set<String> set = new HashSet<String>();		
+		for(TrsComment comment:comments){
+			set.add(comment.getCommenter());
+		}
+		customerVO.setCustomerIds(set);		
+		return  customerMapper.getCustomerListBycustomerIds(customerVO);
+	}
+	
+	@Override
+	public int getCustomerCountByIds(List<TrsComment> comments, CustomerVO customerVO)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Set<String> set = new HashSet<String>();		
+		for(TrsComment comment:comments){
+			set.add(comment.getCommenter());
+		}
+		customerVO.setCustomerIds(set);			
+		return  customerMapper.getCustomerCountBycustomerIds(customerVO);
+	}
+	
+	/**
+	 * 项目报名批量导入
+	 */
+	@Override
+	public int projectRegistrationByExcel(List<CustomerVO> customerList,String projectNo)
+			throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<Customer> updatecustomerList=new ArrayList<Customer>();
+		List<String> customerPhoneNos=new ArrayList<String>();
+		/*String [] customerPhoneNos = new String[customerList.size()];*/
+		int a=1;
+		int b=0;
+		for(int i=0;i<customerList.size();i++){
+			customerPhoneNos.add(customerList.get(i).getCustomerPhoneNo());
+		}
+		CustomerVO customerVO = new CustomerVO();
+		String[] strArr = new String[customerPhoneNos.size()];
+		customerPhoneNos.toArray(strArr);
+		customerVO.setCustomerPhoneNos(strArr);
+		//获取已注册用户信息集合
+		List<CustomerVO> customers=customerMapper.getCustomerListByIds(customerVO);
+		for(int i= 0;i<customerList.size();i++){
+			customerList.get(i).setObjectNo(projectNo);
+			boolean flag = false;
+			for(int j=0;j<customers.size();j++){
+				if(customerList.get(i).getCustomerPhoneNo().equals(customers.get(j).getCustomerPhoneNo())){
+					customerList.get(i).setCustomerId(customers.get(j).getCustomerId());
+					customerList.get(i).setSignStatus("1");
+					updatecustomerList.add(customerList.get(i));
+					flag = true;
+					break;
+				}
+			}
+			if(!flag){
+				//没有注册，就注册（调用存储过程）
+				//log.info(message);
+				customerMapper.addCustomer(customerList.get(i));
+				if(customerList.get(i).getPrcFlag()!=1){
+					//添加数据到
+					a=0;
+					return a*b;
+				}
+			}
+		}	
+		if(updatecustomerList!=null&&!updatecustomerList.isEmpty()){
+			b=customerMapper.batchUpdateByCustomerPhones(updatecustomerList);
+		}else{
+			b=1;
+		}
+		customerVO.setObjectNo(projectNo);
+		List<Customer> customer=trsProjectMapper.getApplyProjectCustomerByIds(customerVO);
+		List<CustomerVO> noApplyCustomerList = new ArrayList<CustomerVO>();
+		for(int i= 0;i<customerList.size();i++){
+			boolean flag = false;
+			for(int j=0;j<customer.size();j++){
+				if(customers.get(j)!=null&&customerList.get(i).getCustomerPhoneNo().equals(customers.get(j).getCustomerPhoneNo())){
+					flag = true;
+					break;
+				}
+			}
+			if(!flag){
+				noApplyCustomerList.add(customerList.get(i));
+			}
+		}
+		if(noApplyCustomerList!=null&&!noApplyCustomerList.isEmpty()){
+			try{
+				trsProjectMapper.batchAddCustSignProject(noApplyCustomerList);
+				a=1;
+			}catch(Exception e){
+				e.printStackTrace();
+				a=0;
+			}
+		}
+		return a*b;
+	}
+
+	@Override
+	public List<Customer> getCustomerByProjectNo(String projectNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<Customer> couster = trsProjectMapper.getApplyProjectCustomerList(projectNo);
+		if(couster==null||couster.isEmpty()){
+			return null;
+		}
+		Set<String> customerIds=new HashSet<String>();
+		for(int i=0;i<couster.size();i++){
+			customerIds.add(couster.get(i).getCustomerId());
+		}
+		String[] strArr = new String[customerIds.size()];
+		customerIds.toArray(strArr);
+		CustomerVO customerVO =new CustomerVO();
+		customerVO.setCustomerIds(customerIds);
+		customerVO.setCurrentRecord(0);
+		ResourceBundle bundle = ResourceBundle.getBundle("config");  
+		String	excelCount = bundle.getString("excelCount");  //excel最大记录数
+		customerVO.setPageSize(Integer.parseInt(excelCount));
+		List<Customer> cousterList = customerMapper.getCustomerListBycustomerIds(customerVO);
+		for(int i=0;i<cousterList.size();i++){
+			cousterList.get(i).setCreateDate(couster.get(i).getCreateDate());
+		}
+		return cousterList;
+	}
+	
+}

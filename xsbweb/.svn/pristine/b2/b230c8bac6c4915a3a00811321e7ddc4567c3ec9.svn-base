@@ -1,0 +1,1146 @@
+package com.xsbweb.controller.manage;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONObject;
+
+import org.apache.log4j.Logger;
+import org.jdom.JDOMException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.xsbweb.cloopen.rest.RSResultCode;
+import com.xsbweb.cloopen.rest.RestSDK;
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.service.LoginRegisterService;
+import com.xsbweb.service.MeetRoomService;
+import com.xsbweb.service.TrsProjectService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.RedisCommnUtils;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.util.XMLJDomUtil;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ImSubAccount;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.MeetCallVO;
+import com.xsbweb.vo.extend.MeetRoomVO;
+
+/**
+ * app语音会议：创建会议，解散会议，邀请加入会议，退出会议，成员静音，取消成员静音
+ * @author liguoliang 
+ *
+ */
+@Controller
+public class AppMeetRoomController {
+
+	@Autowired
+	private MeetRoomService meetRoomService;
+	
+	@Autowired
+	private LoginRegisterService loginRegisterService;  
+	
+	@Autowired
+	private TrsProjectService trsProjectService;
+	
+	private static Logger log = Logger.getLogger(AppMeetRoomController.class);
+	
+	@Resource
+    private RedisUtil redisUtil;
+	/**
+	 * 进入语音会议列表页
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toMeetRoomList.do")
+	public ModelAndView toMeetRoomList(MeetRoomVO meetRoomVO)throws Exception{
+		if(meetRoomVO==null){
+			meetRoomVO = new MeetRoomVO();
+		}
+		ModelAndView mav = new ModelAndView();
+		int totalRecord = meetRoomService.getMeetRoomListCount(meetRoomVO);
+		meetRoomVO.setTotalRecord(totalRecord);
+		List<MeetRoomVO> meetRoomVOList = meetRoomService.getMeetRoomList(meetRoomVO);
+		if(meetRoomVOList!=null){
+			for (MeetRoomVO mmoomVO : meetRoomVOList) {
+				Long createDate = CommonUtils.getInstanceTime(mmoomVO.getCreatedDate());
+				Long now = CommonUtils.getInstanceTime();
+				if(createDate!=null && now!=null){
+					int minute = new Long(now-createDate).intValue();
+					mmoomVO.setStartMinute(minute/60000);
+				}
+			}
+		}
+		mav.setViewName("manage/voicemeet/queryMeetRoomList");
+		mav.addObject("meetRoomVO", meetRoomVO);
+		mav.addObject("meetRoomVOList", meetRoomVOList);
+		return mav;
+	}
+
+	/**
+	 * 未展示，点击展示更改状态 
+	 * @param meetNo
+	 * @param isShow
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toUpdateMeetIsShowByMeetNo.do")
+	
+	//传递两个参数，第一个是id，第二个是状态
+	//public ModelAndView toUpdateMeetIsShowByMeetNo(String meetNo,String isShow) throws Exception{
+	@ResponseBody
+	public Map<String,Object> toUpdateMeetIsShowByMeetNo(String meetNo,String isShow) throws Exception{
+		//ModelAndView modelAndView=new ModelAndView();
+		Map<String,Object> map = new HashMap<String,Object>();
+		MeetRoomVO meetRoomVO=new MeetRoomVO();
+		meetRoomVO.setMeetNo(meetNo);
+		meetRoomVO.setIsShow(isShow);
+		int flag = meetRoomService.updateMeetIsShowByMeetNo(meetRoomVO);
+		if(flag<0){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}else{
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}
+		//List<MeetRoomVO> meetRoomVOList = meetRoomService.getMeetRoomList(meetRoomVO);
+		
+		//modelAndView.addObject("meetRoomVO",meetRoomVO);
+		//modelAndView.addObject("meetRoomVOList",meetRoomVOList);
+		//modelAndView.setViewName("manage/voicemeet/queryMeetRoomList");
+		//return modelAndView;
+		return map;
+	}
+	/**
+	 * 进入新增语音会议页面
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toAddMeetRoom.do")
+	public ModelAndView toAddMeetRoom(String meetNo)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		meetRoomVO.setMeetNo(meetNo);
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/addMeetRoom");
+		return mav;
+	}
+	
+
+	/**
+	 * 进入语音会议页面
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toMeetRoomInfo.do")
+	public ModelAndView toMeetRoomInfo(String confid)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		if(CommonUtils.isBlank(confid)){
+			//mav.addObject("error","参数有误");
+			//mav.setViewName("manage/voicemeet/queryMeetRoomList");
+			return mav;
+		}
+		//----获取redis中该会议的成员信息----------------
+		log.info("confid："+confid);
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		log.info("meetCallVOList："+confid);
+		if(meetCallVOList==null){
+			log.info("######################redis中该会议的成员信息为空");
+		}
+		//--------------------
+		MeetRoomVO meetRoomVO = meetRoomService.getMeetRoomByConfid(confid);
+		if(meetRoomVO==null){
+			mav.addObject("error","该语音会议已不存在！");
+			mav.setViewName("manage/voicemeet/queryMeetRoomList");
+			return mav;
+		}
+		meetRoomVO.setMeetCallVOList(meetCallVOList);
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+	
+	/**
+	 * 在列表页上删除会议
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/meet/deleteConfByList.do")
+	public ModelAndView deleteConfByList(ModelAndView mav,String confid,MeetRoomVO meetRoomVO
+			) throws Exception{
+		List<MeetRoomVO> meetRoomVOList = new ArrayList<MeetRoomVO>();
+		int flag = meetRoomService.deleteMeetRoomByConfid(confid);
+		if(flag==1){
+			meetRoomVOList = meetRoomService.getMeetRoomList(meetRoomVO);
+			mav.addObject("meetRoomVOList", meetRoomVOList);
+		}
+		mav.setViewName("manage/voicemeet/queryMeetRoomList");
+		mav.addObject("meetRoomVO", meetRoomVO);
+		return mav;
+	}
+	
+	@RequestMapping(value="/meet/refreshCallData.do")
+	public ModelAndView refreshCallData(String confid){
+		ModelAndView mav = new ModelAndView();
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		if(meetCallVOList == null){
+			meetCallVOList = new ArrayList<MeetCallVO>();
+		}
+		meetRoomVO.setMeetCallVOList(meetCallVOList);
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+	
+	
+	@RequestMapping(value="/meet/toChooseProject.do")
+	public ModelAndView toChooseProject(TrsProject trsProject) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		if(trsProject!=null && trsProject.getPageSize()==0){
+			trsProject.setPageSize(10);
+		}
+		if(trsProject.getPageNo()>0){
+			trsProject.setPageSize(10*trsProject.getPageNo());
+		}
+		List<TrsProject> trsProjectList = trsProjectService.getProjectListByChoose(trsProject);
+		mav.addObject("trsProject",trsProject);
+		mav.addObject("trsProjectList",trsProjectList);
+		mav.setViewName("manage/voicemeet/chooseProjectList");
+		return mav;
+	}
+	/*
+	 *   //进入选择页面
+	 * public ModelAndView toSelectSubAccountList(){
+		
+	}*/
+	
+	/**
+	 * 新增语音会议
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/addMeetRoom.do",method=RequestMethod.POST)
+	public ModelAndView addMeetRoom(MeetRoomVO meetRoomVO,HttpServletRequest request)throws Exception{
+		RestSDK restSDK = new RestSDK();
+		ModelAndView mav = new ModelAndView();
+		//--------------------
+		//相对url，会议创建通知的回调url地址，默认值为空
+		String action="meet/createconfsucc.do";
+		//最大会议人数，不能大于300。默认值为3
+		String maxmember = meetRoomVO.getMaxmember();
+		//加入会议密码，默认为空，不需要密码。如果设置了密码，用户在加入会议前会自动提示用户输入密码，若输入三次错误且回调url为空则自动挂机。
+		String passwd = meetRoomVO.getPasswd();
+		//密码输入三次错误的回调url地址。默认为空
+		String passwderrorurl = "";
+		//会议DTMF上报通知的回调url地址。默认值为空
+		String dtmfreporturl = "";
+		//会议被删除通知的回调url地址。默认值为空。
+		String delreporturl = "meet/delMeetRoom.do";
+		//此次会议时长单位是秒，小于等于0时则不限时，到时后会议自动结束。第一个成员加入后开始计时，默认值为0
+		String confduration = "0";
+		//会议自动结束后是否自动挂断用户电话，默认值为false
+		String autohangup = "true";
+		//会议自动结束前的提示音，为空则不播放。默认值为空
+		String confendprompt = "";
+		//是否自动录音，true或false。默认值为false
+		String autorecord = "false";
+		//退出会议通知的回调url地址。默认值为空
+		String quiturl = "meet/quitConfsucc.do";
+		//会议媒体控制结果通知的回调url地址。默认值为空
+		String mediaopturl = "meet/operation.do";
+		//是否自动加入会议。通过IVR响应命令调用时有效。默认为false
+		String autojoin = "false";
+		//加入会议通知的回调url地址。默认值为空
+		String joinurl = "meet/joinConfsucc.do";
+		//去掉进入退出语音会议提示音  0没有提示音有背景音、1全部提示音、2无提示音无背景音  默认值为1
+		String voicemod = "2";
+		//String joinurl = "";
+		//调用第三方创建语音会议接口
+		String resposenBody = restSDK.CreateConf(action, maxmember, passwd, passwderrorurl, 
+				dtmfreporturl, delreporturl, confduration, autohangup, 
+				confendprompt, autorecord, quiturl, mediaopturl, autojoin, joinurl,voicemod);
+		//解析resposenBody\
+		log.info("################"+resposenBody);
+		Map<String,String> map = XMLJDomUtil.doXMLParse(resposenBody); 
+		if(map==null){
+			log.info("################创建会议接口调用失败");
+			mav.setViewName("error");
+			mav.addObject("error","创建会议接口调用失败");
+			return mav;
+		}
+		//调用成功
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(map.get("statusCode"))){
+			String confid = map.get("confid");
+			String voiptoconfid = map.get("voiptoconfid");
+			String compere = meetRoomVO.getCompere();
+			//如果输入的主持人手机号码为空，则设置当前用户为主持人
+			if(CommonUtils.isBlank(meetRoomVO.getCompere())){
+				//获取session中用户id
+				HttpSession session = request.getSession();
+				String customerId = (String)session.getAttribute("customerId");
+				if(CommonUtils.isBlank(customerId)){
+					mav.setViewName("login");
+					return mav;
+				}else{
+					compere = customerId;
+				}
+			}
+			
+			//查询用户信息	
+			Customer customer = loginRegisterService.getCustomerById(compere);
+			if(customer==null){
+				mav.setViewName("manage/voicemeet/addMeetRoom");
+				mav.addObject("error","主持人不存在");
+				return mav;
+			}
+			//记录创建的会议信息
+			meetRoomVO.setConfid(confid);
+			meetRoomVO.setVoiptoconfid(voiptoconfid);
+			meetRoomVO.setCompere(CommonUtils.isBlank(meetRoomVO.getCompere())?customer.getCustomerPhoneNo():compere);
+			meetRoomVO.setCreatedDate(CommonUtils.getInstanceDate());
+			//meetRoomVO.setStatus("2");
+			meetRoomVO.setMeetRole("2048");
+			meetRoomService.addMeetRoom(meetRoomVO);
+			meetRoomVO.setCompereName(customer.getCustomerName());
+			//给需要加入会议的人添加一个容联子账户
+			/*ImSubAccount subAccount = meetRoomService.getImSubAccount();
+			if(subAccount==null){
+				log.info("###########################################容联子账户不足！");
+				throw new ApplicationException("容联子账户不足！");
+			}*/
+			//--------调用邀请主持人键入会议接口------------
+			/*String joinResposenBody = restSDK.InviteJoinConf(confid, subAccount.getVoipAccount(), "",
+					"1", "0", "meet/joinConfsucc.do");*/
+			/*String joinResposenBody = restSDK.InviteJoinConf(confid, "8000824700000110", "",
+					"1", "0", "");
+			log.info("####################"+joinResposenBody);
+			 Map<String,String> joinConfMap = XMLJDomUtil.doXMLParse(joinResposenBody);
+			 	//调用成功
+				if(RSResultCode.RS_STATUSCODE_SUCC.equals(joinConfMap.get("statusCode"))){
+					//因为app采取默认加入会议，这里直接修改容联子账户表customer信息
+					ImSubAccount isa = new ImSubAccount();
+					isa.setCustomerPhoneNo(customer.getCustomerPhoneNo());
+					//isa.setVoipAccount(subAccount.getVoipAccount());
+					isa.setVoipAccount("8000824700000110");
+					meetRoomService.updateImSubAccount(isa);
+					log.info("#############################邀请加入的callid为："+joinConfMap.get("callSid"));
+					
+				}else{
+					throw new ApplicationException("邀请主持人接入会议失败！");
+				}*/
+			//-----------------
+		};
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+
+	/**
+	 * 解散语音会议
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/deleteMeetRoom.do")
+	public @ResponseBody Map<String,Object> deleteMeetRoomByConfid(String confid)throws Exception{
+		//--------------------
+		RestSDK restSDK = new RestSDK();
+		Map<String,Object> map = new HashMap<String,Object>();
+		String action = RSResultCode.ACTION_DISMISS_CONF_URL;
+		//会议被删除通知的相对url地址，默认值为空
+		String delurl = "";
+		//会议自动解散后是否自动挂断用户，true表示挂断，false不挂断。默认值为false
+		String autohangup = "true";
+		//解散时参会者退出会议通知的回调url地址。若自动挂断则不发送。默认值为空
+		String quiturl = "";
+		//录音控制结果通知的回调url地址。默认值为空
+		String recordurl = "";
+		//调用第三方解散语音会议接口
+		String resposenBody = restSDK.DismissConf(action, confid, delurl, autohangup, quiturl, recordurl);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		//调用成功后，将会议记录改为失效
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			meetRoomService.deleteMeetRoomByConfid(confid);
+			map.put("resultCode", "1");
+		}else if("101020".equals(remap.get("statusCode"))){
+			meetRoomService.deleteMeetRoomByConfid(confid);
+			map.put("resultCode", "2");
+		}else{
+			map.put("resultCode", "0");
+		}
+		//--------------------
+		return map;
+	}
+	
+	/**
+	 * 邀请加入会议
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/inviteJonConf.do")
+	public ModelAndView inviteJonConf(String phoneNos,String confid)throws Exception{
+		ModelAndView mav= new ModelAndView();
+		RestSDK restSDK = new RestSDK();
+		//调用第三方禁音接口
+		String action = "";
+		//加入会议的角色。会议中只有一个主持人，以最后一个为准。0：普通成员，1：主持人，默认值为0
+		String role = "0";
+		//是否可讲，0：不可讲，1：可讲，默认值为1
+		String speak = "0";
+		//加入会议通知的回调url地址
+		String joinurl = "";
+		if(CommonUtils.isBlank(phoneNos)){
+			mav.addObject("error", "手机号码不能为空");
+			mav.setViewName("error");
+			log.info("########################phoneNos参数为空！");
+			return mav;
+		}
+		String[] phoneArrs = phoneNos.split("#");
+		ImSubAccount sAccount = new ImSubAccount();
+		sAccount.setPhones(phoneArrs);
+		List<ImSubAccount> imSubAccountList = meetRoomService.getImSubAccountByPhones(sAccount);
+		/*int no = phoneArrs.length;
+		//获取指定个数的没有被使用的voip账号
+		List<ImSubAccount> imSubAccountList = meetRoomService.getImSubAccountList(no);
+		if(imSubAccountList==null){
+			log.info("########################容联voip账号不足！");
+			throw new ApplicationException("容联voip账号不足！");
+		}
+		//key:手机号码，value:voip账号
+		Map<String,String> voipmap = new HashMap<String,String>();
+		for (int i = 0; i < phoneArrs.length; i++) {
+			//voipmap.put(phoneArrs[i], imSubAccountList.get(i).getVoipAccount());
+			voipmap.put(phoneArrs[i], "8000824700000003");
+		}*/
+		//拼接调用第三方接口的voips字符串集合
+		StringBuffer voipsb = new StringBuffer();
+		for (ImSubAccount imSubAccount : imSubAccountList) {
+			voipsb.append(imSubAccount.getVoipAccount()).append("#");
+		}
+		//去掉最后一个#
+		if(voipsb.length()>0){
+			voipsb.deleteCharAt(voipsb.length()-1);
+		}
+		
+		String resposenBody = restSDK.InviteJoinConf(confid, voipsb.toString(), action, role, speak, joinurl);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			//因为app采取默认加入会议，这里直接修改容联子账户表customer信息
+			//meetRoomService.updateBatchImSubAccount(voipmap);
+			String callSid = remap.get("callSid");
+			String[] callids = callSid.split("#");
+			//获取redis中该会议的成员信息
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			//-------根据phoneNos查询用户的信息--------
+			
+			ImSubAccount parmVO = new ImSubAccount();
+			parmVO.setVoipAccounts(voipsb.toString().split("#"));
+			List<ImSubAccount> subAccountList = meetRoomService.getCustomersByVoips(parmVO);
+			//-----------------------------------
+			for (int i = 0; i < subAccountList.size(); i++) {
+				MeetCallVO meetCallVO = new MeetCallVO();
+				meetCallVO.setCallSid(callids[i]);
+				meetCallVO.setConfid(confid);
+				meetCallVO.setCustomerId(subAccountList.get(i).getCustomerId());
+				meetCallVO.setCustomerName(subAccountList.get(i).getCustomerName());
+				meetCallVO.setCustomerPhoneNo(subAccountList.get(i).getCustomerPhoneNo());
+				meetCallVO.setVoipAccount(subAccountList.get(i).getVoipAccount());
+				//默认禁音
+				meetCallVO.setIsBanVoice("1");
+				//默认不举手
+				meetCallVO.setIsHandsUp("0");
+				meetCallVOList.add(meetCallVO);
+			}
+			
+			//重新存储
+			RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+			MeetRoomVO meetRoomVO = new MeetRoomVO();
+			meetRoomVO.setMeetCallVOList(meetCallVOList);
+			mav.addObject("resultCode", ResultCode.RESPONSE_SUCCESS);
+			mav.addObject("meetRoomVO", meetRoomVO);
+		}else{
+			mav.addObject("resultCode", ResultCode.RESPONSE_FAIL);
+		}
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+	
+	/**
+	 * 禁音
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/banVoice.do")
+	public ModelAndView banVoice(ModelAndView mav,String callid,String confid)throws Exception{
+		RestSDK restSDK = new RestSDK();
+		String action = RSResultCode.ACTION_MUTE_CONF_URL;
+		//调用第三方禁音接口
+		String resposenBody = restSDK.ConfMute(callid, confid, action);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		JSONObject json = JSONObject.fromObject(remap);
+		log.info("##############禁音操作返回："+json.toString());
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		//调用成功后，改变redis中改会议成员的状态为禁音
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			//----获取redis中该会议的成员信息----------------
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			for (MeetCallVO meetCallVO : meetCallVOList) {
+				if(callid.equals(meetCallVO.getCallSid())){
+					//改为禁音状态
+					meetCallVO.setIsBanVoice("1");
+					break;
+				}
+			}
+			//重新存储
+			RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+			mav.addObject("resultCode", ResultCode.RESPONSE_SUCCESS);
+			meetRoomVO.setMeetCallVOList(meetCallVOList);
+		}else{
+			
+			mav.addObject("resultCode", ResultCode.RESPONSE_FAIL);
+		}
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		mav.addObject("meetRoomVO",meetRoomVO);
+		return mav;
+	}
+	
+	/**
+	 *  * 取消禁音
+	 * @param mav
+	 * @param callid
+	 * @param confid
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/cancellVoice.do")
+	public ModelAndView cancellVoice(ModelAndView mav,String callid,String confid)throws Exception{
+		RestSDK restSDK = new RestSDK();
+		String action = RSResultCode.ACTION_UNMUTE_CONF_URL;
+		//调用第三方取消禁音接口
+		String resposenBody = restSDK.ConfUnMute(callid, confid, action);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		JSONObject json = JSONObject.fromObject(remap);
+		log.info("##############取消禁音操作返回："+json.toString());
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		//调用成功后，改变redis中改会议成员的状态为禁音
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			//----获取redis中该会议的成员信息----------------
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			for (MeetCallVO meetCallVO : meetCallVOList) {
+				if(callid.equals(meetCallVO.getCallSid())){
+					//改为取消禁音状态
+					meetCallVO.setIsBanVoice("0");
+					//设置为未举手状态
+					meetCallVO.setIsHandsUp("0");
+					break;
+				}
+			}
+			//重新存储
+			RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+			mav.addObject("resultCode", ResultCode.RESPONSE_SUCCESS);
+			meetRoomVO.setMeetCallVOList(meetCallVOList);
+		}else{
+			mav.addObject("resultCode", ResultCode.RESPONSE_FAIL);
+		}
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+	
+	/**
+	 * 退出会议
+	 * @param callid
+	 * @param confid
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/quitMeetRoom.do")
+	public ModelAndView quitMeetRoom(ModelAndView mav,String callid,String confid)throws Exception{
+		RestSDK restSDK = new RestSDK();
+		log.info("##############退出会议，callid="+callid+",confid="+confid);
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		String action = RSResultCode.ACTION_QUIT_CONF_URL;
+		String resposenBody = restSDK.QuitConf(callid, confid, action);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		JSONObject json = JSONObject.fromObject(remap);
+		log.info("##############退出会议操作返回："+json.toString());
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			
+			mav.addObject("resultCode", ResultCode.RESPONSE_SUCCESS);
+		}else{
+			mav.addObject("resultCode", ResultCode.RESPONSE_FAIL);
+		}
+		mav.addObject("meetRoomVO",meetRoomVO);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		return mav;
+	}
+	
+	//会议录音
+	@RequestMapping(value="/meet/startConfRecord.do")
+	public ModelAndView startConfRecord(String confid) throws JDOMException, IOException{
+		RestSDK restSDK = new RestSDK();
+		ModelAndView mav = new ModelAndView();
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		//会议媒体控制结果通知的回调url地址，不论成功与失败只要不为空则发送请求。自定义的相对地址，默认值为空
+		String action = "";
+		//录音时长，单位为秒。默认值为0，不限时。 
+		String time = "0";
+		//录音时长到时的录音结果通知的回调url地址。自定义的相对地址，默认值为空 
+		String timeoutrecordurl = "";
+		String resposenBody = restSDK.ConfRecord(confid, action, time, timeoutrecordurl);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			meetRoomVO.setRecording("2");
+		}else{
+			meetRoomVO.setRecording("1");
+		}
+		meetRoomVO.setConfid(confid);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		mav.addObject("meetRoomVO",meetRoomVO);
+		return mav;
+	}
+	
+	//停止会议录音
+	@RequestMapping(value="/meet/stopConfRecord.do")
+	public ModelAndView stopConfRecord(String confid) throws JDOMException, IOException{
+		RestSDK restSDK = new RestSDK();
+		ModelAndView mav = new ModelAndView();
+		MeetRoomVO meetRoomVO = new MeetRoomVO();
+		//会议媒体控制结果通知的回调url地址，不论成功与失败只要不为空则发送请求。自定义的相对地址，默认值为空
+		String action = "";
+		String resposenBody = restSDK.ConfStopRecord(confid, action);
+		Map<String,String> remap = XMLJDomUtil.doXMLParse(resposenBody); 
+		
+		if(RSResultCode.RS_STATUSCODE_SUCC.equals(remap.get("statusCode"))){
+			meetRoomVO.setRecording("3");
+		}else{
+			meetRoomVO.setRecording("2");
+		}
+		meetRoomVO.setConfid(confid);
+		mav.setViewName("manage/voicemeet/meetRoomInfo");
+		mav.addObject("meetRoomVO",meetRoomVO);
+		return mav;
+	}
+	
+	/**
+	 * 会议创建通知的回调请求
+	 * POST /<createconfsucc>?appid={appid}&callid={callid}&confid={confid}&createtime={createtime} HTTP/1.1
+	 */
+	@RequestMapping(value="/meet/createconfsucc.do",method=RequestMethod.POST)
+	public @ResponseBody String createConfSuccess(
+			@RequestParam("appid")String appid,
+			@RequestParam("callid")String callid,
+			@RequestParam("confid")String confid,
+			@RequestParam("createtime")String createtime
+			){
+		log.info("###########回调：会议创建通知的回调，appid="+appid+"&callid="+callid+"&confid="+confid+"&createtime="+createtime);
+		return "200";
+	}
+	
+	/**
+	 * 加入会议通知
+	 * POST /<custom>?appid={appid}&callid={callid}&confid={confid}&jointime={jointime} HTTP/1.1
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/meet/joinConfsucc.do",method=RequestMethod.POST)
+	public @ResponseBody String joinConfSuccess(
+			@RequestParam("appid")String appid,
+			@RequestParam("callid")String callid,
+			@RequestParam(value="confid",required=false)String confid,
+			@RequestParam("jointime")String jointime,
+			@RequestParam(value="number",required=false)String customerPhoneNo
+			) throws Exception{
+		log.info("###########回调：加入会议通知，appid="+appid+"&jointime="+jointime+"&confid="+confid+"&callid="+callid+"&number="+customerPhoneNo);
+		//获取redis中该会议的成员信息
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		if(meetCallVOList == null){
+			meetCallVOList = new ArrayList<MeetCallVO>();
+		}
+		//-------根据phoneNos查询用户的信息--------
+		ImSubAccount imSubAccount = meetRoomService.getCustomerInfoByVoip(customerPhoneNo);
+		if(imSubAccount == null){
+			log.info("#############容联子账户voip："+customerPhoneNo+",没有关联customer账户");
+			return "0";
+		}
+		//-----------------------------------
+		MeetCallVO meetCallVO = new MeetCallVO();
+		meetCallVO.setCallSid(callid);
+		meetCallVO.setConfid(confid);
+		meetCallVO.setJointime(jointime);
+		meetCallVO.setCustomerId(imSubAccount.getCustomerId());
+		meetCallVO.setCustomerName(imSubAccount.getCustomerName());
+		meetCallVO.setCustomerPhoneNo(imSubAccount.getCustomerPhoneNo());
+		//头像地址
+		meetCallVO.setPicPath(imSubAccount.getPicPath());
+		meetCallVO.setVoipAccount(customerPhoneNo);
+		//默认禁音
+		meetCallVO.setIsBanVoice("1");
+		//默认不举手
+		meetCallVO.setIsHandsUp("0");
+		meetCallVOList.add(meetCallVO);
+		//重新存储
+		RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+		//加入会议成功后将信息存储到redis中
+		//return "redirect:/meet/toMeetRoomInfo.do?confid="+confid;
+		return "200";
+	}
+	
+	/**
+	 * 退出会议通知
+	 * POST /<quitconfsucc>?appid={appid}&callid={callid}&quittime={quittime} HTTP/1.1
+	 * @param appid
+	 * @param quittime
+	 * @param confid
+	 * @param callid
+	 * @author liguoliang  2015年9月16日20:34:41
+	 */
+	@RequestMapping(value="/meet/quitConfsucc.do",method=RequestMethod.POST)
+	public @ResponseBody String quitConfSuccess(
+			@RequestParam("appid")String appid,
+			@RequestParam("quittime")String quittime,
+			@RequestParam("confid")String confid,
+			@RequestParam("callid")String callid
+			){
+		log.info("###########回调：退出会议通知，appid="+appid+"&quittime="+quittime+"&confid="+confid+"&callid="+callid);
+		List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		for (MeetCallVO meetCallVO : meetCallVOList) {
+			if(callid.equals(meetCallVO.getCallSid())){
+				meetCallVOList.remove(meetCallVO);
+				try {
+					//退出会议后清除该成员对应的云账号关联的customerId
+					meetRoomService.cancelImSubAccount(meetCallVO.getVoipAccount());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;	
+			}
+		}
+		//如果移除的是最后一个成员则删除该会议记录
+		if(meetCallVOList.isEmpty()){
+			try {
+				meetRoomService.deleteMeetRoomByConfid(confid);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			//重新存储
+			RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+		}
+		return "200";
+	}
+	
+	/**
+	 * 会议媒体控制结果通知
+	 * 云平台会向应用服务器侧发送此请求消息，包括静音、取消静音、会议放音、停止会议放音、会议录音、停止会议录音、调节会议音量、会议成员禁听、取消会议成员禁听、创建会议操作通知。
+	 * POST /<coustom>?appid={appid}&confid={confid}&callid={callid}&notifytype={notifytype}&result={result}&state={state}&recordurl={recordurl}&recordduration={recordduration} HTTP/1.1
+	 * @param appid   应用id
+	 * @param callid  呼叫id。对参会者操作时值有效。
+	 * @param notifytype  操作类型 1放音、2录音、3调大音量、4静音5禁听6收键；11停止放音、12停止录音、13调小音量、14取消静音、15取消禁听。
+	 * @param result  操作结果。　0成功 ，其它值为失败。
+	 * @param state  会议或用户状态，空值或0无意义。只有result为0时此值才有意义。会议状态：1放音中、2录音中、11放音完成、12录音完成。用户状态：4静音、14取消静音5禁听、15取消禁听、6收键中，callid有值有效
+	 * @param recordurl  录音文件下载地址当notifytype=12、result=0、state=12时，此参数才有内容。
+	 * @param recordduration 录音时长。
+	 * @param confid 会议ID 
+	 * @author liguoliang  2015年9月16日20:31:06
+	 * @throws Exception 
+	 */
+	@RequestMapping(value="/meet/operation.do",method=RequestMethod.POST)
+	public @ResponseBody String operation(
+			@RequestParam("appid")String appid,
+			@RequestParam(value="callid",required=false)String callid,
+			@RequestParam("notifytype")String notifytype,
+			@RequestParam("result")String result,
+			@RequestParam(value="state",required=false)String state,
+			@RequestParam(value="recordurl",required=false)String recordurl,
+			@RequestParam(value="recordduration",required=false)String recordduration,
+			@RequestParam("confid")String confid
+			) throws Exception{
+		log.info("###########回调：会议媒体控制结果通知，appid="+appid+"&notifytype="+notifytype
+				+"&confid="+confid+"&callid="+callid+"&recordurl="+recordurl
+				+"&recordduration="+recordduration+"&state="+state+"&result="+result);
+		if(!"0".equals(result)){
+			return "200";
+		}
+		if("1".equals(notifytype)){
+			
+		}else if("2".equals(notifytype)){
+			log.info("########################回调：录音");
+			//state为录音中
+			if("2".equals(state)){
+				//控制录音和完成录音的时候修改会议记录中的录音状态
+				MeetRoomVO meetRoomVO = new MeetRoomVO();
+				meetRoomVO.setConfid(confid);
+				meetRoomVO.setRecording("2");
+				meetRoomService.updateMeetRoomInfo(meetRoomVO);
+			}
+			
+		}else if("3".equals(notifytype)){
+			
+		}else if("4".equals(notifytype)){
+			
+			log.info("########################回调：禁音");
+			//禁音
+			/*List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			if(meetCallVOList!=null){
+				for (MeetCallVO meetCallVO : meetCallVOList) {
+					if(callid.equals(meetCallVO.getCallSid())){
+						meetCallVO.setIsBanVoice("1");
+						break;
+					}
+				}
+			}*/
+			
+		}else if("5".equals(notifytype)){
+			
+		}else if("6".equals(notifytype)){
+			
+		}else if("11".equals(notifytype)){
+			
+		}else if("12".equals(notifytype)){
+			log.info("########################回调：录音完成");
+			//录音完成
+			if("12".equals(state)){
+				MeetRoomVO meetRoomVO = new MeetRoomVO();
+				meetRoomVO.setConfid(confid);
+				meetRoomVO.setRecordurl(recordurl);
+				meetRoomVO.setRecordduration(recordduration);
+				meetRoomVO.setRecording("3");
+				meetRoomService.updateMeetRoomInfo(meetRoomVO);
+			}
+		}else if("13".equals(notifytype)){
+			
+		}else if("14".equals(notifytype)){
+			log.info("########################回调：取消禁音");
+			//取消禁音
+			/*List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			if(meetCallVOList!=null){
+				for (MeetCallVO meetCallVO : meetCallVOList) {
+					if(callid.equals(meetCallVO.getCallSid())){
+						meetCallVO.setIsBanVoice("0");
+						break;
+					}
+				}
+			}*/
+		}else if("15".equals(notifytype)){
+			
+		}
+		log.info("###########回调：会议媒体控制结果通知，appid="+appid+"&notifytype="+notifytype+"&confid="+confid+"&callid="+callid
+				+"&result="+result+"&state="+state+"&recordurl="+recordurl+"&recordduration="+recordduration);
+		return "200";
+	}
+	
+	/**
+	 * 会议被删除通知
+	 * 当会议中的最一个人退出会议后，会议被自动删除，包括创建会议、解散会议操作时会发此请求通知应用侧服务器。
+	 * POST /<delreporturl>?appid={appid}&confid={confid}&deltime={deltime}&recordurl={recordurl} HTTP/1.1
+	 * 
+	 * 主要操作，删除缓存服务器上该会议的信息
+	 * @param appid
+	 * @param deltime
+	 * @param confid
+	 * @param recordurl 会议录音下载地址。会议被删除时停止录音时有效。
+	 */
+	@RequestMapping(value="/meet/delMeetRoom.do",method=RequestMethod.POST)
+	public @ResponseBody String delMeetRoom(
+			@RequestParam("appid")String appid,
+			@RequestParam("deltime")String deltime,
+			@RequestParam("confid")String confid,
+			@RequestParam(value="recordurl",required=false)String recordurl
+			){
+		log.info("###########回调：会议被删除通知，appid="+appid+"&deltime="+deltime+"&confid="+confid+"&recordurl="+recordurl);
+		try {
+			//删除会议数据
+			meetRoomService.deleteMeetRoomByConfid(confid);
+			//更新录音地址 
+			if(CommonUtils.isNotBlank(recordurl)){
+				MeetRoomVO meetRoomVO = new MeetRoomVO();
+				meetRoomVO.setConfid(confid);
+				meetRoomVO.setRecordurl(recordurl);
+				meetRoomService.updateMeetRoomInfo(meetRoomVO);
+			}
+			List<MeetCallVO> meetCallVOList = RedisCommnUtils.getMeetCallListFotRedis(confid);
+			if(meetCallVOList!=null && !meetCallVOList.isEmpty()){
+				String[] voips = new String[meetCallVOList.size()];
+				for (int i = 0; i < meetCallVOList.size(); i++) {
+					voips[i] = meetCallVOList.get(i).getVoipAccount();
+				}
+				ImSubAccount imSubAccount = new ImSubAccount();
+				imSubAccount.setVoipAccounts(voips);
+				//释放voip账号
+				meetRoomService.cancelBatchImSubAccount(imSubAccount);
+			}
+			//删除该会议缓存服务器上信息
+			RedisCommnUtils.setMeetCallListFotRedis(null, confid);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "200";
+	}
+	
+	/**
+	 * 邀请结果回调通知
+	 * @param callid
+	 * @param jointime
+	 * @param confid
+	 * @param result
+	 * @param appid
+	 * @param number
+	 * @return
+	 */
+	@RequestMapping(value="/meet/inviteResult.do",method=RequestMethod.POST)
+	public @ResponseBody String inviteResult(
+			@RequestParam("callid")String callid,
+			@RequestParam("jointime")String jointime,
+			@RequestParam("confid")String confid,
+			@RequestParam("result")String result,
+			@RequestParam("appid")String appid,
+			@RequestParam(value="number",required=false)String number
+			){
+		log.info("###########回调：邀请结果通知，appid="+appid+"&callid="+callid+"&confid="+confid+"&result="+result+"&number="+number);
+		try {
+			if("0".equals(result)){
+				log.info("#############会议："+confid+"邀请"+number+"，接受成功！");
+			}else{
+				log.info("#############会议："+confid+"邀请"+number+"，接受失败！");
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "200";
+	}
+	
+	@RequestMapping(value="meet/test.do")
+	public @ResponseBody String test(){
+		List<MeetCallVO> meetCallVOList = new ArrayList<MeetCallVO>();
+		String confid = "66";
+		MeetCallVO meetCallVO = new MeetCallVO();
+		meetCallVO.setCallSid("55");
+		meetCallVO.setConfid("66");
+		meetCallVO.setJointime("77");
+		meetCallVO.setCustomerId("88");
+		meetCallVO.setCustomerName("99");
+		meetCallVO.setCustomerPhoneNo("11");
+		meetCallVO.setVoipAccount("22");
+		//默认禁音
+		meetCallVO.setIsBanVoice("1");
+		//默认不举手
+		meetCallVO.setIsHandsUp("0");
+		meetCallVOList.add(meetCallVO);
+		//重新存储
+		RedisCommnUtils.setMeetCallListFotRedis(meetCallVOList,confid);
+		log.info("#####################1111111111111");
+		List<MeetCallVO> meetCallVOList22 = RedisCommnUtils.getMeetCallListFotRedis(confid);
+		log.info("#############################"+meetCallVOList22);
+		if(meetCallVOList22!=null){
+			log.info("#############################"+meetCallVOList22.get(0).getCustomerPhoneNo());
+		}
+		return "200";
+	}
+	
+	
+	//-----------------------直播预告------------------------------------
+	
+	/**
+	 * 进入语音直播预告列表页
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toForeMeetRoomList.do")
+	public ModelAndView toForeMeetRoomList(MeetRoomVO meetRoomVO)throws Exception{
+		if(meetRoomVO==null){
+			meetRoomVO = new MeetRoomVO();
+		}
+		ModelAndView mav = new ModelAndView();
+		List<MeetRoomVO> meetRoomVOList = meetRoomService.getForeMeetRoomList(meetRoomVO);
+		mav.setViewName("manage/voicemeet/queryForeMeetRoomList");
+		mav.addObject("meetRoomVO", meetRoomVO);
+		mav.addObject("meetRoomVOList", meetRoomVOList);
+		return mav;
+	}
+	
+	/**
+	 * 进入新增语音直播预告页面
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/toAddForeMeetRoom.do")
+	public ModelAndView toAddForeMeetRoom()throws Exception{
+		ModelAndView mav = new ModelAndView();
+		mav.setViewName("manage/voicemeet/addForeMeetRoom");
+		return mav;
+	}
+	
+	
+	/**
+	 * 新增语音直播预告
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/addForeMeetRoom.do")
+	public String addForeMeetRoom(MeetRoomVO meetRoomVO,ModelMap mode ,HttpServletRequest request)throws Exception{
+		/*TrsMedia voiceListMediaNo = (TrsMedia) request.getSession().getAttribute("voiceListMediaNo");
+		TrsMedia voiceShareMediaNo = (TrsMedia)  request.getSession().getAttribute("voiceShareMediaNo");
+		TrsMedia voicebigPicNo = (TrsMedia)  request.getSession().getAttribute("voicebigPicNo");
+		TrsMedia pptMediaNo = (TrsMedia)  request.getSession().getAttribute("pptMediaNo");
+		request.getSession().removeAttribute("voiceListMediaNo");
+		request.getSession().removeAttribute("voiceShareMediaNo");
+		request.getSession().removeAttribute("voicebigPicNo");
+		request.getSession().removeAttribute("pptMediaNo");
+		if(voiceListMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(voiceListMediaNo);
+		}
+		if(voiceShareMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(voiceShareMediaNo);
+		}if(voicebigPicNo!=null){
+			meetRoomVO.getTrsMedias().add(voicebigPicNo);
+		}if(pptMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(pptMediaNo);
+		}*/
+		
+		int flag = meetRoomService.addForeMeetRoom(meetRoomVO);
+		if(flag>0){
+			return "redirect:/meet/toMeetRoomList.do";
+		}else{
+			mode.put("error", "新增失败");
+			mode.put("meetRoomVO", meetRoomVO);
+			return "manage/voicemeet/addForeMeetRoom";
+		}
+	}
+	
+	/**
+	 * 删除语音直播预告(软删除)
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/meet/deleteMeetRoomByMeetNo.do")
+	public ModelAndView deleteMeetRoomByMeetNo(String meetNo)throws Exception{
+		ModelAndView mav = new ModelAndView();
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag = meetRoomService.deleteMeetRoomByMeetNo(meetNo);
+		if(flag<=0){
+			mav.addObject("error", "删除失败");
+			return mav;
+		}
+		/*List<MeetRoomVO> meetRoomVOList = meetRoomService.getMeetRoomList(new MeetRoomVO());
+		mav.addObject("meetRoomVO", new MeetRoomVO());
+		mav.addObject("meetRoomVOList", meetRoomVOList);*/
+		/*mav
+		mav.setViewName("manage/voicemeet/queryMeetRoomList");*/
+			
+		mav.setViewName("redirect:/meet/toMeetRoomList.do");
+		return mav;
+	}
+	/**
+	 * 语音直播编辑页面跳转
+	 * @param meetNo
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="meet/toEditMeetByMeetNo.do")
+	public ModelAndView editMeetByMeetNo(String meetNo) throws Exception{
+		ModelAndView mav = new ModelAndView("manage/voicemeet/editForeMeetRoom");
+		MeetRoomVO meetRoomVO = meetRoomService.getForeMeetRoomByMeetNo(meetNo);
+		mav.addObject("meetRoomVO", meetRoomVO);
+		return mav;
+	}
+	/**
+	 * 语音直播编辑完成提交
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="meet/editMeetRoom.do")
+	public ModelAndView editMeetRoomByMeetNo(MeetRoomVO meetRoomVO,HttpServletRequest request) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		/*TrsMedia voiceListMediaNo = (TrsMedia) request.getSession().getAttribute("voiceListMediaNo");
+		TrsMedia voiceShareMediaNo = (TrsMedia)  request.getSession().getAttribute("voiceShareMediaNo");
+		TrsMedia voicebigPicNo = (TrsMedia)  request.getSession().getAttribute("voicebigPicNo");
+		TrsMedia pptMediaNo = (TrsMedia)  request.getSession().getAttribute("pptMediaNo");
+		request.getSession().removeAttribute("voiceListMediaNo");
+		request.getSession().removeAttribute("voiceShareMediaNo");
+		request.getSession().removeAttribute("voicebigPicNo");
+		request.getSession().removeAttribute("pptMediaNo");
+		if(voiceListMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(voiceListMediaNo);
+		}
+		if(voiceShareMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(voiceShareMediaNo);
+		}
+		if(voicebigPicNo!=null){
+			meetRoomVO.getTrsMedias().add(voicebigPicNo);
+		}
+		if(pptMediaNo!=null){
+			meetRoomVO.getTrsMedias().add(pptMediaNo);
+		}*/
+		
+		try{
+			meetRoomService.editMeetRoomByMeetNo(meetRoomVO);
+			mav.addObject(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			//mav=toMeetRoomList(new MeetRoomVO());
+			mav.setViewName("redirect:/meet/toMeetRoomList.do");
+		}catch(Exception e){
+			mav.addObject(ResultCode.RESULT_CODE,ResultCode.RESPONSE_FAIL);
+		}
+		/*mav.setViewName("manage/voicemeet/queryMeetRoomList");*/
+		return mav;
+	}
+	/**
+	 * 语音置顶
+	 * @param meetRoomVO
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="meet/lastEditDate.do")
+	public ModelAndView lastEditDate(MeetRoomVO meetRoomVO) throws Exception{
+		ModelAndView mav = new ModelAndView();
+		try{
+			meetRoomVO.setLastEditDate("0");
+			meetRoomService.editMeetRoomByMeetNo(meetRoomVO);
+			mav.setViewName("redirect:/meet/toMeetRoomList.do");
+		}catch(Exception e){
+			mav.addObject("error", "置顶失败");
+		}
+		return mav;
+	}
+	/**
+	 * 批量删除视频直播预告(软删除)
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="meet/meetRoom/{meetNoArrs}/del",method=RequestMethod.DELETE)
+	@ResponseBody
+	public Map<String,Object> batchDeleteMeetRoomByMeetNos(@PathVariable("meetNoArrs")String[] meetNoArrs)throws Exception{
+		Map<String,Object>map = new HashMap<String,Object>();
+		log.info("批量删除视频 meetNoArrs:"+meetNoArrs);
+		int flag = meetRoomService.batchDeleteMeetRoomByMeetNos(meetNoArrs);
+		if(flag>0){
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		}else{
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+		}
+		return map;
+	}
+}

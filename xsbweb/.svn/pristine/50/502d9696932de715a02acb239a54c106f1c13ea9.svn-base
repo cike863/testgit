@@ -1,0 +1,374 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+ResourceBundle bundle = ResourceBundle.getBundle("config");  
+String	hostName = bundle.getString("ftp_url_pro");  //IP地址
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>add</title>
+    <link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mt50{margin-top:50px;}
+        .mt20{margin-top:20px;}
+    </style>
+    <link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/layer/layer.js" ></script>
+</head>
+
+<script type="text/javascript">
+	window.onload = function(){
+		//前台显示回显
+		if(${meetVideoRoomVO.isShow=='0'}){
+			$("#nshow").attr("checked","checked");
+		}
+		if(${meetVideoRoomVO.isShow=='1'}){
+			$("#yshow").attr("checked","checked");
+		}
+		//路演状态回显
+		if(${meetVideoRoomVO.meetRole ge 128 && meetVideoRoomVO.meetRole lt 256}){
+			$("#role128").attr("checked","checked");
+		}
+		if(${meetVideoRoomVO.meetRole ge 256 && meetVideoRoomVO.meetRole lt 512}){
+			$("#role256").attr("checked","checked");
+		}
+		if(${meetVideoRoomVO.meetRole ge 512}){
+			$("#role512").attr("checked","checked");
+		}
+		//图片回显
+		var url="<%=hostName%>";
+		if(${meetVideoRoomVO.meetMediaPath!=''&&meetVideoRoomVO.meetMediaPath!=null}){
+			$("#meetMediaPic").attr("src","http://"+url+":8080/dyly${meetVideoRoomVO.meetMediaPath}");	
+		} 
+		if(${meetVideoRoomVO.shareMediaPath!=''&&meetVideoRoomVO.shareMediaPath!=null}){
+			$("#shareMediaPic").attr("src","http://"+url+":8080/dyly${meetVideoRoomVO.shareMediaPath}");	
+		} 
+		if(${meetVideoRoomVO.bigMediaPath!=''&&meetVideoRoomVO.bigMediaPath!=null}){
+			$("#bigPic").attr("src","http://"+url+":8080/dyly${meetVideoRoomVO.bigMediaPath}");	
+		}
+		
+	};
+	function toUpload(mediaType,dir){
+		var url = "admin/news/uploadLayer.do?mediaNo="+mediaType+"&dir="+dir;
+		layer.open({
+		    type: 2,
+		    area: ['800px', '530px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	};
+	
+	function uploadIsOk(mediaType,mediaNo,url,returnPath,newFileName,format,size){
+		if(mediaType=="videoListMediaNo"){
+			$("[name=meetMediaNo]").val(mediaNo);
+			$("#meetMediaPic").attr("src",url);
+		}
+		if(mediaType=="videoShareMediaNo"){
+			$("[name=shareMediaNo]").val(mediaNo);
+			$("#shareMediaPic").attr("src",url);
+		}
+		if(mediaType=="videobigPicNo"){
+			$("[name=bigPicNo]").val(mediaNo);
+			$("#bigPic").attr("src",url);
+		}
+	};
+	function toAddItem(){
+		var url = " item/toAddItems";
+		layer.open({
+		    type: 2,
+		    area: ['800px', '530px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	}
+	var isUpdateItem=true;
+	var mark;
+	var itemValue;
+	function getItemValue(){
+		return itemValue;
+	}
+	function updateItem(k,itemKey,start){
+		mark=k;
+		/* itemValue=$(k).parents('tr').eq(0).find('td').eq(2).find('[name="itemValue"]').val(); */
+		itemValue=$(k).parents('tr').eq(0).find('td').eq(3).html();
+		itemValue=itemValue.replace(/\\\"/g,'"').replace(/\\\'/g,"'");
+		isUpdateItem=false;
+		var url = " item/toAddItems?itemKey="+itemKey+"&&itemValue=";
+		layer.open({
+		    type: 2,
+		    area: ['800px', '530px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	};
+	var itemSize = 0;
+	function isOK(arg1,arg2,k){
+		var argValue="";
+		argValue=arg2.replace(/"/g,'\\\"').replace(/'/g,"\\\'");
+		/* if(argValue.length>2000){
+			alert("文本过长");
+			return;
+		} */
+		if(isUpdateItem){
+			var itemTablehtml = $("#itemTable").html();
+			var trHtml ="";
+				trHtml += "<tr><td hidden=\"hidden\" ><input readOnly name=\"itemKey\" value=\""+arg1+"\"/></td>"
+				+"<td hidden=\"hidden\" ><input  name=\"itemValue\" value=\'"+argValue+"\'/></td>"
+				+"<td hidden=\"hidden\" >"+arg2+"</td>"
+				+"<td >"+arg1+"</td>"
+				+"<td><a href=\"javascript:void(0);\" onclick=\"deleteItem(this)\">delete</a></td></tr>";
+			$("#itemTable").html(itemTablehtml+trHtml);
+		}
+		if(!isUpdateItem){	
+			k=mark;
+			$(k).parents('tr').eq(0).find('td').eq(1).find('[name="itemKey"]').val(arg1);
+			$(k).parents('tr').eq(0).find('td').eq(2).find('[name="itemValue"]').val(argValue);
+			//console.log($(k).parents('tr').eq(0).find('td').eq(2).find('[name="itemValue"]').val());
+			$(k).parents('tr').eq(0).find('td').eq(3).html(arg2);
+			$(k).parents('tr').eq(0).find('td').eq(4).html(arg1);
+			isUpdateItem=true;
+		}
+		
+		/* 
+		if(isUpdateItem){
+			var itemTablehtml = $("#itemTable").html();
+			var trHtml = "<tr><td><input readOnly name=\"itemKey\" value=\""+arg1+"\"/></td><td><input readOnly name=\"itemValue\" value=\""+arg2+"\"/></td><td><a href=\"javascript:void(0);\" onclick=\"deleteItem(this)\">delete</a></td></tr>";
+			$("#itemTable").html(itemTablehtml+trHtml);
+		};
+		if(!isUpdateItem){	
+			k=mark;
+			$(k).parents('tr').eq(0).find('td').eq(1).find('[name=itemKey]').val(arg1);
+			$(k).parents('tr').eq(0).find('td').eq(2).find('[name=itemValue]').val(arg2);
+			isUpdateItem=true;
+		}; */
+	}; 
+	function deleteItem(k){
+		$(k).parent().parent().remove();     
+	};
+	function submit(){
+		itemSize = 0;
+		document.forms[0].submit();
+	};
+	function deleteObjectItem(objectNo,itemKey){
+		objectNo=objectNo.replace(/\s+/g,"");
+		itemKey=itemKey.replace(/\s+/g,"");
+		$.ajax({
+			url :"admin/project/deleteItem?objectNo="+objectNo+"&itemKey="+itemKey,
+			contentType : 'application/json',
+			async: false,
+			success:function(data){
+				if(data.resultCode==1){
+					window.location.reload();
+				}else if (data.resultCode==0){
+					alert("操作失败");
+				}
+			},
+			error:function(){
+				alert("操作失败");
+			}
+		});
+	};
+	function toChear(k,f){
+		$("#"+k+"").attr("src","");
+		$("[name="+f+"]").val('');
+	};
+	/**
+	上传关联项目
+	*/
+	function toChooseProject(){
+		//$("[name='_method']").val("get");
+		//var url = "admin/project";
+	 	var url = "admin/chooseRelevanceProject";
+		layer.open({
+			type:2,
+			area:['1000px','620px'],
+			fix:false,
+			maxmin:true,
+			content:url
+		});
+	}
+	
+	//设置选择函数，将数据存入到
+	function chooseOk(arg1,arg2,arg3){
+		$("[name='meetProjectNo']").val(arg1);
+		$("[name='meetProjectName']").val(arg2);
+	}
+	function changeRole(value){
+		var role=$("#meetRole").val();
+		//console.log(role < '128');
+			if(role >= '128' && role< '256'){
+				role=parseInt(role-128)+parseInt(value);
+			}
+			if(role >= '256' && role< '512'){
+				role=parseInt(role-256)+parseInt(value);
+			}
+			if(role >= '512' ){
+				role=parseInt(role-512)+parseInt(value);
+			}
+			if(role < '128' ){
+				if(role==0){
+					role=parseInt(value);
+				}else{
+					role=parseInt(role)+parseInt(value);
+				}
+				//console.log("123");
+			}
+			$("#meetRole").val(role);
+	}
+	
+</script>
+
+<body>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-12 mt20">
+            <form class="form-inline" action="admin/meet/${meetVideoRoomVO.meetNo}/upd" method="post">
+            <input type="hidden" name="_method" value="put" />
+            <%-- <input type="hidden" id="meetProjectNo" name="meetProjectNo" value="${meetVideoRoomVO.meetProjectNo}"/> --%>
+            <table class="table table-bordered table-hover table-responsive">
+                <tbody>
+                  <tr>
+                    <td>视频直播预告名称</td>
+                    <td><input type="text" class="form-control" value="${meetVideoRoomVO.confName }" name="confName" style=" width:900px;" ></td>
+                </tr>
+                <tr>
+                    <td>视频直播预告网址</td>
+                    <td><input type="text" class="form-control"  name="baseUrl" value="${meetVideoRoomVO.baseUrl}" style=" width:900px;" ></td>
+                </tr>
+                <tr>
+                    <td>上线时间</td>
+                     <td>
+                     	<input placeholder="请输入日期" class="laydate-icon" name="onlineDate" style="height:30px" 
+                     	value="${meetVideoRoomVO.onlineDate }" id="t1" onClick="laydate({elem: '#t1',istime: true, format: 'YYYY-MM-DD hh:mm'})">
+                     </td>
+                </tr>
+                <tr>
+                    <td>直播时间</td>
+                    <td>
+                    	<input placeholder="请输入日期" class="laydate-icon" name="showDate" style="height:30px" 
+                    	value="${meetVideoRoomVO.showDate }" id="t2" onClick="laydate({elem: '#t2',istime: true, format: 'YYYY-MM-DD hh:mm'})">
+                    </td>
+                </tr>
+                <tr>
+                    <td>是否前台展示</td>
+                     <td>
+                     	是：<input type="radio" id="yshow" name="isShow" value="1"/>
+                     	否：<input type="radio" id="nshow" name="isShow" value="0"/>
+                     </td>
+                </tr>
+                <tr>
+                    <td>定版图</td>
+                     	<td>
+                     	<input type="hidden" class="form-control" value="${meetVideoRoomVO.meetMediaNo }" name="meetMediaNo">
+                     	<img id="meetMediaPic" src="" height="100" width="100">
+                     	<input type="button" onclick="toUpload('videoListMediaNo','image');" value="上传" class="btn btn-success"/>
+                     	<input type="button" onclick="toChear('meetMediaPic','meetMediaNo');" value="清空" class="btn"/>
+                     	<label style="color:red">*文件大小不能超过10M</label>
+                     </td>
+                </tr>
+                <tr>
+                    <td>分享用图片</td>
+                     	<td><input type="hidden" class="form-control" value="${meetVideoRoomVO.shareMediaNo }"  name="shareMediaNo">
+                     	<img id="shareMediaPic" src="" height="100" width="100">
+                     	<input type="button" onclick="toUpload('videoShareMediaNo','image');" value="上传" class="btn btn-success"/>
+                     	<input type="button" onclick="toChear('shareMediaPic','shareMediaNo');" value="清空" class="btn"/>
+                     	<label style="color:red">*文件大小不能超过10M</label>
+                     </td>
+                </tr>
+                <tr>
+                    <td>广告图片</td>
+                     <td>
+                     		<input type= "hidden" class="form-control" name="bigPicNo" value="${meetVideoRoomVO.bigPicNo}">
+                     		<img id="bigPic" src="" height="100" width="100">
+                     		<input type="button" onclick="toUpload('videobigPicNo','image');" value="上传" class="btn btn-success"/>
+                     		<input type="button" onclick="toChear('bigPic','bigPicNo');" value="清空" class="btn"/>
+                     		<label style="color:red">*文件大小不能超过10M</label>
+                     </td>
+                </tr>
+                 <tr>
+                    <td>分享用主标题</td> 
+                     <td><input type="text" class="form-control" value="${meetVideoRoomVO.meetTitle }" name="meetTitle" style=" width:900px;" ></td>
+                </tr>
+                 <tr>
+                    <td>分享用副标题</td>
+                     <td><input type="text" class="form-control" value="${meetVideoRoomVO.meetExTitle }" name="meetExTitle" style=" width:900px;" ></td>
+                </tr>
+                <tr>
+                    <td>关联项目</td>
+                     <td>
+                    	<input type="text" class="form-control" name="meetProjectName" value="${meetVideoRoomVO.meetProjectName}" >
+                    	<input type="button" onclick="toChooseProject()" value="选择"/>
+                     	<input type="hidden" class="form-control" name="meetProjectNo" value="${meetVideoRoomVO.meetProjectNo}" >
+                     </td>
+                </tr>
+                <tr>
+                    <td>视频状态</td>
+                	<td>直播：<input type="radio"  name="changeMeetRole"  id="role256" onclick="changeRole('256')" />&nbsp;&nbsp;&nbsp;&nbsp;
+							预告：<input type="radio"  name="changeMeetRole"  id="role128"  onclick="changeRole('128')" />&nbsp;&nbsp;&nbsp;&nbsp;
+							回放：<input type="radio"  name="changeMeetRole"  id="role512"  onclick="changeRole('512')"  />
+							<input type="hidden" value="${meetVideoRoomVO.meetRole}"  name="meetRole"  id="meetRole"/>
+							</td>
+                </tr>
+                <%-- <tr>
+                	<td colspan="2">	
+                		<table id="itemTable" style="width: 95% !improtant;" class="table table-bordered table-hover table-responsive">
+                			<c:if test="${meetVideoRoomVO.videoItemList!=null }">
+	                			<tr>
+	                				<td>itemKey</td>
+	                				<!-- <td>itemValue</td> -->
+	                				<td>operation <a href="javascript:void(0);" onclick="toAddItem();">+</a></td>
+	                			</tr>
+                				<c:forEach items="${meetVideoRoomVO.videoItemList}" var="object" varStatus="status">
+                					<tr>
+                						<td  style="display: none"><input type="text" value='${item.itemKey }' name="oldItemKey"/></td>
+                						<td><input readonly="readonly" name="itemKey" value="${item.itemKey}"/></td>
+	                					<td><input readonly="readonly" name="itemValue" value="${item.itemValue}"/></td>
+	                					<td><a href="javascript:void(0);" onclick="updateItem(this,'${item.itemKey }','${index.index}')">修改</a>|<a href="javascript:void(0);" onclick="deleteObjectItem('${item.objectNo}','${item.itemKey}')">删除</a></td>
+                						
+                						<td  style="display: none"><input type="text" value='${object.itemKey }' name="oldItemKey"/></td>
+	                					<td hidden="hidden" ><input readonly="readonly" type="text" name="itemKey" value='${object.itemKey}' /></td>
+	                					<td hidden="hidden" ><input  type="text" name="itemValue" value='${object.itemValue}' ></td>
+										<td hidden="hidden" >${fn:replace(object.itemValue, '\\\"', '"')}</td >
+										<td >${object.itemKey}</td >
+		                      			<td><a href="javascript:void(0);" onclick="updateItem(this,'${object.itemKey }',' ${ status.index}')">修改</a>|<a href="javascript:void(0);" onclick="deleteObjectItem('${object.objectNo}','${object.itemKey}')">删除</a></td>
+                					
+                					
+                					</tr>
+                				</c:forEach>
+                			</c:if>
+                		</table>
+                	
+                	</td>
+                </tr> --%>
+                <tr>
+                    <td colspan="2" class="text-center">
+                        <button type="submit" class="btn btn-success" onclick="submit();">提交</button>
+                        <button type="button" class="btn btn-danger" onclick="history.go(-1)">返回</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </form>
+        </div>
+    </div>
+	
+</div>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>zcr</title>
+    <link href="<%=request.getContextPath()%>/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mt50{margin-top:50px;}
+        .mt20{margin-top:20px;}
+        .ml30{margin-left:30px;}
+    </style>
+</head>
+<body>
+<form action="meet/deleteMeetRoom.do" name="listForm"></form>
+<div class="container-full">
+	<input type="hidden" name="meetRoomVO.confid" value="${meetRoomVO.confid }"/>
+    <div class="row">
+        <div class="col-md-12 mt20">
+            <label>主持人：${meetRoomVO.compereName }</label>
+            <%-- <button type="button" class="btn btn-success ml30" onclick="inviteJonConf('${meetRoomVO.confid }')">邀请</button> --%>
+            <button type="button" class="btn btn-danger" onclick="dismissConf('${meetRoomVO.confid }')">解散</button>
+            <aa:zone name="recordButtonZone">
+	            <c:if test="${meetRoomVO.recording != 2}">
+		            <button type="button" class="btn btn-danger" onclick="confRecord('${meetRoomVO.confid }',1)">开始录音</button>
+	            </c:if>
+	            <c:if test="${meetRoomVO.recording == 2}">
+		            <button type="button" class="btn btn-danger" onclick="confRecord('${meetRoomVO.confid }',2)">停止录音</button>
+	            </c:if>
+            </aa:zone>
+            <button type="button" class="btn btn-danger" onclick="clickDiv()">刷新</button>
+            <p>会议名称：${meetRoomVO.confName }</p>
+            <p>会议号：${meetRoomVO.confid }</p>
+            <p>会议开始时间：${meetRoomVO.createdDate }</p>
+            
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 mt20">
+        	<aa:zone name="callListZone">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                        <th>人名</th>
+                        <th>手机号码</th>
+                        <th>进入会议时间</th>
+                        <th>是否举手(1：是，0：否)</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                	<c:if test="${meetRoomVO.meetCallVOList!=null }">
+                		<c:forEach items="${meetRoomVO.meetCallVOList}" var="callVO" varStatus="index">
+                			<tr>
+		                        <td>${callVO.customerName}</td>
+		                        <td>${callVO.customerPhoneNo}</td>
+		                        <td>${callVO.jointime}</td>
+		                        <td> 
+		                        	<c:if test="${callVO.isHandsUp==1}">
+		                        		是
+		                        	</c:if>
+		                        	<c:if test="${callVO.isHandsUp==0}">
+		                        		否
+		                        	</c:if>
+		                        </td>
+		                        <td>
+		                        	<input type="hidden" name="customerId" value="${callVO.customerId}"/>
+		                        	<c:if test="${callVO.isBanVoice == '0' }">
+			                            <button type="button" class="btn btn-info" onclick="operation(1,'${callVO.callSid}')">
+			                                <span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span> 静音
+			                            </button>
+		                        	</c:if>
+		                        	<c:if test="${callVO.isBanVoice == '1' }">
+		                        		<button type="button" class="btn btn-success" onclick="operation(2,'${callVO.callSid}')">
+			                                <span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> 取消静音
+			                            </button>
+		                        	</c:if>
+		                            <button type="button" class="btn btn-danger" onclick="operation(3,'${callVO.callSid}')">
+		                                <span class="glyphicon glyphicon-log-out" aria-hidden="true"></span> 强制退出
+		                            </button>
+		                        </td>
+		                    </tr>
+                		</c:forEach>
+                	</c:if>
+                </tbody>
+            </table>
+            </aa:zone>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+ <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/aa.js"></script>
+ <script type="text/javascript" language="javascript">
+ 
+ 	ajaxAnywhere.formName="listForm";
+	ajaxAnywhere.getZonesToReload = function(){
+		return "callListZone";
+	} 
+	
+	window.onload=function(){
+		
+	} 
+	
+	function clickDiv(){
+		var confid = $("[name='meetRoomVO.confid']").val();
+		var urlstr="meet/refreshCallData.do";
+		var f=document.forms[0];
+		f.action=urlstr+"?confid="+confid;
+		ajaxAnywhere.submitAJAX();
+	}
+	
+	function operation(flag,callid)
+	{
+		var confid = $("[name='meetRoomVO.confid']").val();
+		if(flag==1){
+ 			urlstr = "meet/banVoice.do";
+ 		}else if(flag==2){
+ 			urlstr = "meet/cancellVoice.do";
+ 		}else if(flag==3){
+ 			urlstr = "meet/quitMeetRoom.do";
+ 		}
+		var f=document.forms[0];
+		f.action=urlstr+"?callid="+callid+"&confid="+confid;
+		ajaxAnywhere.submitAJAX();
+	} 
+	
+	function dismissConf(confid){
+		$.ajax({
+  			url:'meet/deleteMeetRoom.do',
+  			contentType : 'application/json',
+  			type:'GET',
+  			data:{
+  				'confid' : confid
+  			},
+			success:function(data){
+				if(data.resultCode=="1"){
+					alert("操作成功！");
+					window.location="meet/toMeetRoomList.do";
+				}else if(data.resultCode=="2"){
+					alert("该会议已经不存在！");
+					window.location="meet/toMeetRoomList.do";
+				}else{
+					alert("解除失败");
+				}
+			}
+  		}); 
+	}
+	
+	function inviteJonConf(confid){
+		var f=document.forms[0];
+		f.action="meet/inviteJonConf.do?phoneNos=18664304421%2318124198805&confid="+confid;
+		ajaxAnywhere.submitAJAX();
+	}
+	
+	function confRecord(confid,flag){
+		var f=document.forms[0];
+		ajaxAnywhere.getZonesToReload = function(){
+			return "recordButtonZone";
+		} 
+		if(flag==1){
+			f.action="meet/startConfRecord.do?confid="+confid;
+		}else{
+			f.action="meet/stopConfRecord.do?confid="+confid;
+		}
+		ajaxAnywhere.submitAJAX();
+	}
+ 	 //禁音、取消禁音、强制退出
+ 	 /*function operation(flag,callid){
+		flag = 2;
+ 		var confid = $("[name='meetRoomVO.confid']").val();
+ 		var urlstr = "";
+ 		if(flag==1){
+ 			urlstr = "meet/banVoice.do";
+ 		}else if(flag==2){
+ 			urlstr = "meet/cancellVoice.do";
+ 		}else{
+ 			
+ 		}
+ 		$.ajax({
+  			url:urlstr,
+  			contentType : 'application/json',
+  			type:'GET',
+  			data:{
+  				'callid' : callid,
+  				'confid' : confid
+  			},
+			success:function(data){
+				alert(data);
+				if(data.resultCode=="1"){
+					alert("操作成功！");
+					
+					
+					
+				}
+			}
+  		}); 
+ 	}*/
+ </script>

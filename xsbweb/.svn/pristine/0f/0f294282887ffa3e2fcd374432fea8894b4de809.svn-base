@@ -1,0 +1,1095 @@
+package com.xsbweb.controller.app;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.xsbweb.common.bean.ResultCode;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.service.CompanyService;
+import com.xsbweb.service.LoginRegisterService;
+import com.xsbweb.service.TrsProjectService;
+import com.xsbweb.service.XSBBaseService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MD5;
+import com.xsbweb.util.SmsUtil;
+import com.xsbweb.vo.Company;
+import com.xsbweb.vo.CompanyAsset;
+import com.xsbweb.vo.Customer;
+import com.xsbweb.vo.ProjectItem;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.TrsProject;
+import com.xsbweb.vo.extend.CustomerVO;
+import com.xsbweb.vo.extend.XSBTotalVO;
+
+@Controller
+public class AppTrsProjectController {
+
+	private Logger log = Logger.getLogger(AppTrsProjectController.class);
+	
+	@Autowired
+	private TrsProjectService trsProjectService;
+	
+	@Autowired
+	private XSBBaseService xsbBaseService;
+	
+	@Autowired
+	private CompanyService companyService;
+	
+	@Autowired
+	private LoginRegisterService loginRegisterService;
+	
+	/**
+	 * 进入路演大厅首页
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/toRoadShowIndex.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> toRoadShowIndex(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam(value="projectType",required=false) String projectType
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		TrsProject trsProject = new TrsProject();
+		trsProject.setPageNo(1);
+		trsProject.setPageSize(10);
+		List<RObject> trsProjectList = null;
+		List<RObject> srcollerList = null;
+		XSBTotalVO xsbTotalVO = null;
+		try {
+			//获取的是路演中的项目列表
+			trsProjectList = trsProjectService.getProjectList(trsProject,CommonUtils.isBlank(projectType)?"1":projectType);
+			//获取路演大厅轮播集合
+			srcollerList = trsProjectService.getIndexScrollList();
+			//获取浏览量、注册量
+			
+			xsbTotalVO = xsbBaseService.getSqlServerDataTotal();
+			
+			XSBTotalVO xsbTotalVO2 = xsbBaseService.getXSBTotalOfRoadIndex();
+			if(xsbTotalVO2!=null){
+				xsbTotalVO.setViewCounts(xsbTotalVO2.getViewCounts()+xsbTotalVO.getViewCounts());
+				xsbTotalVO.setCustomerCounts(xsbTotalVO2.getCustomerCounts());
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("trsProjectList", trsProjectList);
+			map.put("srcollerList", srcollerList);
+			map.put("xsbTotalVO", xsbTotalVO);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取路演大厅的项目列表
+	 * @param projectType  1:路演中，2：成功案例
+	 * @param pageNo
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getProjectList.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getProjectList(
+			HttpServletRequest request,
+			@RequestParam("projectType") String projectType,
+			@RequestParam("pageNo") Integer pageNo,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam(value="industryCode",required=false) String industryCode
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(pageNo==null ||CommonUtils.isBlank(projectType)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		TrsProject trsProject = new TrsProject();
+		trsProject.setPageNo(pageNo);
+		trsProject.setPageSize(10);
+		List<RObject> trsProjectList = null;
+		try {
+			//industryCode如果有值，则说明是行业过滤筛选
+			if(CommonUtils.isBlank(industryCode)){
+				trsProjectList = trsProjectService.getProjectList(trsProject,projectType);
+				for(RObject rObject : trsProjectList){
+					log.info("ObjectId："+rObject.getObjectId());
+					log.info("pv："+rObject.getPv());
+					log.info("projApplyCounts："+rObject.getPv());
+				}
+			}else{
+				trsProjectList = trsProjectService.getProjectListByIndustry(pageNo, 10, industryCode, projectType);
+				for(RObject rObject : trsProjectList){
+					log.info("ObjectId："+rObject.getObjectId());
+					log.info("pv："+rObject.getPv());
+					log.info("projApplyCounts："+rObject.getPv());
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("trsProjectList", trsProjectList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取首页轮播集合
+	 * @param pageNo
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getIndexScrollList.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getIndexScrollList(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			List<RObject> srcollerList = trsProjectService.getIndexScrollList();
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("srcollerList", srcollerList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据项目No获取项目详细信息
+	 * @param projectNo
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getProjectByNo.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getProjectByNo(
+			HttpServletRequest request,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(loginMethod)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		TrsProject trsProject = null;
+		try {
+			trsProject = trsProjectService.getProjectByNo(projectNo);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("trsProject", trsProject);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据项目No获取item列表
+	 * @param projectNo
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/projectItems/{projectNo}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getProjectItemListByNo(
+			HttpServletRequest request,
+			@PathVariable("projectNo") String projectNo,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam(value="objectType",required=false) String objectType
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(loginMethod)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<ProjectItem> projectItemList = null;
+		try {
+			ProjectItem projectItem = new ProjectItem();
+			projectItem.setObjectNo(projectNo);
+			projectItem.setObjectType(objectType);
+			projectItemList = trsProjectService.getProjectItemListByNo(projectItem);
+			if(projectItemList!=null && !projectItemList.isEmpty()){
+				//符文本中图片格式处理
+				for (ProjectItem pm : projectItemList) {
+					if(CommonUtils.isNotBlank(pm.getItemValue())){
+						if(pm.getItemValue().indexOf("/Files/")>0){
+							pm.setItemValue(pm.getItemValue().replace("/Files/", XsbBusinessConstant.DYLY_URL + "/Files/"));
+						}else{
+							pm.setItemValue(pm.getItemValue().replace("/dyly/", XsbBusinessConstant.DYLY_URL+"/"));
+						}
+					}
+				}
+				
+				//如果是公司概况webview只查路演信息
+				if("gk".equals(objectType)){
+					List<ProjectItem> pitem = new ArrayList<ProjectItem>();
+					for (int i = 0; i < projectItemList.size(); i++) {
+						if("路演信息".equals(projectItemList.get(i).getItemKey().trim())){
+							pitem.add(projectItemList.get(i));
+							break;
+						}
+					}
+					map.put("projectItemList", pitem);
+				}else{
+					//公司挂牌，暂时把路演信息去掉
+					for (int i = 0; i < projectItemList.size(); i++) {
+						if("路演信息".equals(projectItemList.get(i).getItemKey().trim())){
+							projectItemList.remove(i);
+							i--;
+						}
+					}
+					map.put("projectItemList", projectItemList);
+				}
+			}else{
+				map.put("projectItemList", new ArrayList<ProjectItem>());
+			}
+			//路演大厅里面公司介绍，要加公司简介（公司挂牌，券商的要求）
+			if(CommonUtils.isNotBlank(objectType) && "project".equals(objectType)){
+				TrsProject trsProject = trsProjectService.getProjectListByProjectNo(projectNo);
+				if(trsProject!=null){
+					Map<String,Object> trsProjectMap = new HashMap<String,Object>();
+					trsProjectMap.put("projCpFullname", trsProject.getProjCpFullname());
+					trsProjectMap.put("onlineDate", trsProject.getProjOnlineDate());
+					trsProjectMap.put("pv", trsProject.getProjPv());
+					trsProjectMap.put("tips", "第一路演");
+					map.put("trsProject", trsProjectMap);
+				}
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据stockId获取路演信息
+	 * @param projectNo
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getProjectCompanyInfo.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getProjectCompanyInfo(
+			HttpServletRequest request,
+			@RequestParam("stockId") String stockId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		Company company = null;
+		try {
+			company = companyService.getProjCompanyByPrc(stockId);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+			map.put("company", company==null?new Company():company);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	//----------------------秒杀报名接口  begin---------------------------------------
+	
+	/**
+	 * 是否已经报名
+	 * @param projectNo
+	 * @param tmpToken
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/isApplyJoinRoad.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> isApplyJoinRoad(
+			HttpServletRequest request,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerId)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		int counts=0;
+		try {
+			counts = trsProjectService.isApplyJoinRoad(customerId,projectNo);
+			if(counts>0){
+				map.put("isApply", "1");
+			}else{
+				map.put("isApply", "0");
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	
+	/**
+	 * 已登录用户报名
+	 * @param projectNo
+	 * @param customerId
+	 * @param tmpToken
+	 * @param loginMethod
+	 * @param customerPhoneNo
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/applyJoinRoadById.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> applyJoinRoadById(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam(value="customerType",required=false) String customerType,
+			@RequestParam("customerName") String customerName,
+			@RequestParam("phoneNo") String phoneNo,
+			@RequestParam("customerEmail") String customerEmail,
+			@RequestParam("customerCompany") String customerCompany,
+			@RequestParam("customerPosition") String customerPosition,
+			@RequestParam(value="capitalScale",required=false) String capitalScale,
+			@RequestParam(value="gzIndustry",required=false) String gzIndustry,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("tmpToken") String tmpToken,
+			@RequestParam("customerPhoneNo") String customerPhoneNo
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(tmpToken)||CommonUtils.isBlank(customerId)
+				||CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(customerName)
+				||CommonUtils.isBlank(phoneNo)||CommonUtils.isBlank(customerEmail)
+				||CommonUtils.isBlank(customerCompany)||CommonUtils.isBlank(customerPosition)
+				||CommonUtils.isBlank(tmpToken)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		/**
+		 * 处理逻辑：判断提交的手机号是否与当前登录人的手机号一致，如果一致则修改信息，如果不一致则给这个手机号码注册一个新账号
+		 */
+		
+		int counts=0;
+		try {
+			//初始化VO
+			CustomerVO customerVO = new CustomerVO();
+			customerVO.setCustomerId(customerId);
+			customerVO.setCustomerPhoneNo(phoneNo);
+			customerVO.setCustomerEmail(customerEmail);
+			customerVO.setCustomerName(customerName);
+			customerVO.setCustomerPosition(customerPosition);
+			customerVO.setCapitalScale(capitalScale);
+			customerVO.setCustomerCompany(customerCompany);
+			if(CommonUtils.isNotBlank(gzIndustry)){
+				customerVO.setGzIndustry(Long.valueOf(gzIndustry));
+			}
+			if(CommonUtils.isNotBlank(customerType)){
+				customerVO.setCustomerType(customerType);
+			}
+			/*//检查ID是否存在
+			CustomerVO cv = loginRegisterService.getCustomerById(customerId);
+			if(cv==null){
+				map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_ID_NULL);
+				return map;
+			}*/
+			//如果提交的手机号码与当前用户手机号码相同，则修改用户信息,
+			if(phoneNo.equals(customerPhoneNo)){
+				counts = trsProjectService.applyJoinRoadById(customerId, projectNo);
+				if(counts==3){
+					//已报名
+					map.put(ResultCode.RESULT_CODE, ResultCode.PROJECT_IS_APPLY);
+					return map;
+				}else 
+					if(counts!=3 && counts>0){
+					//修改用户信息
+					try {
+						int updCustomer = loginRegisterService.updateCustomerInfo(customerVO);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						log.info("##############秒杀报名时,手机号为："+phoneNo+",修改用户信息失败！！！！！");
+						counts = 1;
+					}
+				}
+			}else{//提交的手机号码与当前用户手机号码不相同,则注册新账号
+				//先判断是否已注册
+				String newPhoneId = loginRegisterService.getCustomerIdByPhoneOrMail(phoneNo);
+				//如果存在则返回结果，提示去登录报名
+				if(CommonUtils.isNotBlank(newPhoneId)){
+					map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_EXIST);
+					return map;
+				}
+				//初始密码sxb加随机数
+				String hint = "xsb"+SmsUtil.randomFor6p();
+				customerVO.setCustomerPassword(MD5.get(hint));
+				//新增的时候customerId需要为空
+				customerVO.setCustomerId("");
+				Integer registerFlag = loginRegisterService.register(customerVO);
+				if(registerFlag>0){
+					log.info("############游客：秒杀报名，注册成功！");
+					String custId = loginRegisterService.getCustomerIdByPhoneOrMail(phoneNo);
+					if(CommonUtils.isBlank(custId)){
+						//如果这里custId为空的话应该时候service层和持久层有问题，先算系统错误
+						map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+						log.info("##############秒杀报名注册成功后,根据手机号"+phoneNo+"获取用户ID失败！！！");
+						return map;
+					}
+					//报名
+					counts = trsProjectService.applyJoinRoadById(custId, projectNo);
+					if(counts==3){
+						//已报名
+						map.put(ResultCode.RESULT_CODE, ResultCode.PROJECT_IS_APPLY);
+						return map;
+					}else if(counts!=3 && counts>0){
+						String content = "您可以用账号(手机号码)登录官网，初始密码是："+hint+"。【第一路演】";
+						//发送短信，注册密码
+						String resultStr = SmsUtil.sendPhoneSms(phoneNo, content);
+						if(!"success".equals(resultStr)){
+							log.info("##############注册成功短信发送失败！");
+						}
+					}
+				}else{
+					//注册失败
+					log.info("############游客：秒杀报名，注册失败！手机号："+phoneNo);
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+				}
+			}
+			//报名
+			if(counts>0 && counts!=3){
+				map.put("isApply", "1");
+				//发送短信给项目经理
+				TrsProject trsProject = trsProjectService.getProjectByNo(projectNo);
+				if(trsProject!=null){
+					StringBuffer content2 = new StringBuffer();
+					content2.append("项目[")
+					.append(trsProject.getProjName())
+					.append("]已有人报名，姓名：").append(customerName)
+					.append(" 手机号：").append(customerPhoneNo)
+					.append("。【第一路演】");
+					//String resultStr2 = SmsUtil.sendPhoneSms("18124198820", content2.toString());
+					String resultStr2 = SmsUtil.sendPhoneSms(trsProject.getStaffInfo().get("staffPhone"), content2.toString());
+					if(!"success".equals(resultStr2)){
+						log.info("##############发送项目经理短信失败！");
+					}
+				}
+			}else{
+				map.put("isApply", "0");
+			}
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	
+	/**
+	 *  没有登录的用户报名
+	 * @param loginMethod
+	 * @param projectNo
+	 * @param customerType
+	 * @param customerName
+	 * @param customerPhoneNo
+	 * @param customerEmail
+	 * @param customerCompany
+	 * @param customerPosition
+	 * @param capitalScale
+	 * @param gzIndustry
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/app/project/applyJoinRoad.do",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> applyJoinRoadBy(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam(value="customerType",required=false) String customerType,
+			@RequestParam("customerName") String customerName,
+			@RequestParam("customerPhoneNo") String customerPhoneNo,
+			@RequestParam("customerEmail") String customerEmail,
+			@RequestParam("customerCompany") String customerCompany,
+			@RequestParam("customerPosition") String customerPosition,
+			@RequestParam(value="capitalScale",required=false) String capitalScale,
+			@RequestParam(value="gzIndustry",required=false) String gzIndustry
+			) throws Exception{
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(customerPhoneNo)||CommonUtils.isBlank(loginMethod)
+				||CommonUtils.isBlank(customerName)||CommonUtils.isBlank(customerEmail)
+				||CommonUtils.isBlank(customerCompany)||CommonUtils.isBlank(customerPosition)){
+			log.info("###########getProjectByNo(projectNo)访问参数错误###########");
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		int counts=0;
+		try {
+			//验证是否已注册
+			String customerId = loginRegisterService.getCustomerIdByPhoneOrMail(customerPhoneNo);
+			if(CommonUtils.isNotBlank(customerId)){
+				map.put(ResultCode.RESULT_CODE, ResultCode.CUSTOMER_EXIST);
+				return map;
+			 }
+			log.info("#####################关注行业："+gzIndustry);
+			String hint = "xsb"+SmsUtil.randomFor6p();
+			//没注册就注册改用户
+			CustomerVO customerVO= new CustomerVO();
+			customerVO.setCustomerName(customerName);
+			//初始密码sxb加随机数
+			customerVO.setCustomerPassword(MD5.get(hint));
+			customerVO.setCustomerType(customerType);
+			customerVO.setCapitalScale(capitalScale);
+			customerVO.setGzIndustry(Long.valueOf(gzIndustry));
+			customerVO.setCustomerCompany(customerCompany);
+			customerVO.setCustomerPhoneNo(customerPhoneNo);
+			customerVO.setCustomerPosition(customerPosition);
+			Integer registerFlag = loginRegisterService.register(customerVO);
+			if(registerFlag>0){
+				log.info("############游客：秒杀报名，注册成功！");
+				String custId = loginRegisterService.getCustomerIdByPhoneOrMail(customerPhoneNo);
+				counts = trsProjectService.isApplyJoinRoad(custId,projectNo);
+				//是否已报名
+				int isApply = trsProjectService.isApplyJoinRoad(customerId,projectNo);
+				if(isApply>0){
+					map.put(ResultCode.RESULT_CODE, ResultCode.PROJECT_IS_APPLY);
+				}else{
+					counts = trsProjectService.applyJoinRoadById(customerId, projectNo);
+					if(counts>0){
+						map.put("isApply", "1");
+					}else{
+						map.put("isApply", "0");
+					}
+					map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+				}
+				//发送短信给用户，注册密码
+				String content = "您可以用账号(手机号码)登录官网，初始密码是："+hint+"。【第一路演】";
+				String resultStr = SmsUtil.sendPhoneSms(customerPhoneNo, content);
+				if(!"success".equals(resultStr)){
+					log.info("##############注册成功短信发送失败！");
+				}
+				//发送短信给项目经理
+				TrsProject trsProject = trsProjectService.getProjectByNo(projectNo);
+				if(trsProject!=null){
+					StringBuffer content2 = new StringBuffer();
+					content2.append("项目[")
+					.append(trsProject.getProjName())
+					.append("]已有人报名,姓名：").append(customerName)
+					.append(" 手机号：").append(customerPhoneNo)
+					.append("。【第一路演】");
+					//String resultStr2 = SmsUtil.sendPhoneSms("18124198820", content2.toString());
+					log.info(trsProject.getStaffInfo().get("staffPhone"));
+					String resultStr2 = SmsUtil.sendPhoneSms(trsProject.getStaffInfo().get("staffPhone"), content2.toString());
+					if(!"success".equals(resultStr2)){
+						log.info("##############发送项目经理短信失败！");
+					}
+				}
+			}else{
+				//注册失败
+				log.info("############游客：秒杀报名，注册失败！手机号："+customerPhoneNo);
+				map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_FAIL);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 获取报名项目的用户列表
+	 * @param projectNo
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getApplyProjectCustomerList.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getApplyProjectCustomerList(
+			HttpServletRequest request,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		List<Map<String,String>> customerList = new ArrayList<Map<String,String>>();
+		try {
+			List<Customer> custList = trsProjectService.getApplyProjectCustomerList(projectNo);
+			if(customerList!=null && !custList.isEmpty()){
+				for (Customer customer : custList) {
+					if(customer!=null){
+						Map<String,String> obj = new HashMap<String,String>();
+						obj.put("customerId", customer.getCustomerId());
+						obj.put("customerName", customer.getCustomerName());
+						obj.put("customerPhoneNo", customer.getCustomerPhoneNo());
+						obj.put("headPicPath", customer.getHeadPicPath());
+						customerList.add(obj);
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}
+		map.put("customerList", customerList);
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	//----------------------秒杀报名接口 end-----------------------------------------
+	/**
+	 * 获取公司财务指标
+	 * @param loginMethod
+	 * @param stockId
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/getCompanyAssetByStockId.do",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getCompanyAssetByStockId(
+			HttpServletRequest request,
+			@RequestParam("loginMethod") String loginMethod,
+			@RequestParam("stockId") String stockId
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(stockId)||CommonUtils.isBlank(loginMethod)
+				){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		CompanyAsset companyAsset = null;
+		try {
+			companyAsset = trsProjectService.getCompanyAssetByStockId(stockId);
+			map.put("companyAsset", companyAsset);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	/**
+	 * 根据no获取PE风云信息
+	 * @param projectNo
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/pe/{peNo}",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getPEByNo(
+			HttpServletRequest request,
+			@PathVariable("peNo") String projectNo,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo)||CommonUtils.isBlank(loginMethod)
+				){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			TrsProject trsProject = trsProjectService.getPEByNo(projectNo);
+			Map<String,Object> peMap = new HashMap<String,Object>();
+			if(trsProject!=null){
+				peMap.put("peNo", trsProject.getProjectNo());
+				peMap.put("peName", trsProject.getProjCpFullname());
+				peMap.put("peMediaPath", trsProject.getProjMediaPath());
+				peMap.put("shareMediaParth", trsProject.getShareMediaPath());
+				peMap.put("onlinDate", trsProject.getProjOnlineDate());
+				List<TrsMedia> meidaList = trsProject.getTrsMediaList();
+				if(meidaList!=null && !meidaList.isEmpty()){
+					peMap.put("peLocation", meidaList.get(0).getMediaLocation());
+				}
+			}
+			map.put("itemList", trsProject.getItemList());
+			map.put("peMap", peMap);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	/**
+	 * 获取PE风云集合
+	 * @param pageNo
+	 * @param pageSize
+	 * @param searchDate
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/pe/list",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getPEList(
+			HttpServletRequest request,
+			@RequestParam("pageNo") Integer pageNo,
+			@RequestParam("pageSize") Integer pageSize,
+			@RequestParam(value="searchDate",required=false) String searchDate,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(pageNo==null||CommonUtils.isBlank(loginMethod)||pageSize==null
+				){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			List<TrsProject> trsProjects = trsProjectService.getPEByList(pageSize, pageNo, searchDate);
+			List<Map<String,String>> peList = new ArrayList<Map<String,String>>();
+			if(trsProjects!=null && !trsProjects.isEmpty()){
+				for (TrsProject tp : trsProjects) {
+					Map<String,String> peMap = new HashMap<String,String>();
+					peMap.put("onlineDate", tp.getProjOnlineDate());
+					peMap.put("peName", tp.getProjCpFullname());
+					peMap.put("peNo", tp.getProjectNo());
+					/*List<TrsMedia> meidaList = tp.getTrsMediaList();
+					if(meidaList!=null && !meidaList.isEmpty()){
+						peMap.put("peLocation", meidaList.get(0).getMediaLocation());
+					}*/
+					peList.add(peMap);
+				}
+			}
+			map.put("peList", peList);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}
+		map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		return map;
+	}
+	
+	/**
+	 * 敲钟列表获取接口
+	 * @param request
+	 * @param searchDate 日期查询条件，格式：yyyyMMdd
+	 * @param searchLabel 敲钟搜索条件，机制：全量查stockId，模糊匹配公司简称
+	 * @param pageNo
+	 * @param pageSize
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/qz/list",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getQZList(
+			HttpServletRequest request,
+			@RequestParam(value="searchDate",required=false) String searchDate,
+			@RequestParam(value="searchLabel",required=false) String searchLabel,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		if(CommonUtils.isBlank(loginMethod)){
+			//参数错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			TrsProject trsProject = new TrsProject();
+			if(CommonUtils.isBlank(searchDate)){
+				//searchDate = CommonUtils.getNowDateStringOf8();
+			}
+			trsProject.setPageNo(pageNo==null?1:pageNo);
+			trsProject.setPageSize(pageSize==null?6:pageSize);
+			trsProject.setProjOnlineDate(searchDate);
+			trsProject.setProjName(searchLabel);
+			//取敲钟数据集合
+			List<TrsProject> qzlist = trsProjectService.getQZProjectList(trsProject);
+			if(qzlist==null || qzlist.isEmpty()){
+				//暂时解决app闪退问题，如果当前时间无敲钟数据，就去前面的
+				TrsProject trsProject2 = new TrsProject();
+				trsProject2.setPageNo(pageNo==null?1:pageNo);
+				trsProject2.setPageSize(pageSize==null?6:pageSize);
+				trsProject2.setProjOnlineDate("");
+				trsProject2.setProjName(searchLabel);
+				qzlist = trsProjectService.getQZProjectList(trsProject2);
+				//---------------------------------------
+			}
+			List<Map<String,Object>> result = new ArrayList<Map<String,Object>>();
+			if(qzlist!=null && !qzlist.isEmpty()){
+				Map<String,Object> qzmap = null;
+				for (TrsProject trsProject2 : qzlist) {
+					if(CommonUtils.isBlank(trsProject2.getProjOnlineDate())){
+						continue;
+					}
+					qzmap = new HashMap<String,Object>();
+					//当为状态为预告的时候
+					if("2".equals(trsProject2.getProjShowStatus())){
+						//计算2个日期之间的时间差
+						String timeof = CommonUtils.dateOfTwo(new Date(), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(trsProject2.getProjOnlineDate()));
+						qzmap.put("timeof",timeof);
+					}else if("1".equals(trsProject2.getProjShowStatus())){
+						qzmap.put("timeof","LIVE");
+					}
+					else if("3".equals(trsProject2.getProjShowStatus())){
+						qzmap.put("timeof","精彩回放");
+					}
+					//股票id
+					qzmap.put("stockId", trsProject2.getProjCpCode());
+					//公司简称
+					qzmap.put("projName", trsProject2.getProjName());
+					//直播开始时间
+					String onlineDate = trsProject2.getProjOnlineDate();
+					if(CommonUtils.isNotBlank(trsProject2.getProjOnlineDate())){
+						onlineDate = onlineDate.substring(5, 16);
+					}
+					qzmap.put("onlineDate", onlineDate);
+					//浏览量
+					qzmap.put("pv", trsProject2.getProjPv());
+					//图片地址
+					qzmap.put("projMediaPath", trsProject2.getProjMediaPath());
+					qzmap.put("shareMediaPath", trsProject2.getShareMediaPath());
+					qzmap.put("projectTitle", trsProject2.getProjectTitle());
+					qzmap.put("projectExTitle", trsProject2.getProjectExTitle());
+					//精彩回放，优酷视频code
+					qzmap.put("youkuCode", trsProject2.getYoukuCode());
+					//敲钟直播地址
+					qzmap.put("projectCpUrl", trsProject2.getProjCpUrl());
+					//直播状态 1：直播中，2：预告，3：精彩回放
+					qzmap.put("projShowStatus", trsProject2.getProjShowStatus());
+					//行业
+					qzmap.put("projectDesc", trsProject2.getProjectDesc());
+					//敲钟编号
+					qzmap.put("projectNo", trsProject2.getProjectNo());
+					result.add(qzmap);
+				}
+			}
+			map.put("qzlist", result);
+		} catch (Exception e) {
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	@RequestMapping(value="/app/poject/industrySearch",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> industrySearch(
+			HttpServletRequest request,
+			@RequestParam(value="pageNo",required=false) Integer pageNo,
+			@RequestParam(value="pageSize",required=false) Integer pageSize,
+			@RequestParam(value="code",required=false) String code,
+			@RequestParam(value="type",required=false) String type,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		if(pageNo==null){
+			pageNo = 1;
+		}
+		if(pageSize==null){
+			pageNo = 10;
+		}
+		try {
+			List<RObject> resultList = trsProjectService.getProjectListByIndustry(pageNo,pageSize,code,type);
+			map.put("resultList", resultList);
+			map.put(ResultCode.RESULT_CODE, ResultCode.RESPONSE_SUCCESS);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据项目编号数组获取对应的实时行情数据
+	 * @param request
+	 * @param projectNos
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/quotes",method=RequestMethod.POST)
+	public @ResponseBody Map<String,Object> getProjectQuotes(
+			HttpServletRequest request,
+			@RequestParam("projectNos") String projectNos,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(projectNos==null ||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			if(projectNos!=null){
+				String[] arrs = projectNos.split(",");
+				List<TrsProject> trsProjects = trsProjectService.getQuotesByProjectNos(arrs);
+				if(trsProjects!=null && !trsProjects.isEmpty()){
+					Map<String,Object> quotesMap = new HashMap<String,Object>();
+					for (TrsProject trsProject : trsProjects) {
+						if(CommonUtils.isNotBlank(trsProject.getProjDynQuotes())&&!"--".equals(trsProject.getProjDynQuotes())){
+							java.text.DecimalFormat   df   =new   java.text.DecimalFormat("#.00");  
+							String quotes = df.format(Double.valueOf(trsProject.getProjDynQuotes()));
+							quotesMap.put(trsProject.getProjectNo(),quotes);
+						}else{
+							quotesMap.put(trsProject.getProjectNo(), trsProject.getProjDynQuotes());
+						}
+					}
+					map.put("quotesmap", quotesMap);
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据项目编号获取对应的实时行情数据
+	 * @param request
+	 * @param projectNos
+	 * @param loginMethod
+	 * @return
+	 */
+	@RequestMapping(value="/app/project/quotesByNo",method=RequestMethod.GET)
+	public @ResponseBody Map<String,Object> getProjectQuotesByNo(
+			HttpServletRequest request,
+			@RequestParam("projectNo") String projectNo,
+			@RequestParam("loginMethod") String loginMethod
+			){
+		Map<String,Object> map = new HashMap<String,Object>();
+		//参数错误
+		if(CommonUtils.isBlank(projectNo) ||CommonUtils.isBlank(loginMethod)){
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_PARAMETER_ERROR);
+			return map;
+		}
+		try {
+			String quotes = trsProjectService.getQuotesByProjectNo(projectNo);
+			map.put("quotes", quotes);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//系统错误
+			map.put(ResultCode.RESULT_CODE, ResultCode.ERROR_SYSTEM);
+			e.printStackTrace();
+			return map;
+		}finally{
+			request.setAttribute(ResultCode.RESULT_OBJECT, map);
+		}
+		return map;
+	}
+	
+}

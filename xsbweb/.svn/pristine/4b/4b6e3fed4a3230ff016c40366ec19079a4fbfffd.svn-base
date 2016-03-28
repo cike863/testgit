@@ -1,0 +1,714 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.MeetRoomMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.extend.MeetRoomVO" >
+    <result column="confid" property="confid" jdbcType="VARCHAR" />
+    <result column="voiptoconfid" property="voiptoconfid" jdbcType="VARCHAR" />
+    <result column="maxmember" property="maxmember" jdbcType="INTEGER" />
+    <result column="passwd" property="passwd" jdbcType="VARCHAR" />
+    <result column="compere" property="compere" jdbcType="VARCHAR" />
+    <result column="created_date" property="createdDate" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="compere_name" property="compereName" jdbcType="VARCHAR" />
+    <result column="conf_name" property="confName" jdbcType="VARCHAR" />
+    <result column="recordurl" property="recordurl" jdbcType="VARCHAR" />
+    <result column="recordduration" property="recordduration" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="online_date" property="onlineDate" jdbcType="VARCHAR" />
+    <result column="pv" property="pv" jdbcType="INTEGER" />
+    <result column="conf_create_date" property="confCreateDate" jdbcType="VARCHAR" />
+    <result column="meet_media_no" property="meetMediaNo" jdbcType="VARCHAR" />
+    <result column="share_media_no" property="shareMediaNo" jdbcType="VARCHAR" />
+    <result column="meet_no" property="meetNo" jdbcType="VARCHAR" />
+    <result column="meet_role" property="meetRole" jdbcType="VARCHAR" />
+    <result column="is_show" property="isShow" jdbcType="VARCHAR" />
+     <result column="pic_path" property="picPath" jdbcType="VARCHAR" />
+     <result column="big_pic_no" property="bigPicNo" jdbcType="VARCHAR"  />
+    <result column="project_no" property="projectNo" jdbcType="VARCHAR"  />
+     <result column="meet_title" property="meetTitle" jdbcType="VARCHAR" />
+    <result column="meet_ex_title" property="meetExTitle" jdbcType="VARCHAR" />
+    <result column="ppt_media_no" property="pptMediaNo" jdbcType="VARCHAR" />
+    <result column="ppt_media_path" property="pptMediaPath" jdbcType="VARCHAR" />
+    <result column="meet_media_path" property="meetMediaPath" jdbcType="VARCHAR" />
+    <result column="share_media_path" property="shareMediaPath" jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigMediaPath" jdbcType="VARCHAR" />
+    <result column="proj_name" property="projName" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="videoResultMap" type="com.xsbweb.vo.extend.MeetVideoRoomVO" >
+    <result column="meet_no" property="meetNo" jdbcType="INTEGER" />
+    <result column="confid" property="confid" jdbcType="VARCHAR" />
+    <result column="conf_name" property="confName" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="show_date" property="showDate" jdbcType="VARCHAR" />
+    <result column="online_date" property="onlineDate" jdbcType="VARCHAR" />
+    <result column="pv" property="pv" jdbcType="INTEGER" />
+    <result column="conf_create_date" property="confCreateDate" jdbcType="VARCHAR" />
+    <result column="meet_media_no" property="meetMediaNo" jdbcType="VARCHAR" />
+    <result column="share_media_no" property="shareMediaNo" jdbcType="VARCHAR" />
+    <result column="big_pic_no" property="bigPicNo" jdbcType="VARCHAR"  />
+    <result column="meet_media_path" property="meetMediaPath" jdbcType="VARCHAR" />
+    <result column="share_media_path" property="shareMediaPath" jdbcType="VARCHAR" />
+    <result column="big_pic_path" property="bigMediaPath" jdbcType="VARCHAR" />
+    <result column="meet_role" property="meetRole" jdbcType="VARCHAR" />
+    <result column="activity_profile" property="activityProfile" jdbcType="VARCHAR" />
+    <result column="activity_background" property="activityBackground" jdbcType="VARCHAR" />
+    <result column="guest" property="guest" jdbcType="VARCHAR" />
+    <result column="activity_schedule" property="activitySchedule" jdbcType="VARCHAR" />
+    <result column="base_url" property="baseUrl" jdbcType="VARCHAR" />
+    <result column="meet_project_no" property="meetProjectNo" jdbcType="VARCHAR" />
+    <result column="meet_project_name" property="meetProjectName" jdbcType="VARCHAR" />
+    <result column="meet_title" property="meetTitle" jdbcType="VARCHAR" />
+    <result column="meet_ex_title" property="meetExTitle" jdbcType="VARCHAR" />
+    <result column="max_meet_person_amt" property="maxMeetPersonAmt" jdbcType="INTEGER" />
+    <result column="meet_desc" property="meetDesc" jdbcType="VARCHAR" />
+    <result column="is_show" property="isShow" jdbcType="VARCHAR" />
+    <result column="start_minute" property="startMinute" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="subAccountMap" type="com.xsbweb.vo.ImSubAccount" >
+    <result column="im_Account_id" property="imAccountId" jdbcType="VARCHAR" />
+    <result column="sub_account_sid" property="subAccountSid" jdbcType="VARCHAR" />
+    <result column="sub_token" property="subToken" jdbcType="VARCHAR" />
+    <result column="date_created" property="dateCreated" jdbcType="VARCHAR" />
+    <result column="voip_account" property="voipAccount" jdbcType="VARCHAR" />
+    <result column="voip_pwd" property="voipPwd" jdbcType="VARCHAR" />
+    <result column="customer_id" property="customerId" jdbcType="VARCHAR" />
+ 	<result column="confid" property="confid" jdbcType="VARCHAR" />
+ 	<result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+ 	<result column="customer_phone_no" property="customerPhoneNo" jdbcType="VARCHAR" />
+ 	<result column="pic_path" property="picPath" jdbcType="VARCHAR" />
+  </resultMap>
+ 
+  <sql id="Base_Column_List" >
+    meet_no,confid, voiptoconfid, maxmember, passwd, compere,created_date,status,conf_name
+  </sql>
+  
+  
+  <select id="getMeetRoomListCount" parameterType="com.xsbweb.vo.extend.MeetRoomVO" resultType="java.lang.Integer">
+  		select 
+  			count(1) 
+  		from t_rl_trs_meet_room t
+  		left join v_rl_snap_customer c on c.customer_phone_no=t.compere 
+  		where 1=1 and t.conf_name != ''
+  		<if test="confLabel !=null and confLabel !=''">
+  			and 
+  				(  t.confid like CONCAT('%',#{confLabel},'%' ) 
+  			   or  t.voiptoconfid like CONCAT('%',#{confLabel},'%' ) 
+  			   or t.compere like CONCAT('%',#{confLabel},'%' )
+  			   )
+  		</if>
+  		;
+  </select>
+  
+   <select id="getMeetRoomList" parameterType="com.xsbweb.vo.extend.MeetRoomVO" resultMap="resultMap">
+  		select 
+  			t.meet_no,
+  			t.confid, 
+  			t.voiptoconfid, 
+  			t.maxmember, 
+  			t.passwd, 
+  			t.compere,
+  			c.customer_name compere_name,
+  			date_format(t.created_date,'%Y-%c-%d %H:%i:%s') created_date,
+  			t.status,
+  			 t.meet_role,
+            CASE 
+				WHEN t.meet_role>=1024  and t.meet_role&lt;2048   THEN 2
+				WHEN t.meet_role>=2048  and t.meet_role&lt;4096  THEN 3
+				WHEN t.meet_role>=4096     THEN 1 
+				ELSE 0	end role,
+  			t.conf_name,
+  			date_format(t.show_date,'%Y-%c-%d %H:%i:%s') show_date,
+  			date_format(t.online_date,'%Y-%c-%d %H:%i:%s') online_date,
+  			if(t.pv is null or  t.pv='',0,t.pv) as pv,
+  			t.is_show 
+  		from t_rl_trs_meet_room t
+  		left join v_rl_snap_customer c on c.customer_phone_no=t.compere 
+  		where 1=1 and t.conf_name != ''
+  		<if test="confLabel !=null and confLabel !=''">
+  			and 
+  				(  t.confid like CONCAT('%',#{confLabel},'%' ) 
+  			   or  t.voiptoconfid like CONCAT('%',#{confLabel},'%' ) 
+  			   or t.compere like CONCAT('%',#{confLabel},'%' )
+  			   )
+  		</if>
+  		
+  		order by last_edit_date desc, role desc, t.online_date desc 
+  		limit #{currentRecord},#{pageSize};
+  </select>
+  
+  <select id="getMeetRoomByConfid" parameterType="java.lang.String" resultMap="resultMap">
+  		select 
+	  		<include refid="Base_Column_List"/>,
+	  		c.customer_name compere_name,
+	  		tm.media_location pic_path,
+	  		tm2.media_location ppt_media_path
+  		from t_rl_trs_meet_room
+  		left join v_rl_snap_customer c on c.customer_phone_no=compere 
+  		left join t_rl_trs_media tm on c.customer_media_no=tm.media_no 
+  		left join t_rl_trs_media tm2 on ppt_media_no=tm2.media_no 
+  		 where meet_role='2048' and confid = #{confid} 
+  		 order by online_date desc limit 0,1;   
+   </select>
+  
+   <update id="deleteMeetRoomByConfid" parameterType="java.lang.String">
+  		update t_rl_trs_meet_room set meet_role='4096',is_show='0' where confid = #{confid};
+  		
+   </update>
+   
+   <delete id="deleteForeMeetRoomByMeetNo" parameterType="java.lang.String">
+   		delete from t_rl_trs_meet_room where meet_no = #{meetNo};
+   		
+   </delete>
+   
+   <select id="getForeMeetRoomByMeetNo" parameterType="java.lang.String" resultMap="resultMap">
+   		select 
+  			t.meet_no,
+  			confid, 
+  			voiptoconfid, 
+  			maxmember, 
+  			passwd, 
+  			compere,
+  			date_format(created_date,'%Y-%c-%d %H:%i:%s') created_date,
+  			status,
+  			conf_name,
+  			date_format(show_date,'%Y-%c-%d %H:%i:%s') show_date,
+  			date_format(t.online_date,'%Y-%c-%d %H:%i:%s') online_date,
+  			if(pv is null or  pv='',0,pv) as pv,
+  			t.is_show,
+  			meet_title,
+		    meet_ex_title,
+		    t.project_no,
+		    t.big_pic_no,
+		    t.meet_media_no,
+		    t.share_media_no,	
+		    t.ppt_media_no,
+			tm3.media_location meet_media_path,
+			tm4.media_location share_media_path,
+			tm5.media_location big_pic_path,
+			tm6.media_location ppt_media_path,
+			proj_name
+  		from t_rl_trs_meet_room t
+  		left join v_rl_snap_customer c on c.customer_phone_no=compere 
+  		left join t_rl_trs_media tm on c.customer_media_no=tm.media_no 
+  		left join t_rl_trs_media tm2 on ppt_media_no=tm2.media_no 
+  		
+  		left join t_rl_trs_media tm3 on tm3.media_no=t.meet_media_no 
+		left join t_rl_trs_media tm4 on tm4.media_no=t.share_media_no 
+		left join t_rl_trs_media tm5 on tm5.media_no=t.big_pic_no 
+		left join t_rl_trs_media tm6 on tm6.media_no=t.ppt_media_no 
+		
+		left join t_rl_trs_project p on p.project_no=t.project_no
+  		where t.meet_no = #{meetNo};  		
+   </select>
+   
+   <update id="updateMeetRoomInfo" parameterType="com.xsbweb.vo.extend.MeetRoomVO">
+   		update t_rl_trs_meet_room 
+   		<set>
+   			<if test="recording != null and recording !=''" >
+		        recording = #{recording,jdbcType=VARCHAR},
+	     	</if>
+   			<if test="recordurl != null and recording !=''" >
+		        recordurl = #{recordurl,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="recordurl1 != null and recordurl1 !=''" >
+		        recordurl1 = #{recordurl1,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="recordurl2 != null and recordurl2 !=''" >
+		        recordurl2 = #{recordurl2,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="recordurl3 != null and recordurl3 !=''"  >
+		        recordurl3 = #{recordurl3,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="recordurl4 != null and recordurl4 !=''" >
+		        recordurl4 = #{recordurl4,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="recordurl5 != null and recordurl5 !=''" >
+		        recordurl5 = #{recordurl5,jdbcType=VARCHAR},
+	     	</if>
+   		  	<if test="recordduration !=null and recordduration !=''">
+   			 	recordduration=#{recordduration},
+   			</if>
+   			last_update_date = sysdate()     
+   		</set>
+   		 where confid=#{confid};
+   </update>
+   <update id="updateMeetRoomByMeetNo" parameterType="com.xsbweb.vo.extend.MeetRoomVO" >
+   	update t_rl_trs_meet_room 
+   		<set>
+   			<if test="confName != null and confName !=''" >
+		        conf_name = #{confName,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="projectNo != null and projectNo !=''" >
+		        project_no = #{projectNo,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="onlineDate != null and onlineDate !=''" >
+		        online_date = #{onlineDate,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="showDate != null and showDate !=''" >
+		        show_date = #{showDate,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="isShow != null and isShow !=''" >
+		        is_show = #{isShow,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="meetMediaNo != null and meetMediaNo !=''" >
+		        meet_media_no = #{meetMediaNo,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="shareMediaNo != null and shareMediaNo !=''" >
+		        share_media_no = #{shareMediaNo,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="bigPicNo != null and bigPicNo !=''" >
+		        big_pic_no = #{bigPicNo,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="pptMediaNo != null and pptMediaNo !=''" >
+		        ppt_media_no = #{pptMediaNo,jdbcType=VARCHAR},
+	     	</if>
+	     	
+	     	<if test="meetTitle != null and meetTitle !=''" >
+		        meet_title = #{meetTitle,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="meetExTitle != null and meetExTitle !=''" >
+		        meet_ex_title = #{meetExTitle,jdbcType=VARCHAR},
+	     	</if>
+	     	<if test="lastEditDate != null and lastEditDate !=''" >
+		        last_edit_date = sysdate()
+	     	</if>  
+   		</set>
+   		 where meet_no=#{meetNo};
+   
+   
+   
+   
+   
+   </update>
+   <select id="addMeetRoom" statementType="CALLABLE" parameterType="java.util.HashMap">
+   		call upd_meet_to_live(#{meetNo,mode=IN,jdbcType=VARCHAR},
+					            #{confid,mode=IN,jdbcType=VARCHAR},
+					            #{voiptoconfid,mode=IN,jdbcType=VARCHAR},
+					            #{maxmember,mode=IN,jdbcType=VARCHAR},
+					            #{passwd,mode=IN,jdbcType=VARCHAR},
+					            #{compere,mode=IN,jdbcType=VARCHAR},
+					            #{prcFlag,mode=OUT,jdbcType=INTEGER});
+   </select>
+   <!-- <update id="addMeetRoom" parameterType="com.xsbweb.vo.extend.MeetRoomVO">
+   		update t_rl_trs_meet_room set 
+   			confid = #{confid},
+   			voiptoconfid = #{voiptoconfid},
+   			maxmember = #{maxmember},
+   			passwd = #{passwd},
+   			compere = #{compere},
+   			conf_create_date = sysdate(),
+   			meet_role = 2048
+   		where meet_no = #{meetNo};
+   </update> -->
+   
+   <!-- 容联云账户操作 -->
+   
+   <select id="getSubAccountList" parameterType="com.xsbweb.vo.ImSubAccount" resultMap="subAccountMap">
+   		select at.*,
+   		vc.customer_name,
+   		vc.customer_phone_no
+   		from t_rl_snap_im_account at 
+   		left join v_rl_snap_customer vc on vc.customer_id = at.customer_id 
+   		where 1=1 
+   		<if test="customerName !=null and customerName !=''">
+   			and vc.customer_name = #{customerName}
+   		</if>
+   		<if test="customerName !=null and customerName !=''">
+   			and vc.customer_phone_no = #{customerPhoneNo}
+   		</if>
+   </select>
+   
+   <select id="getImSubAccount" resultMap="subAccountMap">
+   		select 
+   			im_Account_id,
+   			sub_account_sid,
+   			sub_token,
+   			date_format(date_created,'%Y-%c-%d %H:%i:%s') date_created,
+   			voip_account,
+   			voip_pwd,
+   			customer_id
+   		from t_rl_snap_im_account 
+   			where customer_id='' or  customer_id is null limit 0,1;
+   </select>
+   
+    <select id="getImSubAccountList" resultMap="subAccountMap" parameterType="java.lang.Integer">
+   		select 
+   			im_Account_id,
+   			sub_account_sid,
+   			sub_token,
+   			date_format(date_created,'%Y-%c-%d %H:%i:%s') date_created,
+   			voip_account,
+   			voip_pwd,
+   			customer_id
+   		from t_rl_snap_im_account 
+   			where customer_id is null limit 0,#{no};
+   </select>
+   
+   <update id="updateImSubAccount" parameterType="com.xsbweb.vo.ImSubAccount">
+   		update t_rl_snap_im_account acc 
+   			set acc.customer_id=(select ct.customer_id from t_rl_snap_customer ct where ct.customer_phone_no=#{customerPhoneNo} limit 0,1) 
+   		where acc.voip_account = #{voipAccount};
+   </update>
+   
+   <update id="cancelBatchImSubAccount" parameterType="com.xsbweb.vo.ImSubAccount">
+   		update t_rl_snap_im_account acc 
+   			set acc.customer_id='' 
+   		where acc.voip_account in
+   		 <foreach collection="voipAccounts" index="index" item="voipAccount" open="(" separator="," close=")">  
+	          #{voipAccount}   
+      	 </foreach>  
+   </update>
+   
+   <update id="cancelImSubAccount" parameterType="java.lang.String">
+   		update t_rl_snap_im_account acc 
+   			set acc.customer_id='' 
+   		where acc.voip_account = #{voipAccount};
+   </update>
+   
+   <insert id="insertImSubAccount" parameterType="com.xsbweb.vo.ImSubAccount">
+   		insert into t_rl_snap_im_account (
+   			im_account_id,
+   			sub_account_sid,
+   			sub_token,
+   			date_created,
+   			voip_account,
+   			voip_pwd
+   		)values(
+   			#{imAccountId},
+   			#{subAccountSid},
+   			#{subToken},
+   			str_to_date(#{dateCreated},'%Y-%m-%d %H:%i:%s'),
+   			#{voipAccount},
+   			#{voipPwd}
+   		);
+   		
+   </insert>
+   
+   <select id="getCustomerInfoByVoip" parameterType="java.lang.String" resultMap="subAccountMap">
+   		select 
+			sub.voip_account,
+			sub.customer_id,
+			vc.customer_name,
+			vc.customer_phone_no,
+			tm.media_location pic_path
+		from t_rl_snap_im_account sub 
+   			left join v_rl_snap_customer vc on vc.customer_id=sub.customer_id 
+   			left join t_rl_trs_media tm on vc.customer_media_no=tm.media_no
+   		where sub.voip_account=#{voipAccount};
+   </select>
+   
+   <select id="getCustomersByVoips"  parameterType="com.xsbweb.vo.ImSubAccount" resultMap="subAccountMap">  
+		select 
+			sub.voip_account,
+			sub.customer_id,
+			vc.customer_name,
+			vc.customer_phone_no
+		from t_rl_snap_im_account sub 
+   			left join v_rl_snap_customer vc on vc.customer_id=sub.customer_id
+		where sub.voip_account in 
+		  <foreach collection="voipAccounts" index="index" item="voipAccount" open="(" separator="," close=")">  
+	           #{voipAccount}   
+	      </foreach>  
+	</select>  
+   
+   <select id="getImSubAccountByPhones"  parameterType="com.xsbweb.vo.ImSubAccount" resultMap="subAccountMap">  
+		select 
+			sub.voip_account,
+			sub.customer_id,
+			vc.customer_name,
+			vc.customer_phone_no
+		from t_rl_snap_im_account sub 
+   			left join v_rl_snap_customer vc on vc.customer_id=sub.customer_id
+		where vc.customer_phone_no in 
+		  <foreach collection="phones" index="index" item="phone" open="(" separator="," close=")">  
+	          #{phone}   
+	      </foreach>  
+	</select> 
+	
+
+	<select id="getForeMeetRoomList"  parameterType="com.xsbweb.vo.extend.MeetRoomVO" resultMap="resultMap">  
+		select 
+			meet_no,
+			conf_name,
+			date_format(show_date,'%Y-%c-%d %H:%i:%s') show_date,
+			date_format(online_date,'%Y-%c-%d %H:%i:%s') online_date
+		from t_rl_trs_meet_room 
+		where 1=1 
+		<if test="confName!=null and confName !=''">
+			and  conf_name like CONCAT('%',#{confName},'%')
+		</if>
+	</select> 
+	<select id="addForeMeetRoom" statementType="CALLABLE" parameterType="com.xsbweb.vo.extend.MeetRoomVO" resultMap="resultMap">
+		call add_meeting_audio(#{meetMediaNo,mode=IN,jdbcType=VARCHAR},
+					            #{shareMediaNo,mode=IN,jdbcType=VARCHAR},
+					            #{bigPicNo,mode=IN,jdbcType=VARCHAR},
+					            #{showDate,mode=IN,jdbcType=VARCHAR},
+					            #{onlineDate,mode=IN,jdbcType=VARCHAR},
+					            #{confName,mode=IN,jdbcType=VARCHAR},
+					            #{meetTitle,mode=IN,jdbcType=VARCHAR},
+					            #{meetExTitle,mode=IN,jdbcType=VARCHAR},
+					            #{meetRole,mode=IN,jdbcType=VARCHAR},
+					            #{isShow,mode=IN,jdbcType=VARCHAR},    
+					            #{projectNo,mode=IN,jdbcType=VARCHAR},  
+					            #{pptMediaNo,mode=IN,jdbcType=VARCHAR},    
+					            #{meetNo,mode=OUT,jdbcType=VARCHAR},
+					            #{prcFlag,mode=OUT,jdbcType=INTEGER});
+	</select>
+	<!-- <insert id="addForeMeetRoom" parameterType="com.xsbweb.vo.extend.MeetRoomVO">
+		insert into t_rl_trs_meet_room (
+			<if test="meetMediaNo!=null">
+				meet_media_no,
+			</if>
+			<if test="shareMediaNo!=null">
+				share_media_no,
+			</if>
+			show_date,
+			online_date,
+			conf_name,
+			status,
+			created_date
+		)values(
+			<if test="meetMediaNo!=null">
+				#{meetMediaNo},
+			</if>
+			<if test="shareMediaNo!=null">
+				#{shareMediaNo},
+			</if>
+			str_to_date(#{showDate},'%Y-%c-%d'),
+			str_to_date(#{onlineDate},'%Y-%c-%d'),
+			#{confName},
+			'1',
+			sysdate()
+		)
+			
+	</insert> -->
+
+	<delete id="batchDeleteMeetRoomByMeetNos" parameterType="java.lang.String">
+		delete from t_rl_trs_meet_room where meet_no in
+		<foreach collection="array" item="meetNo" index="index"  open="(" separator="," close=")">
+			#{meetNo}
+		</foreach>	
+	</delete>
+	
+	
+	<!-- ===========================视频直播模块 begin=========================== -->
+	<select id="getVideoMeetRoomByMeetNo" parameterType="java.lang.String" resultMap="videoResultMap">
+		select 
+			t.meet_no,
+			t.confid,
+			t.conf_name,
+			t.status,
+			date_format(t.show_date,'%Y-%c-%d %H:%i') show_date,
+			date_format(t.show_date,'%Y-%c-%d %H:%i:%s') start_minute,
+			date_format(t.online_date,'%Y-%c-%d %H:%i:%s') online_date,
+			if(t.pv is null or  t.pv='',0,t.pv) + 
+        			ifnull(nullif(t.fake_count,''),0) as pv,
+			date_format(t.conf_create_date,'%Y-%c-%d %H:%i:%s') conf_create_date,
+			t.meet_media_no,
+			t.share_media_no,
+			t.big_pic_no,
+			t.meet_role,
+			t.activity_profile,
+			t.activity_background,
+			t.guest,
+			t.activity_schedule,
+			t.base_url,
+			t.meet_project_no,
+			t.meet_title,
+			t.meet_ex_title,
+			t.max_meet_person_amt,
+			t.is_show,
+			t.meet_desc,
+			tm1.media_location meet_media_path,
+			tm2.media_location share_media_path,
+			tm3.media_location big_pic_path,
+			tp.proj_name meet_project_name
+		from t_rl_trs_meet_room_video t
+		left join oltp.t_rl_trs_media tm1 on tm1.media_no=t.meet_media_no 
+ 		left join oltp.t_rl_trs_media tm2 on tm2.media_no=t.share_media_no 
+ 		left join oltp.t_rl_trs_media tm3 on tm3.media_no=t.big_pic_no 
+ 		left join oltp.t_rl_trs_project tp on tp.project_no=t.meet_project_no 
+		where t.meet_no=#{meetNo};
+	</select>
+	
+	<select id="getVideoMeetRoomList"  parameterType="com.xsbweb.vo.extend.MeetVideoRoomVO" resultMap="videoResultMap">  
+		select 
+			meet_no,
+			confid,
+			conf_name,
+			status,
+			date_format(show_date,'%Y-%c-%d %H:%i:%s') show_date,
+			date_format(online_date,'%Y-%c-%d %H:%i:%s') online_date, 
+			if(pv is null or  pv='',0,pv) as pv,
+			date_format(conf_create_date,'%Y-%c-%d %H:%i:%s') conf_create_date,
+			meet_media_no,
+			share_media_no,
+			meet_role,
+			 CASE 
+				WHEN meet_role>=128  and  meet_role&lt;256  THEN 2
+				WHEN meet_role>=256  and  meet_role&lt;512  THEN 3
+				WHEN meet_role>=512     THEN 1 
+				ELSE 0	end role,
+			activity_profile,
+			activity_background,
+			guest,
+			activity_schedule,
+			base_url
+		from t_rl_trs_meet_room_video 
+		where 1=1 and conf_name != '' 
+		<if test="confName !=null and confName !=''">
+			and  conf_name like CONCAT('%',#{confName},'%')
+		</if>
+		<if test="meetNo !=null and meetNo !=''">
+			and  meet_no like CONCAT('%',#{meetNo},'%')
+		</if>
+		 order by last_edit_date desc,role desc, online_date desc
+		limit #{currentRecord},#{pageSize};
+	</select> 	
+	<select id="getVideoMeetRoomCounts"  parameterType="com.xsbweb.vo.extend.MeetVideoRoomVO" resultType="java.lang.Integer">  
+		select 
+			count(1) 
+		from t_rl_trs_meet_room_video 
+		where 1=1 and conf_name != '' 
+		<if test="confName !=null and confName !=''">
+			and  conf_name like CONCAT('%',#{confName},'%')
+		</if>
+		<if test="meetNo !=null and meetNo !=''">
+			and  meet_no like CONCAT('%',#{meetNo},'%')
+		</if>
+	</select> 
+	
+	<select id="addForeVideoMeetRoom" statementType="CALLABLE" parameterType="java.util.HashMap">
+		call add_meeting_video(
+								 #{confName,mode=IN,jdbcType=VARCHAR},
+								 #{onlineDate,mode=IN,jdbcType=VARCHAR},
+								 #{showDate,mode=IN,jdbcType=VARCHAR},
+								 #{isShow,mode=IN,jdbcType=VARCHAR},
+								#{meetMediaNo,mode=IN,jdbcType=VARCHAR},
+					            #{shareMediaNo,mode=IN,jdbcType=VARCHAR},
+					            #{bigPicNo,mode=IN,jdbcType=VARCHAR},
+					            #{meetTitle,mode=IN,jdbcType=VARCHAR},
+					            #{meetExTitle,mode=IN,jdbcType=VARCHAR},
+					            #{meetProjectNo,mode=IN,jdbcType=VARCHAR},
+					            #{meetRole,mode=IN,jdbcType=VARCHAR},
+                    			#{baseUrl,mode=IN,jdbcType=VARCHAR},
+					            #{meetNo,mode=OUT,jdbcType=VARCHAR},
+					            #{prcFlag,mode=OUT,jdbcType=INTEGER});
+	</select>
+	<!-- <insert id="addForeVideoMeetRoom" parameterType="com.xsbweb.vo.extend.MeetVideoRoomVO">
+		insert into t_rl_trs_meet_room_video (
+			<if test="meetMediaNo!=null">
+				meet_media_no,
+			</if>
+			<if test="shareMediaNo!=null">
+				share_media_no,
+			</if>
+			meet_role,
+			show_date,
+			online_date,
+			conf_name,
+			status,
+			activity_profile,
+			activity_background,
+			guest,
+			activity_schedule,
+			create_date
+		)values(
+			<if test="meetMediaNo!=null">
+				#{meetMediaNo},
+			</if>
+			<if test="shareMediaNo!=null">
+				#{shareMediaNo},
+			</if>
+			#{meetRole},
+			str_to_date(#{showDate},'%Y-%c-%d'),
+			str_to_date(#{onlineDate},'%Y-%c-%d'),
+			#{confName},
+			'1',
+			#{activityProfile},
+			#{activityBackground},
+			#{guest},
+			#{activitySchedule},
+			sysdate()
+		)
+	</insert> -->
+	<delete id="deleteVideoMeetRoomBymeetNo" parameterType="java.lang.String">
+		delete from  t_rl_trs_meet_room_video where meet_no = #{meetNo};
+		
+   </delete>
+   
+   
+   <update id="updateMeetVideoRoom" parameterType="com.xsbweb.vo.extend.MeetVideoRoomVO">
+   		update t_rl_trs_meet_room_video 
+   		<set>
+   			<if test="baseUrl != null and baseUrl !=''" >
+		        base_url = #{baseUrl},
+	     	</if>
+	     	<if test="confName != null and confName !=''" >
+		        conf_name = #{confName},
+	     	</if>
+	     	<if test="showDate != null and showDate !=''" >
+		        show_date = #{showDate},
+	     	</if>
+	     	<if test="onlineDate != null and onlineDate !=''" >
+		        online_date = #{onlineDate},
+	     	</if>
+	     	<if test="pv != null and pv!=''"  >
+		        pv = #{pv},
+	     	</if>
+	     	<if test="meetMediaNo != null and meetMediaNo !=''" >
+		        meet_media_no = #{meetMediaNo},
+	     	</if>
+	     	<if test="shareMediaNo != null and shareMediaNo !=''" >
+		        share_media_no = #{shareMediaNo},
+	     	</if>
+	     	<if test="bigPicNo != null and bigPicNo !=''" >
+		        big_pic_no = #{bigPicNo},
+	     	</if>
+	     	<if test="meetTitle != null and meetTitle !=''"  >
+		        meet_title = #{meetTitle},
+	     	</if>
+	     	<if test="meetExTitle != null and meetExTitle !=''" >
+		        meet_ex_title = #{meetExTitle},
+	     	</if>
+	     	<if test="meetRole != null and meetRole !=''" >
+		        meet_role = #{meetRole},
+	     	</if>
+	     	<if test="meetProjectNo != null and meetProjectNo !=''" >
+		        meet_project_no = #{meetProjectNo},
+	     	</if>
+	     	<if test="isShow != null and isShow !=''" >
+		        is_show = #{isShow},
+	     	</if>
+	     	<if test="lastEditDate != null and lastEditDate !=''" >
+		        last_edit_date = sysdate()
+	     	</if>  
+   		</set>
+   		 where meet_no=#{meetNo};
+   		 
+   </update>
+   
+   <update id="updateMeetIsShowByMeetNo" parameterType="com.xsbweb.vo.extend.MeetRoomVO">
+   		<!-- update oltp.t_rl_trs_meet_room set is_show='1' where meet_no='35' -->
+   		update oltp.t_rl_trs_meet_room
+   		<set>
+   			is_show = #{isShow},
+   			last_update_date = sysdate() 
+   		</set>
+   		
+   		where meet_no=#{meetNo};
+   		
+   </update>
+   <delete id="batchDeleteVideoMeetRoomByMeetNos" parameterType="java.lang.String">
+		delete from t_rl_trs_meet_room_video where meet_no in
+		<foreach collection="array" item="meetNo" index="index"  open="(" separator="," close=")">
+			#{meetNo}
+		</foreach>	
+	</delete>
+   
+	<!-- ===========================视频直播模块 end============================= -->
+</mapper>
+

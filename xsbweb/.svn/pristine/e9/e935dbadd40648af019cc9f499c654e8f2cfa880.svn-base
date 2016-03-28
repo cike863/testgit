@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.CustomerMapper" >
+  <resultMap id="customerMap" type="com.xsbweb.vo.extend.CustomerVO" >
+    <id column="customer_id" property="customerId" jdbcType="VARCHAR" />
+    <result column="customer_name" property="customerName" jdbcType="VARCHAR" />
+    <result column="customer_type" property="customerType" jdbcType="VARCHAR" />
+    <result column="effective_date" property="effectiveDate" jdbcType="TIMESTAMP" />
+    <result column="extire_date" property="extireDate" jdbcType="TIMESTAMP" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+    <result column="cust_passwd" property="custPasswd" jdbcType="VARCHAR" />
+    <result column="customer_password" property="customerPassword" jdbcType="VARCHAR" />
+    <result column="customer_phone_no" property="customerPhoneNo" jdbcType="VARCHAR" />
+    <result column="customer_privilege_1" property="customerPrivilege1" jdbcType="BIGINT" />
+    <result column="customer_privilege_2" property="customerPrivilege2" jdbcType="BIGINT" />
+    <result column="customer_privilege_3" property="customerPrivilege3" jdbcType="BIGINT" />
+    <result column="customer_privilege_4" property="customerPrivilege4" jdbcType="BIGINT" />
+    <result column="customer_email" property="customerEmail" jdbcType="VARCHAR" />
+    <result column="cust_login_status" property="custLoginStatus" jdbcType="VARCHAR" />
+    <result column="last_login_date" property="lastLoginDate" jdbcType="TIMESTAMP" />
+    <result column="cur_auth_failed" property="curAuthFailed" jdbcType="TINYINT" />
+    
+    <result column="customer_qq" property="customerQq" jdbcType="VARCHAR" />
+    <result column="customer_wechat" property="customerWechat" jdbcType="VARCHAR" />
+    <result column="customer_Nickname" property="customerNickname" jdbcType="VARCHAR" />
+    <result column="customer_Sex" property="customerSex" jdbcType="VARCHAR" />
+    <result column="customer_company" property="customerCompany" jdbcType="VARCHAR" />
+    <result column="customer_position" property="customerPosition" jdbcType="VARCHAR" />
+    <result column="capital_scale" property="capitalScale" jdbcType="VARCHAR" />
+    <result column="gz_industry" property="gzIndustry" jdbcType="BIGINT" />
+    <result column="head_pic_path" property="headPicPath" jdbcType="VARCHAR" />
+    <result column="customer_cases" property="customerCases" jdbcType="VARCHAR" />
+    <result column="customer_cases" property="customerCases" jdbcType="VARCHAR" />
+    <result column="authent_status" property="authentStatus" jdbcType="VARCHAR" />
+    <result column="authent_medie_no_1" property="authentMediaPath1" jdbcType="VARCHAR" />
+	<result column="authent_medie_no_2" property="authentMediaPath2" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  	<select id="getCustomerById"  parameterType="java.lang.String" resultMap="customerMap">
+	select
+	v.customer_id,
+	v.customer_name,
+	v.customer_media_no,
+	v.customer_phone_no,
+	v.customer_type,
+	v.customer_status,
+	v.customer_Sex,
+	v.customer_qq,
+	v.customer_wechat,
+	v.customer_email,
+	v.customer_position,
+	v.customer_company,
+	v.capital_scale,
+	v.gz_industry,
+	v.authent_status,
+	v.customer_Nickname ,
+	tm.media_location head_pic_path ,
+	tm1.media_location authent_medie_no_1,
+	tm2.media_location authent_medie_no_2
+	from v_rl_snap_customer v
+	left join t_rl_trs_media tm on tm.media_no = v.customer_media_no
+	left join t_rl_trs_media tm1 on tm1.media_no = v.authent_medie_no_1
+	left join t_rl_trs_media tm2 on tm2.media_no = v.authent_medie_no_2
+	where v.customer_id = #{customerId} or v.customer_phone_no = #{customerId}
+	limit 0,1;
+	</select>  
+	<!--  <delete id="delCustomer" parameterType="java.lang.String">
+  	    delete from t_rl_snap_customer where customer_id = #{customerId};  
+    </delete>	-->
+    
+    <update id="delCustomer" parameterType="java.lang.String">
+        update t_rl_snap_customer set customer_status='-1' where customer_id = #{customerId};  
+    </update>
+    
+	<select id="getCustomerCounts" parameterType="com.xsbweb.vo.Customer" resultType="java.lang.Integer">
+  		select count(1) from t_rl_snap_customer  
+  		<where>
+  		customer_phone_no is not null  and (customer_status = '1' or  customer_status is null )  
+  		<if test="customerPhoneNo!=null and customerPhoneNo!=''">
+			and customer_phone_no like CONCAT('%', #{customerPhoneNo},'%' )
+		</if>
+		<if test="customerId!=null and customerId!=''">
+			and customer_id = #{customerId}
+		</if>
+		<if test="customerEmail!=null and customerEmail!=''">
+			and customer_email like CONCAT('%', #{customerEmail},'%' )
+		</if>
+		<if test="customerType!=null and customerType!=''">
+			and customer_type like CONCAT('%', #{customerType},'%' )
+		</if>
+		<if test="customerCompany!=null and customerCompany!=''">
+			and customer_company like CONCAT('%', #{customerCompany},'%' )
+		</if>
+		<if test="authentStatus !=null and authentStatus !=''">
+			and authent_status = #{authentStatus}
+		</if>
+		<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and create_date >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and create_date <=replace(#{endQueryDate},'00:00:00.0','23:59:59')]]>
+		</if>
+  		</where>
+   </select>
+   <select id="getAllCustomerList" parameterType="com.xsbweb.vo.Customer" resultMap="customerMap">
+  		select 
+	  		customer_id,
+			customer_name,
+			customer_phone_no,
+			customer_email,
+			customer_company,
+			customer_position,
+			customer_type,
+			gz_industry,
+			capital_scale,
+			customer_cases,
+			create_date
+  		from t_rl_snap_customer 
+  		<where>
+  		customer_phone_no is not null  and (customer_status = '1' or  customer_status is null ) 
+  		<if test="customerPhoneNo!=null and customerPhoneNo!=''">
+			and customer_phone_no like CONCAT('%', #{customerPhoneNo},'%' )
+		</if>
+		<if test="customerId!=null and customerId!=''">
+			and customer_id = #{customerId}
+		</if>
+		<if test="customerEmail!=null and customerEmail!=''">
+			and customer_email like CONCAT('%', #{customerEmail},'%' )
+		</if>
+		<if test="customerType!=null and customerType!=''">
+			and customer_type like CONCAT('%', #{customerType},'%' )
+		</if>
+		<if test="customerCompany!=null and customerCompany!=''">
+			and customer_company like CONCAT('%', #{customerCompany},'%' )
+		</if>
+		<if test="authentStatus !=null and authentStatus !=''">
+			and authent_status = #{authentStatus}
+		</if>
+		<if test="sartQueryDate !=null and sartQueryDate !=''">
+			<![CDATA[and create_date >= #{sartQueryDate}]]>
+		</if>
+		<if test="endQueryDate !=null and endQueryDate !=''">
+			<![CDATA[and create_date <=replace(#{endQueryDate},'00:00:00.0','23:59:59')]]>
+		</if>
+  		</where>
+  		limit #{currentRecord},#{pageSize};
+  </select>
+	
+	
+	<select id="getCustomerListByIds"  parameterType="com.xsbweb.vo.extend.CustomerVO" resultMap="customerMap">  
+		select * from v_rl_snap_customer where customer_phone_no in 
+		  <foreach collection="customerPhoneNos" index="index" item="customerPhoneNo" open="(" separator="," close=")">  
+	           #{customerPhoneNo}   
+	      </foreach>  
+	</select>  
+	
+	<select id="getCustomerListBycustomerIds"  parameterType="com.xsbweb.vo.extend.CustomerVO" resultMap="customerMap">  
+		select * from v_rl_snap_customer where customer_id in 
+		  <foreach collection="customerIds" index="index" item="customerId" open="(" separator="," close=")">
+	           #{customerId}   
+	      </foreach>
+	     	<if test="customerPhoneNo!=null and customerPhoneNo!=''">
+				and customer_phone_no like CONCAT('%',#{customerPhoneNo},'%' ) 			
+			</if>
+			<if test="customerName!=null and customerName!=''">
+				and customer_name like CONCAT('%', #{customerName},'%' )
+			</if> 
+			<if test="customerCompany!=null and customerCompany!=''">
+				and customer_company like CONCAT('%', #{customerCompany},'%' )
+			</if>
+			<if test="customerType!=null and customerType!=''">
+				and customer_type like CONCAT('%', #{customerType},'%' )
+			</if>
+	      limit #{currentRecord},#{pageSize};
+	</select>
+	
+	<select id="getCustomerCountBycustomerIds"  parameterType="com.xsbweb.vo.extend.CustomerVO" resultType="java.lang.Integer">  
+		select count(1) from v_rl_snap_customer where customer_id in 
+		  <foreach collection="customerIds" index="index" item="customerId" open="(" separator="," close=")">
+	           #{customerId}   
+	      </foreach>      
+	      <if test="customerPhoneNo!=null and customerPhoneNo!=''">
+				and customer_phone_no like CONCAT('%',#{customerPhoneNo},'%' ) 			
+			</if>
+			<if test="customerName!=null and customerName!=''">
+				and customer_name like CONCAT('%', #{customerName},'%' )
+			</if> 
+			<if test="customerCompany!=null and customerCompany!=''">
+				and customer_company like CONCAT('%', #{customerCompany},'%' )
+			</if>
+			<if test="customerType!=null and customerType!=''">
+				and customer_type like CONCAT('%', #{customerType},'%' )
+			</if>
+	</select>
+	
+	<select id="validateRegister" statementType="CALLABLE" parameterType="java.util.HashMap">
+		call prc_register_check(#{customerEmail,mode=IN,jdbcType=VARCHAR},
+								#{customerPhoneNo,mode=IN,jdbcType=VARCHAR},
+								#{prcFlag,mode=OUT,jdbcType=INTEGER});
+	</select>
+	
+	<select id="validateLogin" statementType="CALLABLE" parameterType="java.util.HashMap">
+		call get_crm_authorized(#{customerUname,mode=IN,jdbcType=VARCHAR},
+					            #{customerPassword,mode=IN,jdbcType=VARCHAR},
+					            #{ip,mode=IN,jdbcType=VARCHAR},
+					            #{loginMethod,mode=IN,jdbcType=VARCHAR},
+					            #{prcFlag,mode=OUT,jdbcType=INTEGER},
+					            #{customerId,mode=OUT,jdbcType=VARCHAR});
+	</select>
+	
+	<select id="addCustomer" statementType="CALLABLE" parameterType="com.xsbweb.vo.extend.CustomerVO">
+		call upd_customer(#{customerId,mode=IN,jdbcType=VARCHAR},
+						  #{customerPhoneNo,mode=IN,jdbcType=VARCHAR},
+			              #{customerName,mode=IN,jdbcType=VARCHAR},
+			              #{customerPassword,mode=IN,jdbcType=VARCHAR},
+			              #{customerEmail,mode=IN,jdbcType=VARCHAR},
+			              #{customerCompany,mode=IN,jdbcType=VARCHAR},
+			              #{customerQq,mode=IN,jdbcType=VARCHAR},
+			              #{customerWechat,mode=IN,jdbcType=VARCHAR},
+			              #{customerSex,mode=IN,jdbcType=VARCHAR},
+			              #{customerPosition,mode=IN,jdbcType=VARCHAR},
+			              #{customerNickname,mode=IN,jdbcType=VARCHAR},
+			              #{customerType,mode=IN,jdbcType=VARCHAR},
+			              #{capitalScale,mode=IN,jdbcType=VARCHAR},
+			              #{gzIndustry,mode=IN,jdbcType=BIGINT},
+			              #{customerMediaNo,mode=IN,jdbcType=VARCHAR},
+			              #{customerCases,mode=IN,jdbcType=VARCHAR},
+			              #{authentMediaNo1,mode=IN,jdbcType=VARCHAR},
+			              #{authentMediaNo2,mode=IN,jdbcType=VARCHAR},
+			              #{authentStatus,mode=IN,jdbcType=VARCHAR},
+			              #{customerCardId,mode=IN,jdbcType=VARCHAR},
+			              #{customerAddress,mode=IN,jdbcType=VARCHAR},
+			              #{customerInstttCode,mode=IN,jdbcType=VARCHAR},
+			              #{customerId,mode=OUT,jdbcType=INTEGER},
+			              #{prcFlag,mode=OUT,jdbcType=INTEGER});
+
+	</select>
+	
+	<update id="editCustomer" parameterType="com.xsbweb.vo.Customer">
+  	update t_rl_snap_customer 
+	<set>
+		<if test="customerName !=null and customerName !=''">
+			customer_name = #{customerName},
+		</if>
+		<if test="customerType !=null and customerType !=''">
+			customer_type = #{customerType},
+		</if>
+		<if test="customerPhoneNo !=null and customerPhoneNo !=''" >
+			customer_phone_no = #{customerPhoneNo},
+		</if>
+		<if test="customerEmail !=null and customerEmail!=''">
+			customer_email = #{customerEmail},
+		</if>
+		<if test="customerQq !=null  and customerQq !=''">
+			customer_qq = #{customerQq},
+		</if>
+		<if test="customerWechat !=null and customerWechat !=''">
+			customer_wechat = #{customerWechat},
+		</if>
+		<if test="customerNickname !=null and customerNickname !=''">
+			customer_nickname = #{customerNickname},
+		</if>
+		<if test="customerSex !=null and customerSex !=''">
+			customer_sex = #{customerSex},
+		</if>
+		<if test="customerCompany !=null  and customerCompany !=''">
+			customer_company = #{customerCompany},
+		</if>
+		<if test="customerPosition !=null and customerPosition !=''">
+			customer_position = #{customerPosition},
+		</if>
+		<if test="capitalScale !=null and capitalScale !=''">
+			capital_scale = #{capitalScale},
+		</if>
+		<if test="gzIndustry !=null and gzIndustry !=''">
+			gz_industry = #{gzIndustry},
+		</if>
+		<if test="customerCases !=null and customerCases !=''">
+			customer_cases = #{customerCases},
+		</if>
+		<if test="authentStatus !=null and authentStatus !=''">
+			authent_status = #{authentStatus}
+		</if>
+	</set>
+		where customer_id = #{customerId};
+  </update>
+	
+	<select id="getCustomerIdByPhoneOrMail" statementType="CALLABLE" parameterType="java.util.HashMap">
+		call prc_getcustomerId_by(#{customerLabel,mode=IN,jdbcType=VARCHAR},
+								#{customerId,mode=OUT,jdbcType=VARCHAR});
+	</select>
+	<!-- <insert id="insertCustomer" parameterType="com.xsbweb.vo.CustomerVO">
+		insert into t_rl_snap_customer(customer_name,customer_type) values(#{customerName},1) ;
+	</insert> -->
+	
+	<select id="getRoleEnumByCustomerId" statementType="CALLABLE" parameterType="java.util.HashMap">
+		call get_crm_role_enum(#{customerId,mode=IN,jdbcType=VARCHAR},
+								#{prcFlag,mode=OUT,jdbcType=INTEGER});
+	</select>
+	
+	<update id="batchUpdateByCustomerPhones"  parameterType="java.util.List">
+          <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+              <![CDATA[  update oltp.t_rl_snap_customer ]]> 
+                <set>
+                	<if test="item.customerEmail != null  and item.customerEmail !=''">
+                		customer_email = #{item.customerEmail },
+                	</if>
+                 	<if test="item.customerName !=null and item.customerName !=''">
+						customer_name = #{item.customerName},
+					</if>
+					<if test="item.customerType !=null  and item.customerType !=''">
+						customer_type = #{item.customerType},
+					</if>
+					<if test="item.customerCompany !=null and item.customerCompany !=''">
+						customer_company = #{item.customerCompany},
+					</if>
+					<if test="item.customerPosition !=null and item.customerPosition !=''">
+						customer_position = #{item.customerPosition},
+					</if>
+					<if test="item.capitalScale !=null and item.capitalScale !=''">
+						capital_scale = #{item.capitalScale},
+					</if>
+					<if test="item.gzIndustry !=null and item.gzIndustry !=''">
+						gz_industry = #{item.gzIndustry},
+					</if>
+					<if test="item.customerCases !=null and item.customerCases !=''">
+						customer_cases = #{item.customerCases},
+					</if>
+					<if test="item.customerType !=null and item.customerType !=''">
+						customer_type = #{item.customerType},
+					</if>
+                	</set>
+                where customer_phone_no = #{item.customerPhoneNo}               
+         </foreach>
+    </update>
+	
+</mapper>

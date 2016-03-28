@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.EnumVOMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.extend.EnumVO" >
+    <id column="enum_full_name" property="enumFullName" jdbcType="VARCHAR" />
+    <id column="enum_code" property="enumCode" jdbcType="VARCHAR" />
+    <result column="enum_desc" property="enumDesc" jdbcType="VARCHAR" />
+    <result column="enum_desc_cn" property="enumDescCn" jdbcType="VARCHAR" />
+    <result column="enum_group_code" property="enumGroupCode" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <insert id="addEnum" parameterType="com.xsbweb.vo.extend.EnumVO">
+  	    insert into meta.t_mt_column_enum(
+  	    	enum_full_name,
+  	    	enum_code,
+  	    	enum_desc,
+  	    	enum_group_code
+  	    )values(
+  	    	#{enumFullName},
+  	    	#{enumCode},
+  	    	#{enumDesc},
+  	    	#{enumGroupCode}
+  	    )
+  </insert>
+  
+    <sql id="Base_Column_List" >
+    	enum_full_name,enum_code,enum_desc,enum_group_code
+   </sql>
+  <select id="getEnumVOList" parameterType="com.xsbweb.vo.extend.EnumVO" resultMap="resultMap">
+ 	select	
+  		enum_full_name,
+  		enum_code,
+  		enum_desc,
+  		enum_desc_cn,
+  		enum_group_code
+  	from t_mt_column_enum 
+  		 where (enum_desc is not null and enum_desc !='')
+  		<if test="enumGroupCode !=null and enumGroupCode !=''">
+  			and enum_group_code = #{enumGroupCode} 
+  		</if>
+  		<if test="enumFullName !=null and enumFullName !=''">
+  			and enum_full_name = #{enumFullName} 
+  		</if>
+  		<if test="enumCode!=null and enumCode !=''">
+  			and enum_code = #{enumCode} 
+  		</if>
+  		<if test="enumDesc!=null and enumDesc !=''">
+  			and enum_desc = #{enumDesc} 
+  		</if> 
+  		  order by 
+  		 <if test="enumFullName == null or enumFullName == ''">
+  		 		enum_desc,enum_desc_cn
+  		 </if>
+  		 <if test="enumFullName !=null and enumFullName !=''">
+  		 		(enum_desc_cn+1) 
+  		 </if>
+  		   limit #{currentRecord},#{pageSize};
+  </select>
+  
+  
+  <select id="getProjectEnumVOList" resultMap="resultMap">
+ 	select	
+  		enum_full_name,
+  		enum_code,
+  		enum_desc,
+  		enum_desc_cn,
+  		enum_group_code
+  	from t_mt_column_enum where 
+  		 enum_full_name='industry' and (enum_desc is not null and enum_desc !='') order by last_update_date;
+  </select>
+  
+  <select id="getEnumVOListByColumnFullName" parameterType="java.lang.String" resultMap="resultMap">
+  	select	
+	<include refid="Base_Column_List" />
+  	from t_mt_column_enum where enum_desc != '' and enum_full_name = #{enumFullName} 
+  	order by CONVERT(enum_desc_cn,SIGNED);
+  </select>
+  
+  <select id="getEnumVOListByNameAndCode" parameterType="java.util.HashMap" resultMap="resultMap">
+  	select 
+  		enum_code,
+  		enum_desc_cn 
+  	from t_mt_column_enum 
+  	where enum_desc != ''
+  	and enum_full_name =#{enumFullName} 
+  	and enum_group_code=#{enumGroupCode} 
+  	order by enum_desc_cn asc;
+  </select>
+  
+  <!-- 查询总数 -->
+  <select id="getEnumCounts" parameterType="com.xsbweb.vo.extend.EnumVO" resultType="java.lang.Integer">
+  	select 
+  		count(1)
+    from t_mt_column_enum 
+    where (enum_desc is not null and enum_desc !='')
+    <if test="enumGroupCode!=null and enumGroupCode!=''">
+  			and enum_group_code = #{enumGroupCode} 
+  		</if>
+  		<if test="enumFullName!=null and enumFullName!=''">
+  			and enum_full_name = #{enumFullName} 
+  		</if>
+  		<if test="enumCode!=null and enumCode!=''">
+  			and enum_code = #{enumCode} 
+  		</if>
+  		<if test="enumDesc!=null and enumDesc!=''">
+  			and enum_desc = #{enumDesc} 
+  		</if> 
+  </select>
+  
+  <!-- 删除 -->
+  <delete id="deleteEnum" parameterType="com.xsbweb.vo.extend.EnumVO">
+  	delete from t_mt_column_enum where enum_full_name = #{enumFullName} and enum_code = #{enumCode};
+  </delete>
+  
+  <!-- 更新 -->
+  <update id="updateEnum" parameterType="com.xsbweb.vo.extend.EnumVO">
+  	update meta.t_mt_column_enum
+  	<set>
+  		<!-- <if test="enumFullName !=null">
+  			enum_full_name = #{enumFullName},
+  		</if>
+  		<if test="enumCode !=null">
+  			enum_code = #{enumCode},
+  		</if> -->
+  		<if test="enumDesc !=null and enumDesc !=''">
+  			enum_desc = #{enumDesc},
+  		</if>
+  		<if test="enumGroupCode !=null and enumGroupCode !=''">
+  			enum_group_code = #{enumGroupCode},
+  		</if>
+  		<if test="enumDescCn !=null and enumDescCn !=''">
+  			enum_desc_cn = #{enumDescCn},
+  		</if>
+  		<if test="enumDescCn !=null and enumDescCn !=''">
+  			enum_desc_cn = #{enumDescCn},
+  		</if>
+  	</set>
+  	where enum_full_name =#{enumFullName}  and enum_code =#{enumCode};
+  </update> 
+  
+  <!-- 模糊查询 -->    
+  <select id="fuzzySearchEnum" parameterType="java.util.HashMap" resultMap="resultMap">
+  	select 
+  	   <include refid="Base_Column_List" /> 
+	   from t_mt_column_enum where enum_full_name like CONCAT('%',#{searchInformation},'%') 
+								     or enum_code like CONCAT('%',#{searchInformation},'%') 
+									 or enum_desc like CONCAT('%',#{searchInformation},'%')
+									 limit #{currentRecord},#{pageSize};
+  </select>
+
+  <!-- 获取模糊查询的总数 -->
+  <select id="getfuzzySearchEnumCount" resultType="java.lang.Integer" parameterType="java.lang.String">
+  	select count(1) from t_mt_column_enum where enum_full_name like CONCAT('%',#{searchInformation},'%') 
+								     or enum_code like CONCAT('%',#{searchInformation},'%') 
+									 or enum_desc like CONCAT('%',#{searchInformation},'%');
+  </select>
+  
+  <select id="getEnumByfullNameEnumCode" parameterType="java.util.HashMap" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/>  
+  		from t_mt_column_enum where enum_full_name =#{enumFullName}  and enum_code =#{enumCode};
+   </select>
+   
+   <!-- 修改 -->
+  <update id="updateEnumByMenu" parameterType="com.xsbweb.vo.extend.EnumVO">
+  		update meta.t_mt_column_enum 
+  			<set>
+  				<if test="enumGroupCode!=null and enumGroupCode!=''">
+  					enum_group_code =#{enumGroupCode},
+  				</if>
+  				<if test="enumDesc!=null and enumDesc!=''">
+  					enum_desc=#{enumDesc} ,
+  				</if>
+  				<if test="enumDescCn!=null and enumDescCn!=''">
+  					enum_desc_cn=#{enumDescCn} ,	
+  				</if>
+  				<if test="createDate ==null or createDate==''">
+  					create_date= sysdate() 
+  				</if>		  				
+  			</set> 			
+	  where enum_code =#{enumCode} 	
+  			
+   </update>
+  <select id="selectEnumCode" parameterType="java.lang.String" resultType="java.lang.String" >  
+  		select 
+  			enum_code 
+  			from meta.t_mt_column_enum 
+  			where enum_full_name=#{enumFullName} 
+  			and (enum_group_code =''  or enum_group_code is null)
+  			and (enum_desc=''  or enum_desc is null)
+  			order by (enum_code+1)
+  			limit 0,1;	
+  	</select>
+	<select id="getScrollList" parameterType="com.xsbweb.vo.extend.EnumVO" resultMap="resultMap">
+	select DISTINCT object_id enum_group_code,
+	obj_name enum_full_name,
+	dim.enum_desc,
+	dim.enum_code,
+	 GROUP_CONCAT(dim.enum_desc_cn SEPARATOR '；') enum_desc_cn
+	from
+	(
+	select t0.meet_no as object_id,
+	t0.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room t0
+	where t0.is_show = '1'
+	union all
+	select t.meet_no as object_id,
+	t.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room_video t
+	where t.is_show = '1'
+	union all
+	select t2.project_no as object_id,
+	t2.proj_name as obj_name,
+	project_role as obj_role
+	from oltp.t_rl_trs_project t2
+	where t2.is_show = '1'
+	union all
+	select t4.news_no as object_id,
+	news_title as obj_name,
+	news_role as obj_role
+	from oltp.t_rl_trs_news_idx t4
+	where t4.is_show = '1'
+	) dat
+	inner join meta.t_mt_column_enum dim
+	on dim.enum_code &amp; dat.obj_role > 0
+	where dim.enum_full_name = 'role'
+	<!-- and dim.enum_code in
+	('1','2','4','8','16','8192','16384','32768','65536','131072') -->
+	<if test="enumGroupCode !=null and enumGroupCode !=''">	
+		and object_id like CONCAT('%',#{enumGroupCode},'%' ) 
+	</if>
+	<if test="enumFullName !=null and enumFullName !=''">
+		and obj_name like CONCAT('%',#{enumFullName},'%' ) 
+	</if>
+	<if test="enumDescCn !=null and enumDescCn !=''">
+		and enum_desc_cn like CONCAT('%',#{enumDescCn},'%' ) 
+	</if>
+	group by object_id
+	 order by last_update_date desc limit #{currentRecord},#{pageSize};
+	</select>
+	
+	<select id="getScrollListCount" parameterType="com.xsbweb.vo.extend.EnumVO" resultType="java.lang.Integer">
+	select count(DISTINCT object_id)
+	from
+	(
+	select t0.meet_no as object_id,
+	t0.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room t0
+	where t0.is_show = '1'
+	union all
+	select t.meet_no as object_id,
+	t.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room_video t
+	where t.is_show = '1'
+	union all
+	select t2.project_no as object_id,
+	t2.proj_name as obj_name,
+	project_role as obj_role
+	from oltp.t_rl_trs_project t2
+	where t2.is_show = '1'
+	union all
+	select t4.news_no as object_id,
+	news_title as obj_name,
+	news_role as obj_role
+	from oltp.t_rl_trs_news_idx t4
+	where t4.is_show = '1'
+	) dat
+	inner join meta.t_mt_column_enum dim
+	on dim.enum_code &amp; dat.obj_role > 0
+	where dim.enum_full_name = 'role'
+	<!-- and dim.enum_code in
+	('1','2','4','8','16','8192','16384','32768','65536','131072') -->
+	<if test="enumGroupCode !=null and enumGroupCode !=''">	
+		and object_id  like CONCAT('%',#{enumGroupCode},'%' ) 
+	</if>
+	<if test="enumFullName !=null and enumFullName !=''">
+		and obj_name  like CONCAT('%',#{enumFullName},'%' ) 
+	</if>
+	<if test="enumDescCn !=null and enumDescCn !=''">
+		and enum_desc_cn like CONCAT('%',#{enumDescCn},'%' ) 
+	</if>
+	</select>
+	<select id="getScrollListByObjectId" parameterType="java.lang.String"  resultMap="resultMap">
+	select object_id enum_group_code,
+	obj_name enum_full_name,
+	dim.enum_desc,
+	dim.enum_code,
+	dim.enum_desc_cn
+	from
+	(
+	select t0.meet_no as object_id,
+	t0.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room t0
+	where t0.is_show = '1'
+	union all
+	select t.meet_no as object_id,
+	t.conf_name as obj_name,
+	meet_role as obj_role
+	from oltp.t_rl_trs_meet_room_video t
+	where t.is_show = '1'
+	union all
+	select t2.project_no as object_id,
+	t2.proj_name as obj_name,
+	project_role as obj_role
+	from oltp.t_rl_trs_project t2
+	where t2.is_show = '1'
+	union all
+	select t4.news_no as object_id,
+	news_title as obj_name,
+	news_role as obj_role
+	from oltp.t_rl_trs_news_idx t4
+	where t4.is_show = '1'
+	) dat
+	inner join meta.t_mt_column_enum dim
+	on dim.enum_code &amp; dat.obj_role > 0
+	where dim.enum_full_name = 'role'
+	<!-- and dim.enum_code in
+	('1','2','4','8','16','8192','16384','32768','65536','131072') -->
+	and object_id =#{enumGroupCode}
+	 order by create_date desc;
+	</select>
+	 <select id="getScrollTypeList" resultMap="resultMap">
+  	select 
+  		enum_desc,
+  		enum_code,
+  		enum_desc_cn 
+  	from t_mt_column_enum 
+  	where enum_desc != ''
+  	and enum_desc like %scroll%
+  	and enum_group_code in('news','ad')
+  	order by enum_desc_cn asc;
+  </select>
+  <select id="editScrollList" statementType="CALLABLE" parameterType="java.util.HashMap">
+  	call upd_object_scroll(#{objectId,mode=IN,jdbcType=VARCHAR},
+	  							#{enumDesc,mode=IN,jdbcType=VARCHAR},
+	  							#{prcFlag,mode=OUT,jdbcType=INTEGER});
+  </select>
+  <update id="bathUpdateEnum"  parameterType="java.util.List" >
+  		<foreach collection="list" item="item" index="index" open="" close="" separator=";">
+  			update meta.t_mt_column_enum 
+  				 <set>
+                	<if test="item.enumDescCn != null  and item.enumDescCn !=''">
+                		enum_desc_cn = #{item.enumDescCn },
+                	</if>
+					last_update_date= sysdate()
+				</set>
+				where enum_code=#{item.enumCode } and enum_full_name=#{item.enumFullName}
+  		</foreach>
+  </update>
+  
+   <select id="getEnumDescListByRoleAndFullName" parameterType="java.util.Map" resultType="String">
+  	<![CDATA[select distinct dic1.enum_desc from meta.t_mt_column_enum dic1 where dic1.enum_full_name = #{enumFullName} 
+			and #{role,jdbcType=BIGINT}&dic1.enum_code<>0]]>
+  </select>
+  <update id="batchDeleteProjectEnums" parameterType="java.lang.String" >
+		update  t_mt_column_enum set enum_desc='',enum_desc_cn=''  where enum_full_name= 'industry' and enum_desc in
+		<foreach collection="array" index="index" item="enumDesc" open="(" separator="," close=")">  
+	           #{enumDesc}   
+	      </foreach> 
+	</update>
+</mapper>

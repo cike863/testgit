@@ -1,0 +1,206 @@
+package com.xsbweb.controller.manage;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.controller.app.AppLoginRegistController;
+import com.xsbweb.service.AdminIndexService;
+import com.xsbweb.service.ConfigService;
+import com.xsbweb.service.EnumService;
+import com.xsbweb.service.StaffService;
+import com.xsbweb.service.XSBBaseService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MD5;
+import com.xsbweb.util.MathUtil;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.RedisUtil;
+import com.xsbweb.vo.Staff;
+import com.xsbweb.vo.extend.EnumVO;
+import com.xsbweb.vo.extend.MeetRoomVO;
+
+@Controller
+public class AdminStaffController {
+	private Logger log = Logger.getLogger(AdminStaffController.class);
+	
+	   @Autowired
+		private ConfigService configService;  
+	    
+	   @Autowired
+	   private StaffService staffService;
+	    
+	   @Autowired
+	   private  XSBBaseService xsbBaseService;
+	    
+	    private RedisUtil redisUtil = new RedisUtil();
+	    
+	    /**
+	     * 员工列表页面
+	     * @param staff
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/staff",method=RequestMethod.GET)
+	    public ModelAndView toAdminCustomer(Staff staff)throws Exception{
+	    	ModelAndView mav = new ModelAndView();
+	    	//获取总数
+	    	int totalCounts = staffService.getStaffCounts(staff);
+	    	List<Staff> staffList = staffService.getAllStaffList(staff);
+	    	staff.setTotalRecord(totalCounts);
+	    	mav.setViewName("manage/staff/queryStaffList");
+	    	mav.addObject("staffList",staffList);
+	    	mav.addObject("staff",staff);
+	    	return mav;
+	    }
+	    
+	    /**
+	     * 后台权限列表页面
+	     * @param staffId
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/role",method=RequestMethod.GET)
+	    public ModelAndView toAdminChangeRoleList(String staffId)throws Exception{
+	    	ModelAndView mav = new ModelAndView("manage/staff/roleStaff");
+	    	EnumVO enumVO = new EnumVO();
+	    	enumVO.setEnumFullName("role");
+	    	enumVO.setEnumGroupCode("system");
+	    	//固定100，赋权限的页面展示所有栏目
+	    	enumVO.setPageSize(100);
+	    	List<EnumVO> roleList = xsbBaseService.getEnumVOList(enumVO);
+	    	
+	    	Staff staff = staffService.getStaffListById(staffId);  	
+	    	if(staff.getStaffRole()!=null&&!"".equals(staff.getStaffRole())){
+	    		List<Long> checkedCode =MathUtil.Fun(Long.parseLong(staff.getStaffRole()));
+	    		mav.addObject("checkedCode",checkedCode);
+	    	}
+	    	mav.addObject("roleList",roleList);
+	    	mav.addObject("staffId",staffId);
+	    	return mav;
+	    }
+	    
+	   /**
+	    * 改变权限
+	    * @param staffId
+	    * @param role
+	    * @return
+	    * @throws Exception
+	    */
+	    @RequestMapping(value="/admin/role/changeStaffRole",method=RequestMethod.GET)
+	    public @ResponseBody String changeStaffRole(String staffId,String staffRole)throws Exception{
+	    	if(CommonUtils.isBlank(staffId) || CommonUtils.isBlank(staffRole)){
+	    		return "-1";
+	    	}
+	    	Staff staff = new Staff();
+	    	staff.setStaffId(staffId);
+	    	String [] result = staffRole.split(",");
+	    	long output = 0;
+	    	for(int i=0;i<result.length;i++){
+	    		output+=Long.parseLong(result[i]);
+	    	}	    	
+	    	staff.setStaffRole(output+"");
+	    	MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+	    	int flag = staffService.updateStaff(staff);
+	    	if(flag>0){
+	    		return "1";
+	    	}
+	    	return "0";
+	    }
+	    
+	    
+	    
+		@RequestMapping(value="/admin/staff/toAddStaff.do")
+	    public ModelAndView toAddStaff()throws Exception{
+		    	ModelAndView mav = new ModelAndView();
+		    	Staff staff = new Staff();
+		    	mav.addObject("staff",staff);
+		    	mav.setViewName("manage/staff/addStaff");
+	    	return mav;
+		    }
+	    
+    /**
+	     * 新增用户
+	     * @param news
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/staff/addStaff.do")
+	    public String addStaff(Staff staff)throws Exception{
+	    	//MD5加密
+	    	staff.setStaffPassword(MD5.get(staff.getStaffPassword()));
+	    	staffService.addStaff(staff);
+	    	return "redirect:/admin/staff.do";
+	    }
+	    
+	    /**
+	     * 跳转到用户编辑页面
+	     * @param newsNo
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/staff/toEditStaff.do")
+	    public ModelAndView toEditStaff(String id)throws Exception{
+	    	ModelAndView mav = new ModelAndView();
+	        Staff staff = staffService.getStaffListById(id);
+	        if(staff!=null){
+	    	mav.setViewName("manage/staff/editStaff");
+	    	mav.addObject("staff",staff);
+	        }
+	        return mav;
+	    }
+    
+	    /**
+	     * 编辑用户
+	     * @param 
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/staff/editStaff.do")
+	    public String editCustomer(Staff staff,ModelMap mode)throws Exception{
+	    	if(staff==null || CommonUtils.isBlank(staff.getStaffId())){
+	    		mode.addAttribute("staff", staff);
+	    		mode.addAttribute("error","用户customer_no缺失！");
+	    		log.info("####################用户customer_no缺失！");
+	    		return "manage/staff/editStaff";
+	    	}
+	    	//编辑
+	    	//MD5加密
+	    	staff.setStaffPassword(MD5.get(staff.getStaffPassword()));
+	    	int flag = staffService.updateStaff(staff);
+	    	if(flag>0){
+	    		return "redirect:/admin/staff.do";
+	    	}else{
+	    		mode.addAttribute("staff", staff);
+	    		mode.addAttribute("error","修改失败！");
+	    		return "manage/staff/editStaff";
+	    		}
+	    }
+	    
+	    /**
+	     * 删除
+	     * @param customer
+	     * @return
+	     * @throws Exception
+	     */
+	    @RequestMapping(value="/admin/staff/deleteStaff.do",method=RequestMethod.GET)
+	    public String deleteStaff(String id,ModelMap mode,Staff staff)throws Exception{
+	    	int flag =staffService.delStaff(id);
+	    	if(flag==1){
+	    		return "redirect:/admin/staff.do";
+	    	}else{
+	    		mode.addAttribute("error","删除失败");
+	    		return "admin/staff";
+	    	}
+	    }
+	    
+	  
+}

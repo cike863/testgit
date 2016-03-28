@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.MenuMapper" >
+  <resultMap id="resultMap" type="com.xsbweb.vo.Menu" >
+    <result column="item_id" property="itemId" jdbcType="VARCHAR" />
+    <result column="item_text" property="itemText" jdbcType="VARCHAR" />
+    <result column="page_loc" property="pageLoc" jdbcType="VARCHAR" />
+    <result column="target_link" property="targetLink" jdbcType="VARCHAR" />
+    <result column="item_parent" property="itemParent" jdbcType="VARCHAR" />
+    <result column="item_order" property="itemOrder" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+  </resultMap>
+ 
+  <sql id="Base_Column_List" >
+    item_id, item_text, page_loc, target_link, item_order,item_parent
+  </sql>
+  
+  <select id="getMenuListByMenuIds" parameterType="com.xsbweb.vo.extend.MenuVO" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/> 
+  		from t_rl_snap_page_item where item_id in 
+  		<foreach collection="menuIds" item="menuId" index="index" open="(" separator="," close=")">
+  			#{menuId}
+  		</foreach>
+  </select>
+  
+   <select id="getAllMenuList" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/> 
+  		from t_rl_snap_page_item  order by item_id
+  </select>
+  
+  <select id="getMenuByMenuId" parameterType="java.lang.String" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/>  
+  		from t_rl_snap_page_item where item_id = #{menuId}; 
+   </select>
+   
+   <select id="getSubMenuByParentId" parameterType="java.lang.String" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/>  
+  		from t_rl_snap_page_item where item_parent = #{itemParent}; 
+   </select>
+   
+    <select id="getMenuByMenuName" parameterType="java.lang.String" resultMap="resultMap">
+  		select 
+  		<include refid="Base_Column_List"/>  
+  		from t_rl_snap_page_item where 1=1 
+  			and item_text like CONCAT('%',#{itemText},'%'); 
+   </select>
+  
+   <update id="updateMenuByMenuId" parameterType="com.xsbweb.vo.Menu" >
+  		update t_rl_snap_page_item
+  		 <set >
+		      <if test="itemText != null and itemText !=''" >
+		        item_text = #{itemText},
+		      </if>
+		      <if test="pageLoc != null and pageLoc !=''" >
+		        page_loc = #{pageLoc},
+		      </if>
+		      <if test="targetLink != null and targetLink !=''" >
+		        target_link = #{targetLink},
+		      </if>
+		      <if test="itemOrder != null and itemOrder !=''" >
+		        item_order = #{itemOrder},
+		      </if>
+		      <if test="itemParent != null and itemParent !=''" >
+		        item_parent = #{itemParent},
+		      </if>
+		      last_update_date = sysdate()     
+	      </set>
+  		where item_id = #{itemId};
+   </update>
+   
+   <delete id="deleteMenuByMenuId" parameterType="java.lang.String">
+  		delete from t_rl_snap_page_item where item_id = #{menuId};
+   </delete>
+   
+   <insert id="addMenu" parameterType="com.xsbweb.vo.Menu">
+   		insert into t_rl_snap_page_item (
+   			create_date,
+			item_id,
+			item_text,
+			last_update_date,
+			page_loc,
+			target_link,
+			item_parent,
+			item_order
+   		)values(
+   			sysdate(),
+   			#{itemId},
+   			#{itemText},
+   			sysdate(),
+   			#{pageLoc},
+   			#{targetLink},
+   			#{itemParent},
+   			#{itemOrder}
+   		)
+   </insert>
+</mapper>
+

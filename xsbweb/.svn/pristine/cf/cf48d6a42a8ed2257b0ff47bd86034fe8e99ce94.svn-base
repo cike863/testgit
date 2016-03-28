@@ -1,0 +1,246 @@
+ <%@ page language="java" import="java.util.*" pageEncoding="utf-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://ajaxanywhere.sourceforge.net/" prefix="aa"%>
+<%@ taglib uri="http://java.xsb.com/xsbweb/tag/pager" prefix="page"%>
+<%
+String path = request.getContextPath();
+String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <base href="<%=basePath%>">
+    <title></title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <link href="<%=path%>/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/util/jquery-1.11.3.js"></script>
+ 	<script type="text/javascript" language="javascript"  src="<%=request.getContextPath()%>/js/aa.js"></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/dtpicker/js/laydate.js" ></script>
+	<script  type="text/javascript" src="<%=request.getContextPath()%>/common/layer/layer.js" ></script>
+    <style>
+        .mt10{margin-top:10px;}
+    </style>
+</head>
+<body>
+	<div class="row">
+        <div class="col-md-12 mt10">
+            <form class="form-inline" method="post"  name="confForm">
+                <div class="input-group">
+                	<span class="input-group-addon">项目编号</span>
+                	<input type="text" class="form-control" id="projectNo" name="projectNo" placeholder="请输入查询内容" value="${(projectNo == '')?'':projectNo}" >
+                </div>
+                <input type="hidden" name="_method" value="get" /> 
+                <input type="text"  name="projectName"  ><input type="button" onclick="toChooseProject()" value="项目选择"/>
+                <input type="button" onclick="toUpload('','file');" value="选择文件" class="btn btn-success"/>
+				<input type="hidden" id="theFilePath" name="theFilePath" value="">
+                <button onclick="excelImport()"  class="btn btn-danger" >excel导入</button>
+            	<button onclick="excelOutport()" class="btn btn-danger">excel导出</button>
+            </form>
+        </div>
+    </div>
+	 <div class="row">
+        <div class="col-md-12 mt10">
+        	<aa:zone name="confListZone">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr>
+                    	<th>序号</th>
+                    	<th>项目编号</th>
+                    	<th>关联公司代码</th>
+                        <th>项目名称</th>
+                        <th>上线时间</th>
+                        <th>最后编辑时间</th>
+                        <th>路演状态</th>
+                        <th>前台显示</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                	<c:if test="${trsProjectVOList!=null}">
+	                	<c:forEach items="${trsProjectVOList}" var="project" varStatus="index">
+	                		<tr>
+	                			<td>${index.index+1}</td>
+	                			<td>${project.projectNo}</td>
+	                			<td>${project.projCpCode}</td>
+		                        <td>${project.projName}</td>
+		                        <td>${project.projOnlineDate}</td>
+								<td>${project.lastEditDate}</td>
+		                        <td>
+		                        <c:choose>
+		                        	<c:when test="${project.projRole eq '32'}">
+		                        		路演中
+		                        	</c:when>
+		                        	<c:when test="${project.projRole eq '64'}">
+		                        		成功案例
+		                        	</c:when>
+		                        	<c:otherwise>
+		                        		无数据
+		                        	</c:otherwise>
+		                        </c:choose>
+		                        </td>
+		                        <td>
+		                        <c:choose>
+		                        	<c:when test="${project.isShow eq '1'}">
+		                        		显示
+		                        	</c:when>
+		                        	<c:when test="${project.isShow eq '2'}">
+		                        		隐藏
+		                        	</c:when>
+		                        	<c:otherwise>
+		                        		无数据
+		                        	</c:otherwise>
+		                        </c:choose>
+		                        </td>
+		                        <td>	
+		                        	<c:if test="${project.projectNo ne '' }">
+		                        		<a href="<%=path%>/admin/project/${project.projectNo}" <%-- onclick="updateForeProject('${project.projectNo}')" --%>>编辑</a> | 
+			                        	<a href="javascript:void(0);" onclick="deleteForeProject('${project.projectNo}')">删除</a> |
+			                        	<a href="javascript:void(0);" onclick="queryApplyList('${project.projectNo}')">查看报名列表</a> |
+			                        	<a href="javascript:void(0);" onclick="getitems('${project.projectNo}')">查看item</a>
+		                        	</c:if>
+		                    </tr>
+	                	</c:forEach>
+                	</c:if>
+                </tbody>
+            </table>
+            </aa:zone>
+            <%-- <page:pager pageSize="${trsProject.pageSize}" pageNo="${trsProject.pageNo}" url="${serachInformation == ''?\"admin/project\":\"admin/project/serach\"}"
+            recordCount="${trsProject.totalRecord}"/> --%>
+            <page:pager pageSize="${trsProject.pageSize eq '0' ?1:trsProject.pageSize}" pageNo="${trsProject.pageNo}" url="admin/project"  recordCount="${trsProject.totalRecord}"/>
+        </div>
+    </div>
+</div>	
+</body>
+ 	
+ <script type="text/javascript" language="javascript">
+ 	ajaxAnywhere.formName="confForm";
+	ajaxAnywhere.getZonesToReload = function(){
+		return "confListZone";
+	}
+ function toUpload(mediaType,dir){
+		mediaType=mediaType.replace(/\s+/g,"");
+		dir=dir.replace(/\s+/g,"");
+		var url = "admin/news/uploadLayer.do?mediaNo="+mediaType+"&dir="+dir;
+		layer.open({
+		    type: 2,
+		    area: ['800px', '530px'],
+		    fix: false, //不固定
+		    maxmin: true,
+		    content: url
+		});
+	}
+	
+	function uploadIsOk(mediaType,mediaNo,url,returnPath,newFileName,format,size){		
+		$("#theFilePath").val(url);
+		/* $("#meetMediaPic").attr("src",url); */
+	}
+ /**
+	上传关联项目
+	*/
+	function toChooseProject(){
+		//$("[name='_method']").val("get");
+		//var url = "admin/project";
+	 	var url = "admin/chooseRelevanceProject";
+		layer.open({
+			type:2,
+			area:['1000px','620px'],
+			fix:false,
+			maxmin:true,
+			content:url
+		});
+	}
+	
+	//设置选择函数，将数据存入到
+	function chooseOk(arg1,arg2,arg3){
+		$("[name='projectNo']").val(arg1);
+		$("[name='projectName']").val(arg2);
+	}
+	function excelImport(){
+		var path = $("#theFilePath").val();
+		var  fileType=path.substring(path.lastIndexOf('.')+1);
+		var array="xls,xlsx";
+		var projectNo=$("[name='projectNo']").val();
+		if(array.indexOf(fileType)==-1){
+			alert("请选择excel文件");
+			return;
+		}
+		if(projectNo==''||projectNo ==null){
+			alert("请选择项目");
+			return;
+		}
+		 $.ajax({
+			url:"admin/uploadExcel.do?theFilePath="+path+"&projectNo="+projectNo,
+			contentType : 'application/json',
+  			type:'GET',
+  			async: false,
+			success:function(data){
+				//console.log("读取返回成功");
+				if(data.resultCode=='1'){
+					alert("数据导入成功");
+				}else if(data.resultCode=='0'){
+					alert("数据导入失败");
+				}else if(data.resultCode=='60001'){
+					alert("excel表没有数据");
+				}else if(data.resultCode=='60003'){
+					alert("请选择格式正确的excle文件");
+				}
+			},
+			error:function(){
+				alert("数据导入失败");
+			}
+		}); 
+		/*document.forms[0].action="admin/uploadExcel.do?theFilePath="+path+"&projectNo="+projectNo;
+		console.log("admin/uploadExcel.do?theFilePath="+path+"&projectNo="+projectNo);
+		ajaxAnywhere.submitAJAX(); */
+	}
+	function excelOutport(){
+		var projectNo=$("[name='projectNo']").val();
+		if(projectNo==''|| projectNo ==null){
+			alert("请选择项目");
+			return;
+		}
+		$.ajax({
+			url:"admin/toCheckExcel.do?projectNo="+projectNo,
+			contentType : 'application/json',
+  			type:"GET",
+  			async: false,  
+			success:function(data){
+				//console.log("下载返回成功");
+				if(data.resultCode=='1'){
+					//console.log("122");
+					/* $.ajax({
+						url:"admin/toExcel.do?projectNo="+projectNo,
+					}); */
+					downloadExcel(projectNo);
+					/* document.forms[0].action="admin/toExcel.do?projectNo="+projectNo;
+					ajaxAnywhere.submitAJAX(); */
+					/* window.location.target="_ablank";
+					 window.location.href="admin/toExcel.do?projectNo="+projectNo ; */
+					/*  window.location.href="enum/toEnum.do?enumFullName="+enumFullName+"&&enumCode="+enumCode; */
+					<%-- window.location.href='<%=basePath%>"/admin/toExcel.do?projectNo="+projectNo;  --%>
+					/* console.log("admin/toExcel.do?projectNo="+projectNo); */
+				}else if(data.resultCode=='60002'){
+					//console.log("123");
+					alert("所选项目没有报名数据");
+				}
+			},
+			error:function(){
+				alert("数据导出失败");
+			} 
+		}); 
+		function downloadExcel(projectNo){
+			window.location="admin/toExcel.do?projectNo="+projectNo;
+		};
+		/* window.location.target="_ablank";
+		window.location.href="admin/toExcel.do?projectNo="+projectNo; */
+		/* document.forms[0].action="admin/toExcel.do?projectNo="+projectNo;
+		ajaxAnywhere.submitAJAX(); */
+		/*window.location.target="_ablank";
+		window.location.href="admin/toExcel.do?projectNo="+projectNo;*/
+	}
+</script>
+</html>

@@ -1,0 +1,93 @@
+package com.xsbweb.controller.manage;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.xsbweb.util.IdlSDK;
+
+@Controller
+@RequestMapping(value="/admin")
+public class EtlThreadController {
+	//开始线程接口
+	private static final String ETL_STAR = "/XSBETLWeb/schedule/toStar";
+	//停止线程接口
+	private static final String ETL_STOP = "/XSBETLWeb/schedule/toStop";
+	
+	/**
+	 * 根据ip、端口号和线程名称启动etl抽取线程
+	 * @param request
+	 * @param threadName
+	 * @param threadHost
+	 * @param threadPort
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/etl/toStar",method=RequestMethod.GET)
+	public @ResponseBody Object toDoSchedule(
+			HttpServletRequest request,
+			@RequestParam("threadName") String threadName,
+			@RequestParam("threadHost") String threadHost,
+			@RequestParam("threadPort") String threadPort
+			) throws Exception{
+		
+		Map<String,Integer> map = new HashMap<String, Integer>();
+		//组装请求路径
+		StringBuffer urlbuffer = new StringBuffer("http://");
+		urlbuffer.append(threadHost)
+		.append(":")
+		.append(threadHost)
+		.append(ETL_STAR);
+		//组装请求参数
+		StringBuffer parambuffer = new StringBuffer("threadName=");
+		parambuffer.append(threadName);
+		Map<String,Object> result = IdlSDK.getURLByPost(urlbuffer.toString(), parambuffer.toString());
+		//20001:线程已经启动,20002:线程已经停止
+		if(result==null){
+			return "0";
+		}
+		return result.get("resultCode");
+	}
+	
+	/**
+	 * 根据ip、端口号和线程名称停止etl抽取线程
+	 * @param request
+	 * @param threadName
+	 * @param threadHost
+	 * @param threadPort
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/etl/toStop",method=RequestMethod.GET)
+	public @ResponseBody Object toStopSchedule(
+			HttpServletRequest request,
+			@RequestParam("threadName") String threadName,
+			@RequestParam("threadHost") String threadHost,
+			@RequestParam("threadPort") String threadPort
+			) throws Exception{
+		
+		Map<String,Integer> map = new HashMap<String, Integer>();
+		//组装请求路径
+		StringBuffer urlbuffer = new StringBuffer("http://");
+		urlbuffer.append(threadHost)
+		.append(":")
+		.append(threadHost)
+		.append(ETL_STOP);
+		//组装请求参数
+		StringBuffer parambuffer = new StringBuffer("threadName=");
+		parambuffer.append(threadName);
+		Map<String,Object> result = IdlSDK.getURLByPost(urlbuffer.toString(), parambuffer.toString());
+		//20001:线程已经启动,20002:线程已经停止
+		if(result==null){
+			return "0";
+		}
+		return result.get("resultCode");
+	}
+}

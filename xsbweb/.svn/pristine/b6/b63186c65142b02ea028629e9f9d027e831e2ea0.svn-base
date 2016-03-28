@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xsbweb.mapper.EtlConfigMapper" >
+
+  <resultMap id="resultMap" type="com.xsbweb.vo.EtlThread" >
+    <result column="thread_host" property="threadHost" jdbcType="VARCHAR" />
+    <result column="thread_port" property="threadPort" jdbcType="VARCHAR" />
+    <result column="thread_name" property="threadName" jdbcType="VARCHAR" />
+    <result column="last_start_time" property="lastStartTime" jdbcType="VARCHAR" />
+    <result column="last_stop_time" property="lastStopTime" jdbcType="VARCHAR" />
+    <result column="thread_status" property="threadStatus" jdbcType="VARCHAR" />
+    <result column="last_update_date" property="lastUpdateDate" jdbcType="VARCHAR" />
+    <result column="created_date" property="createdDate" jdbcType="VARCHAR" />
+    <result column="last_update_by" property="lastUpdateBy" jdbcType="VARCHAR" />
+    <result column="created_by" property="createdBy" jdbcType="VARCHAR" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <select id="getEtlThread" parameterType="com.xsbweb.vo.EtlThread" resultMap="resultMap">
+  	select 
+  		thread_host,
+  		thread_port,
+  		thread_name,
+  		last_start_time,
+  		last_stop_time,
+  		thread_status,
+  		t.last_update_date,
+	  	t.created_date,
+	  	s1.staff_name as last_update_by,
+	  	s2.staff_name as created_by,
+	  	description
+	  from oltp.t_rl_trs_etl_thread t
+	  left join oltp.t_rl_snap_staff s1 on s1.staff_id=t.last_update_by
+	  left join oltp.t_rl_snap_staff s2 on s2.staff_id=t.created_by
+	  	where 1=1  
+	  	<if test="threadHost !=null and threadHost !=''">
+	  		and thread_host = #{threadHost} 
+	  	</if>
+	  	<if test="threadName !=null and threadName !=''">
+	  		and thread_name = #{threadName} 
+	  	</if>
+	  	<if test="threadPort !=null and threadPort !='' ">
+	  		and thread_port = #{threadPort} 
+	  	</if>
+  </select>
+  
+  <insert id="addEtlThread" parameterType="com.xsbweb.vo.EtlThread">
+  	insert into oltp.t_rl_trs_etl_thread
+  	(	
+  		<if test="threadHost !=null and threadHost !=''">
+ 			thread_host,
+ 		</if>
+ 		<if test="threadPort !=null and threadPort !=''">
+ 			thread_port,
+ 		</if>
+ 		<if test="threadName !=null and threadName !=''">
+ 			thread_name,
+ 		</if>
+ 		<if test="threadStatus !=null and threadStatus !=''">
+ 			thread_status,
+ 		</if>
+ 		<if test="threadStatus=='0'">
+ 			last_stop_time,
+ 		</if>
+ 		<if test="threadStatus=='1'">
+ 			last_start_time,
+ 		</if>
+ 		<if test="createdBy !=null and createdBy !=''">
+ 			created_by,
+ 		</if>
+ 		<if test="description !=null and description !=''">
+ 			description
+ 		</if>
+  	)values(
+  		<if test="threadHost !=null and threadHost !=''">
+ 			#{threadHost},
+ 		</if>
+ 		<if test="threadPort !=null and threadPort !=''">
+ 			#{threadPort},
+ 		</if>
+ 		<if test="threadName !=null and threadName !=''">
+ 			#{threadName},
+ 		</if>
+ 		<if test="threadStatus !=null and threadStatus !=''">
+ 			#{threadStatus},
+ 		</if>
+ 		<if test="threadStatus=='0'">
+ 			sysdate(),
+ 		</if>
+ 		<if test="threadStatus=='1'">
+ 			sysdate(),
+ 		</if>
+ 		<if test="createdBy !=null and createdBy !=''">
+ 			#{createdBy},
+ 		</if>
+ 		<if test="description !=null and description !=''">
+ 			#{description}
+ 		</if>
+  	);
+  </insert>
+  
+  <update id="editEtlThread" parameterType="com.xsbweb.vo.EtlThread">
+  	update oltp.t_rl_trs_etl_thread 
+ 	<set>
+ 		<if test="threadHost !=null and threadHost !=''">
+ 			thread_host = #{threadHost},
+ 		</if>
+ 		<if test="threadPort !=null and threadPort !=''">
+ 			thread_port = #{threadPort},
+ 		</if>
+ 		<if test="threadName !=null and threadName !=''">
+ 			thread_name = #{threadName},
+ 		</if>
+ 		<if test="threadStatus !=null and threadStatus !=''">
+ 			thread_status = #{threadStatus},
+ 		</if>
+ 		<if test="threadStatus=='0'">
+ 			last_stop_time = sysdate(),
+ 		</if>
+ 		<if test="threadStatus=='1'">
+ 			last_start_time = sysdate(),
+ 		</if>
+ 		<if test="lastUpdateBy !=null and lastUpdateBy !=''">
+ 			last_update_by = #{lastUpdateBy},
+ 		</if>
+ 		<if test="description !=null and description !=''">
+ 			description = #{description}
+ 		</if>
+ 	</set>
+ 	where thread_host = #{threadHost} and thread_port = #{threadPort} and thread_name = #{threadName};
+  </update>
+  
+  <delete id="deleteEtlThread" parameterType="com.xsbweb.vo.EtlThread">
+  	delete from oltp.t_rl_trs_etl_thread  
+  	where thread_host = #{threadHost} and thread_port = #{threadPort} and thread_name = #{threadName};
+  </delete>
+</mapper>

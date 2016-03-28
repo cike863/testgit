@@ -1,0 +1,351 @@
+package com.xsbweb.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.mysql.jdbc.log.Log;
+import com.xsbweb.common.bean.DataBaseConstant;
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.controller.app.AppLoginRegistController;
+import com.xsbweb.mapper.APPCommonMapper;
+import com.xsbweb.mapper.NewsMapper;
+import com.xsbweb.mapper.TrsCommentMapper;
+import com.xsbweb.mapper.TrsMediaMapper;
+import com.xsbweb.service.NewsService;
+import com.xsbweb.util.CommonUtils;
+import com.xsbweb.util.MultipleDataSource;
+import com.xsbweb.util.XsbBusinessUtil;
+import com.xsbweb.vo.News;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.SearchWord;
+import com.xsbweb.vo.TrsMedia;
+import com.xsbweb.vo.extend.NewsVO;
+
+public class NewsServiceImpl implements NewsService{
+	private Logger log = Logger.getLogger(NewsServiceImpl.class);
+	@Autowired
+	private NewsMapper newsMapper;
+	
+	@Autowired 
+	private TrsCommentMapper trsCommentMapper;
+	
+	@Autowired 
+	private APPCommonMapper appCommonMapper;
+	
+	@Autowired
+	private TrsMediaMapper trsMediaMapper;
+	
+	@Override
+	public News getNewsContentByNewsNo(String newsNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		News news = newsMapper.getNewsContentByNewsNo(newsNo);
+		if(news.getNewsContent()!=null && news.getNewsContent().contains("/Files/")){
+			news.setNewsContent(news.getNewsContent().replace("/Files/", XsbBusinessConstant.DYLY_URL+"/Files/"));
+		}
+		return news;
+	}
+	public List<SearchWord> getSearchWordListByNewsNo(String newsNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord> words =newsMapper.getWordListByNewsNo(newsNo);
+		return words;
+	}
+
+	@Override
+	public NewsVO getNewsIndexListByPrc(String newsConfig) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		NewsVO newsVO = new NewsVO();
+		Map<String, Object> param = new HashMap<String, Object>();
+		param.put("newsConfig", newsConfig);
+		param.put("prcFlag", null);
+		List<News> newsList = newsMapper.getNewsIndexListByPrc(param);
+		newsVO.setNewsList(newsList);
+		newsVO.setPrcFlag((Integer)param.get("prcFlag"));
+		return newsVO;
+	}
+
+	@Override
+	public List<News> getAllNewsList(News news) throws Exception {
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		return newsMapper.getAllNewsList(news);
+	}
+
+	@Override
+	public int addNews(News news) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//获取当前时间，精确到毫秒
+    	String nowDate = CommonUtils.getNowDateStringOf17();
+    	//news.setNewsNo("news"+CommonUtils.getNowDateStringOf8()+((int)(Math.random()*10000)+""));
+    	/*String newsDate = news.getNewsDate();*/
+    	if(news.getNewsRole().contains(",")){
+    		String [] resultRole = news.getNewsRole().split(",");
+        	long output = 0;
+        	for(int i=0;i<resultRole.length;i++){
+        		output+=Long.parseLong(resultRole[i]);
+        	}	    	
+        	news.setNewsRole(output+"");
+    	}
+    	/*if(newsDate!=null&&!"".equals(newsDate)&&newsDate.length()>=10){
+    		news.setNewsDate(newsDate.substring(8, 10));
+        	news.setNewsMonth(newsDate.substring(5, 7));
+        	news.setNewsYear(newsDate.substring(0, 4));
+    	} else{
+    		news.setNewsDate(nowDate.substring(8, 10));
+        	news.setNewsMonth(nowDate.substring(5, 7));
+        	news.setNewsYear(nowDate.substring(0, 4));
+    	}*/
+		int flag;
+		if("".equals(news.getNewsRole())){
+			news.setNewsRole("0");
+		}
+		try {
+			newsMapper.insertNews(news);
+			//int a = newsMapper.insertNewsDtl(news);
+			//int b = newsMapper.insertNewsIdx(news);
+			//flag = a*b;
+			flag=news.getPrcFlag();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+	
+	@Override
+	public int addWords(List<SearchWord> words,String newsNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord> searchWords = new ArrayList<SearchWord>();
+		if(words!=null&&!words.isEmpty()){
+			for(SearchWord searchWord:words){
+				if(searchWord!=null){
+					searchWord.setObject(newsNo);
+					searchWords.add(searchWord);
+				}
+			}
+		}
+		int flag;
+		try {			
+			flag = newsMapper.batchAddWord(searchWords);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+	
+	
+
+	@Override
+	public int editNews(News news){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);	
+		
+		if(news.getNewsContent().contains("&amp;emsp;")){
+			news.setNewsContent(news.getNewsContent().replaceAll("&amp;emsp;","&nbsp;"));
+		}
+		int flag;
+		try {
+			log.info(MultipleDataSource.getDataSourceKey()+"----------");
+			int b = newsMapper.updateNewsIdx(news);
+			int a = newsMapper.updateNewsDtl(news);
+			flag = a*b;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+	@Override
+	public int editWords(News news){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		List<SearchWord> words =new ArrayList<SearchWord>();
+		if(news.getOldWordList()!=null&&!news.getOldWordList().isEmpty()){
+			for(SearchWord searchWord:news.getOldWordList()){
+				if(searchWord!=null){
+					searchWord.setObject(news.getNewsNo());
+					words.add(searchWord);
+				}
+			}
+		}
+		List<SearchWord> addWords =new ArrayList<SearchWord>();
+		if(news.getSearchWord()!=null&&!news.getSearchWord().isEmpty()){
+			for(SearchWord searchWord:news.getSearchWord()){
+				if(searchWord!=null){
+					searchWord.setObject(news.getNewsNo());
+					addWords.add(searchWord);
+				}
+			}
+		}
+		int flag;
+		int a=1;
+		int b=1;
+		try {
+			log.info(MultipleDataSource.getDataSourceKey()+"----------");
+			if(words!=null&&!words.isEmpty()){
+				/*for(int i=0;i<words.size();i++){*/
+					a*= newsMapper.batchUpdateWord(words);
+					
+				/*}*/
+				
+			}
+			if(addWords!=null&&!addWords.isEmpty()){
+				b =newsMapper.batchAddWord(addWords);
+			}
+			flag=a*b;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public int deleteNews(String newsNo){
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag;
+		try {
+			int a = newsMapper.deleteNewsDtl(newsNo);
+			int b = newsMapper.deleteNewsIdx(newsNo);
+			flag = a*b;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+	@Override
+	public int deleteWordByObject(String newsNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return newsMapper.deleteWordByObject(newsNo);
+	}
+
+	@Override
+	public int newsToTop(String newsNo){
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		int flag;
+		try {
+			flag = newsMapper.newsToTop(newsNo);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public int newsCancelTop(String newsNo){
+		//MultipleDataSource.setDataSourceKey(DataBaseConstant.OLAP);
+		int flag;
+		try {
+			flag = newsMapper.newsCancelTop(newsNo);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = -1;
+		}
+		return flag;
+	}
+
+	@Override
+	public List<RObject> getNewsScrollList() throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		//三板行情_轮播1
+		Map<String, Object> param1 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.NEWS_SCROLL_1, 1, 10);
+		List<RObject> scrolllist1 = appCommonMapper.getRObjectListByGroup(param1);	
+		//三板行情_轮播2
+		Map<String, Object> param2 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.NEWS_SCROLL_2, 1, 10);
+		List<RObject> scrolllist2 = appCommonMapper.getRObjectListByGroup(param2);	
+		//三板行情_轮播3
+		Map<String, Object> param3 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.NEWS_SCROLL_3, 1, 10);
+		List<RObject> scrolllist3 = appCommonMapper.getRObjectListByGroup(param3);	
+		//三板行情_轮播4
+		Map<String, Object> param4 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.NEWS_SCROLL_4, 1, 10);
+		List<RObject> scrolllist4 = appCommonMapper.getRObjectListByGroup(param4);	
+		//三板行情_轮播5
+		Map<String, Object> param5 = XsbBusinessUtil.initRObjectParam(XsbBusinessConstant.NEWS_SCROLL_5, 1, 10);
+		List<RObject> scrolllist5 = appCommonMapper.getRObjectListByGroup(param5);	
+		List<RObject> scrolllist = new ArrayList<RObject>();
+		if(scrolllist1!=null && !scrolllist1.isEmpty()){
+			scrolllist.add(scrolllist1.get(0));
+		}
+		if(scrolllist2!=null && !scrolllist2.isEmpty()){
+			scrolllist.add(scrolllist2.get(0));
+		}
+		if(scrolllist3!=null && !scrolllist3.isEmpty()){
+			scrolllist.add(scrolllist3.get(0));
+		}
+		if(scrolllist4!=null && !scrolllist4.isEmpty()){
+			scrolllist.add(scrolllist4.get(0));
+		}
+		if(scrolllist5!=null && !scrolllist5.isEmpty()){
+			scrolllist.add(scrolllist5.get(0));
+		}
+		return scrolllist;
+	}
+
+	@Override
+	public List<RObject> getNewsIndexListByType(RObject rObject) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		Map<String, Object> param = XsbBusinessUtil.initRObjectParam(rObject.getNewsType(), rObject.getPageNo(), rObject.getPageSize());
+		List<RObject> newsIndexList = appCommonMapper.getRObjectListByGroup(param);
+		return newsIndexList;
+	}
+
+	/**
+	 * 获取新闻总数
+	 * @param news
+	 * @return
+	 * @throws Exception
+	 */
+	public int getNewsCounts(News news) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return newsMapper.getNewsCounts(news);
+	}
+
+	@Override
+	public List<News> getRelatedReadList(News news) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return newsMapper.getRelatedReadList(news);
+	}
+
+	@Override
+	public int praiseComment(String commentNo) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsCommentMapper.updatePraiseComment(commentNo);
+	}
+	@Override
+	public void deleteWordByObjectAndWord(SearchWord word) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		newsMapper.deleteWordByObjectAndWord(word);
+	}
+	@Override
+	public int addTrsMedia(List<TrsMedia> trsMediaList) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		return trsMediaMapper.batchInsert(trsMediaList);
+	}
+	@Override
+	public int batchDeleteNews(String[] newsNoArrs) throws Exception {
+		MultipleDataSource.setDataSourceKey(DataBaseConstant.OLTP);
+		int flag=0;
+		try{
+			newsMapper.deleteWordByObjects(newsNoArrs);
+			newsMapper.deleteNewsDtlByNewsNos(newsNoArrs);
+			newsMapper.deleteNewsIdxByNewsNos(newsNoArrs);
+			flag=1;
+		}catch(Exception e){
+			e.printStackTrace();
+			flag=0;
+		}
+		return flag;
+	}
+	
+}

@@ -1,0 +1,114 @@
+package com.xsbweb.vo;
+
+public class EtlThread {
+
+	private String threadHost;
+	
+	private String threadPort;
+	
+	private String threadName;
+	
+	private String lastStartTime;
+	
+	private String lastStopTime;
+	
+	private String threadStatus;
+	
+	private String lastUpdateDate;
+	
+	private String createdDate;
+	
+	private String lastUpdateBy;
+	
+	private String createdBy;
+	
+	private String description;
+
+	public String getThreadHost() {
+		return threadHost;
+	}
+
+	public void setThreadHost(String threadHost) {
+		this.threadHost = threadHost;
+	}
+
+	public String getThreadPort() {
+		return threadPort;
+	}
+
+	public void setThreadPort(String threadPort) {
+		this.threadPort = threadPort;
+	}
+
+	public String getThreadName() {
+		return threadName;
+	}
+
+	public void setThreadName(String threadName) {
+		this.threadName = threadName;
+	}
+
+	public String getLastStartTime() {
+		return lastStartTime;
+	}
+
+	public void setLastStartTime(String lastStartTime) {
+		this.lastStartTime = lastStartTime;
+	}
+
+	public String getLastStopTime() {
+		return lastStopTime;
+	}
+
+	public void setLastStopTime(String lastStopTime) {
+		this.lastStopTime = lastStopTime;
+	}
+
+	public String getThreadStatus() {
+		return threadStatus;
+	}
+
+	public void setThreadStatus(String threadStatus) {
+		this.threadStatus = threadStatus;
+	}
+
+	public String getLastUpdateDate() {
+		return lastUpdateDate;
+	}
+
+	public void setLastUpdateDate(String lastUpdateDate) {
+		this.lastUpdateDate = lastUpdateDate;
+	}
+
+	public String getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(String createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getLastUpdateBy() {
+		return lastUpdateBy;
+	}
+
+	public void setLastUpdateBy(String lastUpdateBy) {
+		this.lastUpdateBy = lastUpdateBy;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+}

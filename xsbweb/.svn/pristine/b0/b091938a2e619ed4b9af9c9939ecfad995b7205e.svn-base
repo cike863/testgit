@@ -1,0 +1,229 @@
+package com.xsbweb.util;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import com.xsbweb.common.bean.XsbBusinessConstant;
+import com.xsbweb.service.impl.LoginRegisterServiceImpl;
+import com.xsbweb.vo.RObject;
+import com.xsbweb.vo.extend.CustomerVO;
+
+public class XsbBusinessUtil {
+
+	private static Logger log = Logger.getLogger(XsbBusinessUtil.class);
+	/**
+	 * 用户信息修改，调用存储过程参数初始化
+	 * @param customerVO
+	 * @return
+	 */
+	public static Map<String, Object> initCustomerParam(CustomerVO customerVO){
+		Map<String, Object> param = new HashMap<String, Object>();
+		if(CommonUtils.isNotBlank(customerVO.getCustomerId())){
+			param.put("customerId", customerVO.getCustomerId());
+		}else{
+			param.put("customerId", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerPhoneNo())){
+			param.put("customerPhoneNo", customerVO.getCustomerPhoneNo());
+		}else{
+			param.put("customerPhoneNo", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerName())){
+			param.put("customerName", customerVO.getCustomerName());
+		}else{
+			param.put("customerName", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerPassword())){
+			param.put("customerPassword", customerVO.getCustomerPassword());
+		}else{
+			param.put("customerPassword", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerEmail())){
+			param.put("customerEmail", customerVO.getCustomerEmail());
+		}else{
+			param.put("customerEmail", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerType())){
+			param.put("customerType", customerVO.getCustomerType());
+		}else{
+			param.put("customerType", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerCompany())){
+			param.put("customerCompany", customerVO.getCustomerCompany());
+		}else{
+			param.put("customerCompany", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerQq())){
+			param.put("customerQq", customerVO.getCustomerQq());
+		}else{
+			param.put("customerQq", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerWechat())){
+			param.put("customerWechat", customerVO.getCustomerWechat());
+		}else{
+			param.put("customerWechat", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerSex())){
+			param.put("customerSex", customerVO.getCustomerSex());
+		}else{
+			param.put("customerSex", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerPosition())){
+			param.put("customerPosition", customerVO.getCustomerPosition());
+		}else{
+			param.put("customerPosition", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerNickname())){
+			param.put("customerNickname", customerVO.getCustomerNickname());
+		}else{
+			param.put("customerNickname", null);
+		}
+		
+		if(customerVO.getGzIndustry()!=null){
+			param.put("gzIndustry", customerVO.getGzIndustry());
+		}else{
+			param.put("gzIndustry", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCapitalScale())){
+			param.put("capitalScale", customerVO.getCapitalScale());
+		}else{
+			param.put("capitalScale", null);
+		}
+		if(CommonUtils.isNotBlank(customerVO.getCustomerMediaNo())){
+			param.put("customerMediaNo", customerVO.getCustomerMediaNo());
+		}else{
+			param.put("customerMediaNo", null);
+		}
+		if(customerVO.getCustomerCases()!=null){
+			param.put("customerCases", customerVO.getCustomerCases());
+		}else{
+			param.put("customerCases", null);
+		}
+		if(customerVO.getAuthentMediaNo1()!=null){
+			param.put("authentMediaNo1", customerVO.getAuthentMediaNo1());
+		}else{
+			param.put("authentMediaNo1", null);
+		}
+		if(customerVO.getAuthentMediaNo2()!=null){
+			param.put("authentMediaNo2", customerVO.getAuthentMediaNo2());
+		}else{
+			param.put("authentMediaNo2", null);
+		}
+		if(customerVO.getAuthentStatus()!=null){
+			param.put("authentStatus", customerVO.getAuthentStatus());
+		}else{
+			param.put("authentStatus", null);
+		}
+		if(customerVO.getCustomerCardId()!=null){
+			param.put("customerCardId", customerVO.getCustomerCardId());
+		}else{
+			param.put("customerCardId", null);
+		}
+		if(customerVO.getCustomerAddress()!=null){
+			param.put("customerAddress", customerVO.getCustomerAddress());
+		}else{
+			param.put("customerAddress", null);
+		}
+		if(customerVO.getCustomerInstttCode()!=null){
+			param.put("customerInstttCode", customerVO.getCustomerInstttCode());
+		}else{
+			param.put("customerInstttCode", null);
+		}
+		param.put("prcFlag", null);
+	/*	log.info("customerPhoneNo:"+customerVO.getCustomerPhoneNo()
+				+"-----customerPassword:"+customerVO.getCustomerPassword()
+				+"-----customerEmail:"+customerVO.getCustomerEmail());*/
+		return param;
+	}
+	
+	public static Map<String, Object> initRObjectParam(String group,int pageNo,int pageSize){
+		Map<String, Object> param = new HashMap<String, Object>();
+		param.put("group", group);
+		param.put("pageNo", pageNo);
+		param.put("currentRecord", (pageNo>0?pageNo:1)*pageSize);
+		param.put("pageSize", pageSize);
+		param.put("prcFlag", null);
+		if(XsbBusinessConstant.MEETING_DOING.equals(group)){
+			param.put("isShow", "0");
+		}
+		return param;
+	}
+	
+	/**
+	 * 初始化三板行情中的分页参数
+	 * @param param
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 */
+	public static Map<String, Object> initSbhqPageParam(Map<String, Object> param,Integer pageNo,Integer pageSize){
+		if(pageNo!=null){
+			pageNo = pageNo==0?1:pageNo;
+		}else{
+			pageNo = 1;
+		}
+		if(pageSize!=null){
+			pageSize = pageSize==0?10:pageSize;
+		}else{
+			pageSize = 10;
+		}
+		param.put("pageNo", pageNo);
+		param.put("pageSize", pageSize);
+		param.put("currentRecord", (pageNo-1)*pageSize);
+		return param;
+	}
+	
+	/**
+	 * 初始化轮播页跳转方式
+	 * @param scrollList
+	 * @return
+	 */
+	public static List<RObject> initScrollForward(List<RObject> scrollList){
+		if(scrollList!=null && !scrollList.isEmpty()){
+			String regex = "[+-]?[0-9]*";
+			for (RObject rObject : scrollList) {
+				if(CommonUtils.isNotBlank(rObject.getRole())){
+					//验证是否为数字
+					if(!CommonUtils.regexString(regex,rObject.getRole())){
+						break;
+					}
+					int roleInt = Integer.valueOf(rObject.getRole());
+					
+					if(rObject.getObjectId().indexOf(XsbBusinessConstant.OBJECT_ID_EXPR)>=0){
+						rObject.setRedirect("10");//PE风云
+					}else{
+						if(XsbBusinessConstant.OBJECT_ID_QZ.equals(rObject.getObjectId())||rObject.getObjectId().indexOf("prmt")>=0){
+							rObject.setRedirect("9");//敲钟
+						}else{
+							if(roleInt>=32 && roleInt<64){//路演大厅_路演中
+								rObject.setRedirect("1");
+							}else if(roleInt>=64 && roleInt<128){//路演大厅_成功案例
+								rObject.setRedirect("2");
+							}else if(roleInt>=128 && roleInt<256){//路演直播_直播预告
+								rObject.setRedirect("3");
+							}else if(roleInt>=256 && roleInt<512){//路演直播_直播中
+								rObject.setRedirect("4");
+							}else if(roleInt>=512 && roleInt<1024){//路演直播_往期回放
+								rObject.setRedirect("5");
+							}else if(roleInt>=1024 && roleInt<2048){//语音路演_直播预告
+								rObject.setRedirect("6");
+							}else if(roleInt>=2048 && roleInt<4096){//语音路演_直播中
+								rObject.setRedirect("7");
+							}else if(roleInt>=4096 && roleInt<8192){//语音路演_直播回放
+								rObject.setRedirect("8");
+							}
+						}
+					}
+				}else{
+					if(rObject.getObjectId().indexOf(XsbBusinessConstant.OBJECT_ID_EXPR)>=0){
+						rObject.setRedirect("10");//PE风云
+					}
+				}
+			}
+		}
+		return scrollList;
+	}
+}
